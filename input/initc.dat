@@ -1,0 +1,83 @@
+    150.0    150.0    <-- CO   initial concentrations in ppb
+      0.01     0.01    <-- NO
+      0.02     0.02    <-- NO2
+      0.02     0.02   <-- HNO3
+      0.02     0.02   <-- NH3
+      0.02     0.02    <-- SO2
+      0.0      0.0    <-- SO4
+     30.0     30.0    <-- O3
+   1650.0   1650.0    <-- CH4
+      0.4      0.4    <-- C2H6
+      0.1      0.1    <-- C3H8
+      0.2      0.2    <-- ALKA
+      0.2      0.2    <-- ETHE
+      0.2      0.2    <-- ALKE
+      0.2      0.2    <-- AROM
+      0.1      0.1    <-- ACO2
+      0.1      0.1    <-- ACTA
+      0.2      0.2    <-- HCHO
+      0.4      0.4    <-- ALD2
+      0.03     0.03    <-- H2O2
+      0.0      0.0    <-- ROOH
+     0.01     0.01    <-- HONO
+     0.02     0.02    <-- PAN
+      0.0      0.0    <-- TPAN
+      0.3      0.3    <-- KET
+      0.0      0.0    <-- CRES
+      0.0      0.0    <-- DIAL
+      0.0      0.0    <-- GLYX
+      0.0      0.0    <-- MGLY
+      0.0      0.0    <-- NH4NO3
+      0.5      0.5    <-- HCL
+      0.0      0.0    <-- R3N2
+      0.0      0.0    <-- RAN2
+      0.0      0.0    <-- RAN1
+      0.0      0.0    <-- N2O5
+      0.0      0.0    <-- HNO4
+      0.0      0.0    <-- NO3
+      0.05     0.05   <-- DMS
+      0.0      0.0    <-- optional 2
+      0.0      0.0    <-- optional 3
+      0.0      0.0    <-- optional 4
+    0.000    0.000    <-- FE3 (fraction of aerosol mass)
+   0.0000   0.0000    <-- MN2 (fraction of aerosol mass)
+  0.0e+00             <-- NO  emission rates in molecules/cm**2/sec
+  0.0e+00             <-- NO2
+  0.0e+00             <-- HNO3
+  3.5e+09             <-- NH3
+  0.0e+00             <-- SO2
+  0.0e+00             <-- SO4
+  0.0e+00             <-- O3
+  0.0e+00             <-- CH4
+  0.0e+00             <-- C2H6
+  0.0e+00             <-- C3H8
+  0.0e+00             <-- ALKA
+  0.0e+00             <-- ETHE
+  0.0e+00             <-- ALKE
+  0.0e+00             <-- AROM
+  0.0e+00             <-- ACO2
+  0.0e+00             <-- ACTA
+  0.0e+00             <-- HCHO
+  0.0e+00             <-- ALD2
+  0.0e+00             <-- H2O2
+  0.0e+00             <-- ROOH
+  0.0e+00             <-- HONO
+  0.0e+00             <-- PAN
+  0.0e+00             <-- TPAN
+  0.0e+00             <-- KET
+  0.0e+00             <-- CRES
+  0.0e+00             <-- DIAL
+  0.0e+00             <-- GLYX
+  0.0e+00             <-- MGLY
+  0.0e+00             <-- NH4NO3
+  0.0e+00             <-- HCL
+  0.0e+00             <-- R3N2
+  0.0e+00             <-- RAN2
+  0.0e+00             <-- RAN1
+  0.0e+00             <-- N2O5
+  0.0e+00             <-- HNO4
+  0.0e+00             <-- NO3
+  3.5e+09             <-- DMS
+  0.0e+00             <-- optional 2
+  0.0e+00             <-- optional 3
+  0.0e+00             <-- optional 4

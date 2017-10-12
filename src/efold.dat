@@ -1,0 +1,48 @@
+c  efolding depth [meters] for each of the species in the firn, the corresponding photolysis rate is shown commented out after the efolding depth
+.1d0     !{N8} NO2 + hv = NO + O3 :                             ph_ratf( 1)      ; {band-model}
+.1d0     !{N10} NO3 + hv = NO + O2 :                            ph_ratf( 2)      ; {band-model}
+.1d0     !{O9}  O3 + hv = O2 + O1D:                             ph_ratf( 3)      ; {band-model}      
+.1d0     !{N18} HONO + hv = NO + OH :                           ph_ratf( 4)      ; {band-model}
+.1d0     !{N19} HNO3 + hv = NO2 + OH :                          ph_ratf( 5)      ; {band-model}
+.1d0     !{O10} H2O2 + hv = 2OH :                               ph_ratf( 6)      ; {band-model}
+.1d0     !{N23} HNO4 + hv = NO2 + HO2 :                         ph_ratf( 7)      ; {band-model}
+.1d0     !{C15} HCHO + hv = 2HO2 + CO :                         ph_ratf( 8)      ; {band-model}
+.1d0     !{C16} HCHO + hv = CO + H2 :                           ph_ratf( 9)      ; {band-model}
+.1d0     !{N13} NO3 + hv = NO2 + O3:                            ph_ratf(10)      ; {band-model}
+.1d0     !{N24} HNO4 + hv = OH + NO3:                           ph_ratf(11)      ; {band-model}
+.1d0     !{N16} N2O5 + hv = NO2 + NO3:                          ph_ratf(12)      ; {band-model}
+.1d0     !{Cl33} HOCl + hv = Cl + OH:                           xhal*ph_ratf(13) ; {band-model}
+.1d0     !{Cl35} ClNO3 + hv = Cl + NO3  :                       xhal*ph_ratf(14) ; {band-model}
+.1d0     !{Br23} BrNO3 + hv = Br + NO3 :                        xhal*ph_ratf(15) ; {band-model}
+.1d0     !{Cl31} Cl2O2 + hv = Cl + Cl + O2:                     xhal*ph_ratf(16) ; {band-model}
+.1d0     !? :                         ph_ratf( 17)      ; {band-model}
+.1d0     !{Cl34} ClNO2 + hv = Cl + NO2  :                       xhal*ph_ratf(18) ; {band-model}
+.1d0     !{Cl32} Cl2 + hv = 2 Cl:                               xhal*ph_ratf(19) ; {band-model}
+.1d0     !{Br21} HOBr + hv = Br + OH:                           xhal*ph_ratf(20) ; {band-model}
+.1d0     !{Br22} BrNO2 + hv = Br + NO2 :                        xhal*ph_ratf(21) ; {band-model}
+.1d0     !{Br20} Br2 + hv = 2 Br:                               xhal*ph_ratf(22) ; {band-model}
+.1d0     !? :                         ph_ratf( 23)      ; {band-model}
+.1d0     !{Br19} BrO + hv = Br + O3 -O2:                        xhal*ph_ratf(24) ; {band-model}
+.1d0     !{I22} IO + hv  = I + O3 -O2:                          xiod*ph_ratf(25) ; {band-model}
+.1d0     !{I24} HOI + hv = I + OH:                              xiod*ph_ratf(26) ; {band-model}
+.1d0     !{I31} I2 + hv  = 2 I:                                 xiod*ph_ratf(27) ; {band-model}
+.1d0     !? :                         ph_ratf( 28)      ; {band-model}
+.1d0     !? :                         ph_ratf( 29)      ; {band-model}
+.1d0     !{I26} INO3 + hv = I + NO3:                            xiod*ph_ratf(30) ; {band-model}
+.1d0     !{I27} CH3I + hv = I + MO2:                            xiod*ph_ratf(31) ; {band-model}
+.1d0     !{I28} C3H7I + hv = I + MO2:                           xiod*ph_ratf(32) ; {band-model}
+.1d0     !{I29} CH2ClI + hv = I + Cl + 2 HO2 + CO:              xiod*ph_ratf(33) ; {band-model}
+.1d0     !{I30} CH2I2 + hv = I + IO + HCHO:                     xiod*ph_ratf(34) ; {band-model; Enami et al. (2004)}
+.1d0     !{Cl30} OClO + hv = O3 + ClO - O2:                     xhal*ph_ratf(35) ; {band-model}
+.1d0     !{I23} I2O2 + hv = 2 I + O2:                           xiod*ph_ratf(36) ; {band-model}
+.1d0     !{I25} INO2 + hv = I + NO2:                            xiod*ph_ratf(37) ; {band-model}
+.1d0     !NO2m + hv ->  :           (38) ; 
+.1d0     !NO3m + hv -> NO2 + OH :           (39) ; 
+.1d0     !?? :           (40) ; 
+.1d0     !?? :           (41) ; 
+.1d0     !?? :           (42) ; 
+.1d0     !O3 -> O2 + O3P :           (43) ; 
+.1d0     !?
+.1d0     !?
+.1d0     !?
+.1d0     !?

@@ -1,0 +1,40 @@
+#INCLUDE master.spc
+#INCLUDE gas.eqn
+
+
+#INLINE F77_GLOBAL
+! photolysis common block
+! jjb original version
+!     double precision ph_rat
+!     dimension ph_rat(47) ! jjb
+!     common /ph_r/ ph_rat
+! jjb test version handling ph_rat another way
+      integer nphrxn
+      parameter (nphrxn=47)
+! conversion factors
+      double precision yxkmtd,yhenry,yxeq,ycwd,conv1,xhal,xiod,xhet1,
+     &       xhet2
+      common /kpp_rate_g/ yxkmtd(2,NSPEC),yhenry(NSPEC),yxeq(NSPEC),
+     &       ycwd(2),conv1,xhal,xiod,xhet1,xhet2
+      double precision ph_rat
+      common /ph_r_g/ ph_rat(nphrxn) ! jjb
+#ENDINLINE
+
+#INLINE F77_RCONST
+! rates functions
+      REAL*8 atk_3, atk_3f
+      REAL*8 DMS_add
+      REAL*8 farr, farr_sp
+      REAL*8 fbck, fbckJ, fbck2
+      REAL*8 fcn
+      REAL*8 fdhetg
+      REAL*8 shno3
+      REAL*8 sp_17, sp_23
+      EXTERNAL atk_3, atk_3f
+      EXTERNAL DMS_add
+      EXTERNAL farr, farr_sp
+      EXTERNAL fbck, fbckJ, fbck2
+      EXTERNAL fcn
+      EXTERNAL fdhetg
+      EXTERNAL shno3, sp_17, sp_23
+#ENDINLINE
