@@ -2906,8 +2906,8 @@ c aerosol source after Smith et al., 93, QJRMS,119,809-824
 c               print *,df,rr,rq(jt,ia)-rq(jt,ia-1)
 c df in m^-2 um^-1 s^-1, convert to: cm^-3 s^-1
 c m^-2 --> m^-3: 1/dz, m^-3 --> cm^-3: 10-6, integrate over r
-!              if (jt.eq.1) then                     ! jjb BUG here: jt_low+1 can be out of bounds if jt_low = nkt
-              if (jt.eq.1 .and. jt_low.ne.nkt) then  !     quick fix
+!              if (jt.eq.1) then
+              if (jt_low.eq.1) then
 c                  df=df*(rq(jt+1,ia)-rq(jt,ia))/d_z*1.d-6
                  df=df*(rq(jt_low+1,ia)-rq(jt_low,ia))/d_z*1.d-6
               else
