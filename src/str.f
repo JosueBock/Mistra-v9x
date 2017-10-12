@@ -1207,6 +1207,7 @@
          if (rn(ia).gt..5d0.and.ka.lt.0) ka=ia-1
          kw(ia)=-1
       enddo
+      if (ka.lt.0) ka=nka
 ! xfac: dilution as volume ratio: V_dry*x = V_water (r_dry*(x)^(1./3.)=r_water)
       xfac=10. ! volume ratio is 1000
       do ia=1,nka
