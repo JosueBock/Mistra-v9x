@@ -3008,7 +3008,7 @@ c update total liquid water [kg/m^3]
 !    interpolation of clarke functions by means of tabulated values
 !    u: clarke function for momentum; tq: for temperature, humidity etc.
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 !

@@ -1108,7 +1108,7 @@
 !     note about ASCII code for characters: 48 - 57  <=> 0-9
 !                                           97 - 122 <=> a-z
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment

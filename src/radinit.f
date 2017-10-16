@@ -53,7 +53,7 @@
 !    Note that in this paper, alpha = 1-xa
 ! 
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -261,7 +261,7 @@
 ! Description:
 !    first calculation of radiative fluxes and heating rates
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -362,7 +362,7 @@
 !    descriptions of variables can be found at the end of file 'pifm2*.dat'
 !    (part of these description written in German)
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -487,7 +487,7 @@
 !    standard atmosphere between etw(n) and 50000 meters.
 !    input of constant radiation parameters
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -929,7 +929,7 @@ c$$$      end subroutine load0
 ! Description:
 !    loading actual variables and actual optical parameters
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -1120,7 +1120,7 @@ c$$$      end subroutine load0
 !    radiative fluxes and heating rates at each minute
 
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment

@@ -84,7 +84,7 @@
 !
 !     s0 is solar constant
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -489,7 +489,7 @@ c1360.3
 !        pp. 215-238 (see page 219: coefficients b_1,i to b_4,i).
 !    And reference therein.
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -629,7 +629,7 @@ c1360.3
 !   calculated.
 ! *********************************************************************
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -821,7 +821,7 @@ c1360.3
 !              for partial reference, see Loughlin et al. 1997, QJRMS vol 123 (543), pp. 1985-2007
 !              doi: 10.1002/qj.49712354311
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -891,7 +891,7 @@ c1360.3
 !   ff * xm1 arithmetical mean values
 ! **************************************************************
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -971,7 +971,7 @@ c1360.3
 !   and of the radiation temperature of the surface.
 ! ***************************************************************
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -1048,7 +1048,7 @@ c1360.3
 !   wavenumbers with exponential series. Critical wavenumber is 'vcut'. 
 ! ***************************************************************
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -1184,7 +1184,7 @@ c$$$!   temperatur (kann ungleich der Temperatur der Luft am Boden
 c$$$!   sein)
 c$$$! ***************************************************************
 c$$$!
-c$$$! Current Code Owner: released under GNU General Public License
+c$$$
 c$$$!
 c$$$! History:
 c$$$! Version   Date     Comment
@@ -1248,7 +1248,7 @@ c$$$!   for 35 temperatures {ttab}.
 c$$$!   Daten in Block Data PLANC1.
 c$$$! ***************************************************************
 c$$$!
-c$$$! Current Code Owner: released under GNU General Public License
+c$$$
 c$$$!
 c$$$! History:
 c$$$! Version   Date     Comment
@@ -1295,8 +1295,6 @@ c$$$      end function fst4
 !    nrfl layers for a given band ib and cumulative probability ig. They are 
 !    calculated from fkg in the subroutines qop{'gas formula'}.
 
-!
-! Current Code Owner: released under GNU General Public License
 !
 ! History:
 ! Version   Date     Comment
@@ -1606,7 +1604,7 @@ c$$$      end function fst4
 !   originaere Fu-Einheit. stanp ist ebenfalls in Pascal
 ! *********************************************************************
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -1712,7 +1710,7 @@ c$$$      end function fst4
 !   Fuer die Einheiten gilt dasselbe wie in U.P. qks
 ! *********************************************************************
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -1819,7 +1817,7 @@ c$$$      end function fst4
 !   Fuer die Einheiten gilt dasselbe wie in U.P. qks
 ! *********************************************************************
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -1915,7 +1913,7 @@ c$$$      end function fst4
 ! Description:
 !     Calculation of ozone absorption in band 1 ( 50000 - 14500 cm**-1 )
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -1987,7 +1985,7 @@ c$$$      end function fst4
 !    16 (  540 -  400 cm**-1 ), 17 (  400 -  280 cm**-1 ),
 !    and 18 ( 280 - 0 cm**-1 ).
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -2048,7 +2046,7 @@ c$$$      end function fst4
 !   Calculation of optical depth of methane (CH4) absorption in bands
 !   10 ( 1400 - 1250 cm**-1 ) and 11 ( 1250 - 1100 cm**-1 )
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -2108,7 +2106,7 @@ c$$$      end function fst4
 !    Calculation of optical depth of nitrogene oxide (N2O) absorption in bands
 !    10 ( 1400 - 1250 cm**-1 ) and 11 ( 1250 - 1100 cm**-1 )
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -2167,7 +2165,7 @@ c$$$      end function fst4
 !    Calculation of optical depth of ozone absorption in band
 !    12 ( 1100 - 980 cm**-1 ).
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -2233,7 +2231,7 @@ c$$$      end function fst4
 !    14 ( 800 - 670 cm**-1) and 15 ( 670 - 540 cm**-1).
 !    See page 86 of Fu (1991).
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -2297,7 +2295,7 @@ c$$$      end function fst4
 !   The first index (second for {pl}) stands for cloud free (1) and
 !   cloudy (2) parts.
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -2409,7 +2407,7 @@ c$$$      end function fst4
 !   Mostly based on the following reference (and references therein):
 !   Zdunkowski et al. 1982, Contrib. Atmos. Phys. Vol. 55 (3), pp. 215-238
 
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -2697,7 +2695,7 @@ c$$$      end function fst4
 !   ir fluxes. ('f' and 'w' stand for cloud free and cloudy parts)
 !
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -2885,7 +2883,7 @@ c$$$      end function fst4
 !   The right hand side is calculated in KURZW or LANGW.
 !
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment

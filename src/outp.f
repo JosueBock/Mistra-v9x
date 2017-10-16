@@ -46,7 +46,7 @@
 ! Description:
 !    profiles of meteorological data needed to restart the program
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -156,7 +156,7 @@
 ! Description:
 !    output of chemical data needed to restart the program
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -272,7 +272,7 @@
 ! Description:
 !    output of photolysis rates
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -388,7 +388,7 @@
 !
 ! DMOO = CH3SCH2OO, MSIA = CH3S(O)OH
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -484,7 +484,7 @@
 !
 ! MS- = CH3S(O)O-, CH3SO3- = CH3S(OO)O-
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -595,7 +595,7 @@
 !   j2-j3+11.O2     j2-j3+12.OIO   j2-j3+13. HgOH2 j2-j3+14. HgOHCl j2-j3+15. HgSO3
 !   j2-j3+16. HgOHBr j2-j3+17. --  j2-j3+18. --    j2-j3+19. --     j2-j3+20. --
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -1364,7 +1364,7 @@
 !    output of chemical constants and parameters used in current run
 !    This subroutine is called only once during initialisation (no restart case)
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment

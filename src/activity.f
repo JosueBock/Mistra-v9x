@@ -64,8 +64,6 @@
 !         3 Na+
 !
 
-! Current Code Owner: released under GNU General Public License
-!
 ! History:
 ! Version   Date     Comment
 ! -------   ----     -------

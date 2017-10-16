@@ -250,7 +250,7 @@
 !     help routine for apparent nucleation if apparent nucleation
 !     has to be called twice because of two different real nucleation mechanisms
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -376,7 +376,7 @@
 !                           d_nucini, J_real, uppest nucleation level (k-loop!)
 !
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -902,7 +902,7 @@
 !     --- This routine calculates the number mean diameter d_mean ---
 !         and the total particle number Np_ges of the background particles
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -1120,7 +1120,7 @@
 !
 !    it is assumed that only OIO contributes to nucleation
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -1250,7 +1250,7 @@
 ! ln S  = ln [NH3],   []=mixing ratio
 ! ln rH = ln rH
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -1335,7 +1335,7 @@
 ! Description:
 !    output nucleation: .asc output for gnu-plotting
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
@@ -1413,7 +1413,7 @@
 ! Description:
 !    output nucleation
 !
-! Current Code Owner: released under GNU General Public License
+
 !
 ! History:
 ! Version   Date     Comment
