@@ -44,9 +44,10 @@ HOW TO RUN MISTRA -- in a nutshell:
 
 ---
 
-3) Generate the mechanism files in src/mech, run make
+3) Check that C shell (csh) is installed on your system, then generate the mechanism files: in src/mech, run make
 
-4) Edit the Makefile (in main directory), set the correct path to the netcdf libraries and include file. Depending on netcdf distribution, use "-lnetcdf" or "-lnetcdf -lnetcdff"
+4) Check that netcdf libraries are installed on your system (locate netcdf.inc). If not, install the package libnetcdff-dev
+Edit the Makefile (in main directory), set the correct path to the netcdf libraries and include file. Depending on netcdf distribution, use "-lnetcdf" or "-lnetcdf -lnetcdff".
 
 5) in directories.f , set the appropriate path to Mistra input files. It is advised to use a directory that will not be duplicated for each version the user will run, but choose a generic directory instead.
 
