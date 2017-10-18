@@ -42,3 +42,8 @@ bud_t.f
 
 # mistra executable
 mistra
+
+# output files
+*.out
+*.nc
+fort.*
