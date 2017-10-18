@@ -50,7 +50,7 @@ CFLAGS= -fdefault-real-8 -fdefault-double-8 -fbacktrace -Wall -ffpe-trap=invalid
 # To avoid mistakes in this situation, the Makefile has been added in the dependency list of all modules,
 # and in the dependency list of all objects which don't already include a module
 
-mistra: constants.o global_params.o common_modules.o directories.o \
+mistra: precision.o constants.o global_params.o common_modules.o directories.o \
 	str.o radinit.o  nrad.o outp.o nuc.o jrate.o activity.o \
 	tot.o bud_t.o bud_s_t.o \
 	aer.o bud_a.o bud_s_a.o \
@@ -66,13 +66,16 @@ global_params.o global_params.mod: global_params.f Makefile
 common_modules.o gas_common.mod: common_modules.f global_params.mod Makefile
 	$(FC) $(CFLAGS) -c $<
 
-constants.o constants.mod: constants.f Makefile
+constants.o constants.mod: constants.f90 Makefile
 	$(FC) $(CFLAGS) -c $<
 
 directories.o directories.mod: directories.f Makefile
 	$(FC) $(CFLAGS) -c $<
 
 mod_out_netCDF.o cdf_var_gas.mod: mod_out_netCDF.f90 Makefile
+	$(FC) $(CFLAGS) -c $<
+
+precision.o precision.mod: precision.f90 Makefile
 	$(FC) $(CFLAGS) -c $<
 
 # files containing modules

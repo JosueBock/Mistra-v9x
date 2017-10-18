@@ -6,3 +6,39 @@
 
 # Backup files
 *~
+
+# ----------------------------------------------- #
+# Mistra chemical mechanism files created by KPP:
+
+# aer
+# ---
+aer.f
+aer.map
+aer_Global.h
+aer_Parameters.h
+aer_Sparse.h
+# next two files: ignore only those in src
+src/aer_km.dat
+src/aer_mk.dat
+
+# gas
+gas.f
+gas.map
+gas_Global.h
+gas_Parameters.h
+gas_Sparse.h
+
+# tot
+tot.f
+tot.map
+tot_Global.h
+tot_Parameters.h
+tot_Sparse.h
+
+# budget files
+bud_a.f
+bud_g.f
+bud_t.f
+
+# mistra executable
+mistra
