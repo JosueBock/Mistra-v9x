@@ -5885,23 +5885,63 @@ c a=k5, b=H+, c=cvvz
 
 c----------------------------------------------------------------
 
-      double precision function flsc6 (a,b)
-c calculate special rate function 
-c after G. Schmitz (pers.comm.)
-c a=k6, b=H+
+      function flsc6 (a,b)
+
+! Description :
+! -----------
+!    calculate special rate function
+!    after G. Schmitz (pers.comm.)
+!    a=k6, b=H+
+
+! Author :
+! ------
+!    Roland von Glasow
+
+! Modifications :
+! -------------
+!  17-Oct-2016  Josue Bock  implicit none (u8.5)
+!
+!  05-Mar-2017  Josue Bock  introduced a lower limit for [H+] to prevent flsc6
+!                           to reach very high values if [H+] is very small
+!                           The chosen value might need to be further adjusted
+!
+!  19-Oct-2017  Josue Bock  - added a test to warn only if negative values (avoid warning
+!                             messages to be displayed just after initialisation)
+!                           - cosmetic improvements: header, precision from module, ...
+! End modifications
+!-----------------------------------------------------------------------------------------------------------------------
+
+
+! Declarations:
+! ------------
+! Modules used:
+      USE precision, ONLY:
+! Imported Type Definitions:
+     &     dp                   ! kind double precision real
 
       implicit none
 
-      double precision a,b
+! Function result
+      real(kind=dp) :: flsc6
 
-      if (b.gt.0.d0) then
-        !flsc6=( a/b )
-        flsc6=( a/max(1.d-15,b) ) ! <jjb> introduce a lower limit for [H+] to avoid overflow flsc6
+! Function arguments
+! Scalar arguments with intent(in):
+      real(kind=dp), intent(in) :: a
+      real(kind=dp), intent(in) :: b
+
+! Local parameters:
+      real(kind=dp), parameter :: min_Hp = 1.e-15_dp ! <jjb> introduce a lower limit for [H+] to avoid overflow flsc6
+
+!- End of header ------------------------------------------------------------
+
+      if (b.gt.min_Hp) then
+         flsc6= a/b
       else
-         print*,"Warning flsc6 encountered [H+]<0"
-        flsc6=0.
+         flsc6=0._dp
+         if (b.lt.0._dp) print*,"Warning: flsc6 encountered [H+]<0",b
       endif
-      end
+
+      end function flsc6
 
 c----------------------------------------------------------------
 
