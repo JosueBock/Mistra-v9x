@@ -1792,6 +1792,44 @@
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       subroutine profr
 
+! Description :
+! -----------
+!   output of radiation variables
+
+
+! Interface :
+! ---------
+
+! Input :
+! -----
+
+! Output :
+! ------
+
+! Externals :
+! ---------
+!    none
+
+
+! Author :
+! ------
+!    Andreas Bott
+
+
+! Modifications :
+! -------------
+!           2016  Josue Bock  removed hard coded parameters, use module instead
+!                             correction and homogeneisation of array size.
+!    16-Mar-2017  Josue Bock  missing declarations, implicit none
+!    18-Mar-2017  Josue Bock  improvement of output formats, to fit the data
+!                             added header, comments
+!    19-Oct-2017  Josue Bock  double precision => real(kind=dp)
+
+! == End of header =============================================================
+
+! Declarations:
+! ------------
+! Modules used:
       USE global_params, ONLY :
 ! Imported Parameters:
      &     nrlay,
@@ -1799,55 +1837,79 @@
      &     mb,
      &     mbs
 
-      implicit double precision (a-h,o-z)
+      USE precision, ONLY :
+     &     dp                   ! kind double precision real
 
+
+      implicit none
+
+! Local scalars:
+      integer i, ib
+
+! Common blocks:
       common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+      real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+      integer :: ntypa,ntypd
 
       common /cb11/ totrad (mb,nrlay)
-      double precision totrad
+      real(kind=dp) :: totrad
 
       common /cb15/ fnseb,flgeg,hr(nrlay)
-      double precision fnseb, flgeg, hr
+      real(kind=dp) :: fnseb, flgeg, hr
 
       common /cb16/ u0,albedo(mbs),thk(nrlay)
-      double precision u0, albedo, thk
+      real(kind=dp) :: u0, albedo, thk
 
       common /cb40/ time,lday,lst,lmin,it,lcl,lct
-      double precision time
-      integer lday, lst, lmin, it, lcl, lct
+      real(kind=dp) :: time
+      integer :: lday, lst, lmin, it, lcl, lct
 
       common /kurz/ fs1(nrlev),fs2(nrlev),totds(nrlev),ss(nrlev),
      &              fsn(nrlev),dtdts(nrlay)
-      double precision fs1, fs2, totds, ss, fsn, dtdts
+      real(kind=dp) :: fs1, fs2, totds, ss, fsn, dtdts
 
       common /lang/ fl1(nrlev),fl2(nrlev),fln(nrlev),dtdtl(nrlay)
-      double precision fl1, fl2, fln, dtdtl
+      real(kind=dp) :: fl1, fl2, fln, dtdtl
 
+! == End of declarations =======================================================
+
+
+      ! Time stamp
       write (40,6000) lday,lst,lmin,u0
- 6000 format (10x,'day: ',i5,10x,'hour: ',i5,10x,'minute: ',i5,
-     & 10x,'cosine of zenith distance: ',f8.2,/)
+
+      ! Solar bands (middle of layer values)
       write (40,6010)
-! 6020 format (7f14.3,e14.5,f14.1)
-! 6030 format (/,10x,' fs1, fs2, ss, f1l, fl2, f1f, f2f, p') ! jjb
- 6030 format (/,10x,' fs1, fs2, ss, f1l, fl2')
-! 6040 format (7f14.3,f14.1)
- 6010 format (10x,' totrad(l,i) l=1,6, fn, hr, p')
       do i=1,nrlay
-         write (40,6021) (totrad(ib,i),ib=1,mbs),hr(i),p(i)
+         write (40,6011) i,(totrad(ib,i),ib=1,mbs),hr(i)
       enddo
-      write (40,6030)
-      write (40,6030)
+
+      ! IR bands (middle of layer values)
+      write (40,6020)
       do i=1,nrlay
-         write (40,6021) (totrad(ib,i),ib=mbs+1,mb)
+         write (40,6021) i,(totrad(ib,i),ib=mbs+1,mb)
       enddo
+
+      ! P, T, and fluxes (level values)
       write (40,6030)
- 6021 format(12f10.3)
- 6041 format(6f14.3)
       do i=1,nrlev
-         write (40,6041) fs1(i),fs2(i),ss(i),fl1(i),fl2(i)
+         write (40,6031) i,p(i),t(i),fs1(i),fs2(i),ss(i),fl1(i),fl2(i)
       enddo
+
+
+! Formats :
+! -------
+ 6000 format (/,'day: ',i3,10x,'hour: ',i3,10x,'minute: ',i3,
+     & 10x,'cosine of zenith distance: ',f8.2,/)
+
+ 6010 format (/,'#layer',20x,'totrad(l,i) l=1,6 (solar)',20x,'hr')
+ 6011 format (i4,6f10.3,es14.4)
+
+ 6020 format (/,'#layer',38x,'totrad(l,i) l=7,18 (IR)')
+ 6021 format (i4,12f10.3)
+
+ 6030 format (/,'#level',4x,'pres',4x,'temp',10x'fs1',10x,'fs2',12x,
+     &          'ss',11x,'fl1',11x,'fl2')
+ 6031 format(i4,f10.1,f8.1,5f14.3)
 
       end subroutine profr
