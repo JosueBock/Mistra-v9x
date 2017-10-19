@@ -41,25 +41,14 @@
       parameter ( nkt = 70 )
 
 ! param_rad
-      integer n0
-      parameter ( n0 = n )
-
       ! number of layers including the extra ones for radiation calculation
       !   see SR initr (in radinit.f) for height definition
-      integer n1
-      parameter ( n1 = n0+10 )
+      !   note that the infinitesimally thin layer is ignored, thus only
+      !   (n-1) layers are taken from the main model to the radiative code
+      integer, parameter :: nrlay = (n -1) + 11
 
-      integer n2
-      parameter ( n2 = n1+1 )
+      integer, parameter :: nrlev = nrlay + 1
 
-      integer nrfl
-      parameter ( nrfl = n+10 ) ! same as n1, though
-
-      integer np
-      parameter ( np = nrfl+1 ) ! same as n2
-
-      integer n4
-      parameter ( n4 = np ) ! same as n2 as well
 
       integer mb
       parameter ( mb = 18 )   ! Total number of wavelength bands in the radiative code

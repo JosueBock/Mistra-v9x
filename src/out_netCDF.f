@@ -3181,8 +3181,8 @@ c output of meteorological variables
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
-     &     n1,
-     &     n4,
+     &     nrlay,
+     &     nrlev,
      &     nka,
      &     nkt
 
@@ -3209,10 +3209,11 @@ c output of meteorological variables
       common /cb52/ ff(nkt,nka,n),fsum(n),nar(n)       ! jjb corrected, but mess up below, see comments
       common /cb53/ theta(n),thetl(n),t(n),ta(n),p(n),rho(n)
       common /cb54/ xm1(n),xm2(n),feu(n),dfddt(n),xm1a(n),xm2a(n)
-      common /kurz/ fs1(n4),fs2(n4),totds(n4),ss(n4),fsn(n4),dtdts(n1)
+      common /kurz/ fs1(nrlev),fs2(nrlev),totds(nrlev),ss(nrlev),
+     &              fsn(nrlev),dtdts(nrlay)
       double precision fs1, fs2, totds, ss, fsn, dtdts
 
-      common /lang/ fl1(n4),fl2(n4),fln(n4),dtdtl(n1)
+      common /lang/ fl1(nrlev),fl2(nrlev),fln(nrlev),dtdtl(nrlay)
       double precision fl1, fl2, fln, dtdtl
 
       dimension ifield(1,1,1), idimcount(4), idimstart(4) 

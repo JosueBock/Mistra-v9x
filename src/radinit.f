@@ -280,14 +280,14 @@
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
-     &     n1
+     &     nrlay
 
       implicit none
 
 ! Local scalars:
       integer istr, k, lmin0, lst0
 ! Common blocks:
-      common /cb15/ fnseb,flgeg,hr(n1)
+      common /cb15/ fnseb,flgeg,hr(nrlay)
       double precision fnseb, flgeg, hr
 
       common /cb40/ time,lday,lst,lmin,it,lcl,lct
@@ -493,8 +493,8 @@
 ! Version   Date     Comment
 ! -------   ----     -------
 ! 1.2       10/2016  corrected several array size
-!                    initialisation of qmo3(np) was missing
-!                    initialisation of rnaer(nrfl=n1) was missing
+!                    initialisation of qmo3(nrlev) was missing
+!                    initialisation of rnaer(nrlay) was missing
 !                    removed rnaer from /cb02/, turned into a local array
 !
 !           07/2016  Removal of labeled do loops.                        <Josue Bock>
@@ -522,14 +522,12 @@
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
-     &     n1,
-     &     n4,
+     &     nrlay,
+     &     nrlev,
      &     nka,
      &     mb,
      &     mbs,
-     &     mbir,
-     &     nrfl,
-     &     np
+     &     mbir
 
       implicit none
 
@@ -540,8 +538,8 @@
       double precision dd, emdd, xdd, xemdd, xnaer
 
 ! Local arrays:
-      double precision etax(n4), usav(n1)
-      double precision rnaer(n1)          ! total number concentration of aerosol particles [cm**-3]
+      double precision etax(nrlev), usav(nrlay)
+      double precision rnaer(nrlay)          ! total number concentration of aerosol particles [cm**-3]
 
 ! Internal function:
       double precision p21, tt
@@ -550,15 +548,16 @@
       common /aeag/ seanew(8,mb,4),saanew(8,mb,4),ganew(8,mb,4),ff2(8)
       double precision seanew, saanew, ganew, ff2
 
-      common /cb02/ tx(n4),px(n4),rhox(n4),xm1x(n4),rho2x(n1),frac(n1),
-     & ts,ntypa(n1),ntypd(n1)
+      common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
+     &              rho2x(nrlay),frac(nrlay),
+     & ts,ntypa(nrlay),ntypd(nrlay)
       double precision tx,px,rhox,xm1x,rho2x,frac,ts
       integer ntypa,ntypd
 
-      common /cb16/ u0,albedo(mbs),thk(n1)
+      common /cb16/ u0,albedo(mbs),thk(nrlay)
       double precision u0, albedo, thk
 
-      common /cb19/ berayl(6),bea(mb,n1),baa(mb,n1),ga(mb,n1)
+      common /cb19/ berayl(6),bea(mb,nrlay),baa(mb,nrlay),ga(mb,nrlay)
       double precision berayl, bea, baa, ga
 
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
@@ -569,16 +568,16 @@
       double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
-!      common /cb56/ o3un(52),o3r(52),vis(n2),sigea(8,6,4),    ! /cb56/ was only used with SR load0
+!      common /cb56/ o3un(52),o3r(52),vis(nrlev),sigea(8,6,4),    ! /cb56/ was only used with SR load0
 !     &              sigaa(8,6,4),gaa(8,6,4),sean(8,4),feux(8)
 !      double precision o3un,o3r,vis,sigea,sigaa,gaa,sean,feux
       double precision o3un(52),o3r(52),sigea(8,6,4),          ! keep this for array size declaration
      &               sigaa(8,6,4),gaa(8,6,4),sean(8,4),feux(8) ! and potential backward compatibility
 
-      common /height/ zx(n4)
+      common /height/ zx(nrlev)
       double precision zx
 
-      common /ozon/ qmo3(n4)
+      common /ozon/ qmo3(nrlev)
       double precision qmo3
 
       common /tmp2/ as(mbs),ee(mbir)
@@ -673,20 +672,20 @@
       rnaer(k)=0.
 
 ! fictitious level at infinity
-      zx(np)=zx(nrfl)+50000.
-      tx(np)=tx(nrfl)
-      px(np)=0.
-      xm1x(np)=0.
-      rhox(np)=0.
+      zx(nrlev)=zx(nrlay)+50000.
+      tx(nrlev)=tx(nrlay)
+      px(nrlev)=0.
+      xm1x(nrlev)=0.
+      rhox(nrlev)=0.
 
 ! Layer thicknesses calculated during initialisation
-      do i=1,nrfl
+      do i=1,nrlay
          thk(i)=zx(i+1)-zx(i)
       end do
 
 ! aerosol type: 1 rural 2 urban 3 maritme 4 tropospheric
 ! droplet type: 1-3 cumulus 4 best
-      do k=1,nrfl
+      do k=1,nrlay
          ntypa(k)=2
          ntypd(k)=4
       enddo
@@ -694,7 +693,7 @@
 ! interpolate unreduced and reduced ozone amounts from craig
 ! table, save preliminarily the total amounts in arrays eta
 ! and xi which will be used for h2o and co2 later.
-      do i=1,nrfl
+      do i=1,nrlay
          do j=1,51
             jj=j
             zj=(j-1.)*1000.
@@ -708,23 +707,23 @@
         dd=(zx(i)-zj)/(zjp-zj)
         etax(i)=o3un(jj)+(o3un(jp)-o3un(jj))*dd
       enddo
-      etax(np)=0.
+      etax(nrlev)=0.
 ! path lengths for every layer
-      do i=1,nrfl
-         j=np-i
+      do i=1,nrlay
+         j=nrlev-i
          jp=j+1
          usav(i)=(etax(j)-etax(jp))*0.01
       enddo
 
 ! start calculate qmo3
-      do i=1,nrfl
-         j=np-i
+      do i=1,nrlay
+         j=nrlev-i
          jp=j+1
          qmo3(i)=usav(j)/(2.3808*(px(j)-px(jp)))
       end do
-      qmo3(np)=0.
+      qmo3(nrlev)=0.
 
-      do i=n,nrfl
+      do i=n,nrlay
 !        ip=i+1         ! jjb potential problem here, ip is defined but not used
          na=ntypa(i)
          if (na.gt.0.and.rnaer(i).gt.0.) then
@@ -754,7 +753,7 @@
       enddo
 
 ! no clouds
-      do i=1,nrfl
+      do i=1,nrlay
          frac(i)=0.
          rho2x(i)=0.
       enddo
@@ -780,30 +779,28 @@ c$$$      USE global_params, ONLY :
 c$$$! Imported Parameters:
 c$$$     &     mb,
 c$$$     &     mbs,
-c$$$     &     n1,
-c$$$     &     n2,
-c$$$     &     nrfl,
-c$$$     &     np,
+c$$$     &     nrlay,
+c$$$     &     nrlev,
 c$$$     &     n,nf,nka,nkt ! jjb remove unused
 c$$$
 c$$$      implicit double precision (a-h,o-z)
 c$$$! loading actual variables and constant optical parameters
 c$$$
-c$$$      double precision rnaer(n1) ! jjb removed from cb02, now local variable.
+c$$$      double precision rnaer(nrlay) ! jjb removed from cb02, now local variable.
 c$$$
 c$$$      common /aeag/ seanew(8,mb,4),saanew(8,mb,4),ganew(8,mb,4),ff2(8)
-c$$$      common /cb02/ tx(n4),px(n4),rhox(n4),xm1x(n4),rho2x(n1),frac(n1),
-c$$$     & ts,ntypa(n1),ntypd(n1)
+c$$$      common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),rho2x(nrlay),
+c$$$     & frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
 c$$$      double precision tx,px,rhox,xm1x,rho2x,fracx,ts
 c$$$      integer ntypa,ntypd
 c$$$
-c$$$      common /cb16/ u0,albedo(mbs),thk(n1)
+c$$$      common /cb16/ u0,albedo(mbs),thk(nrlay)
 c$$$      double precision u0, albedo, thk
 c$$$
 c$$$      common /cb18/ alat,declin                ! for the SZA calculation
 c$$$      double precision alat,declin
 c$$$
-c$$$      common /cb19/ berayl(6),bea(mb,n1),baa(mb,n1),ga(mb,n1)
+c$$$      common /cb19/ berayl(6),bea(mb,nrlay),baa(mb,nrlay),ga(mb,nrlay)
 c$$$      double precision berayl, bea, baa, ga
 c$$$
 c$$$      common /cb40/ time,lday,lst,lmin,it,lcl,lct
@@ -814,12 +811,12 @@ c$$$      common /cb52/ f(nkt,nka,n),fsum(n),nar(n)
 c$$$      common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
 c$$$      double precision theta, thetl, t, talt, p, rho
 c$$$      common /cb54/ xm1(n),xm2(n),feu(n),dfddt(n),xm1a(n),xm2a(n)
-c$$$      common /cb56/ o3un(52),o3r(52),vis(n2),sigea(8,6,4),
+c$$$      common /cb56/ o3un(52),o3r(52),vis(nrlev),sigea(8,6,4),
 c$$$     &              sigaa(8,6,4),gaa(8,6,4),sean(8,4),feux(8)
 c$$$      common /neu/ icld
 c$$$      integer icld
 c$$$
-c$$$      common /nox/ tauno2(n1)
+c$$$      common /nox/ tauno2(nrlay)
 c$$$      double precision tauno2
 c$$$
 c$$$! fsum0 estimated aerosol concentration with radius lower than
@@ -854,7 +851,7 @@ c$$$      ru0=6371.*u00
 c$$$      u0=8./(dsqrt(ru0**2+102000.)-ru0)
 c$$$! aerosol type: 1 rural 2 urban 3 maritme 4 tropospheric
 c$$$! droplet type; best type, if previously defined as 4
-c$$$      do 1010 i=1,nrfl
+c$$$      do 1010 i=1,nrlay
 c$$$         ntypa(i)=2
 c$$$         ntypd(i)=4
 c$$$         if (ntypd(i).ge.4) goto 2000
@@ -893,9 +890,9 @@ c$$$c------------------------------------------------------------------
 c$$$! optical depth of qno2 only used in first wavelength bin optical
 c$$$c
 c$$$      qno=0.0
-c$$$      do k=1,nrfl
+c$$$      do k=1,nrlay
 c$$$!        dzd8=thk(j)*0.125 ! jjb has to be defined AFTER j is defined below
-c$$$         j=np-k
+c$$$         j=nrlev-k
 c$$$         dzd8=thk(j)*0.125 ! jjb has to be defined AFTER j
 c$$$         jp=j+1
 c$$$         rp=rho(j)*p(j)
@@ -907,8 +904,8 @@ c$$$      enddo
 c$$$c
 c$$$! fractional cloudiness
 c$$$!!      clouds=0.                 ! jjb 12/10/2016 'clouds' removed from /cb20/, was not used
-c$$$      do 1050 i=1,nrfl
-c$$$         j=nrfl+1-i
+c$$$      do 1050 i=1,nrlay
+c$$$         j=nrlay+1-i
 c$$$         if(rho2x(i).ge.1.0e-5) then
 c$$$            frac(j)=1.0
 c$$$            icld=1
@@ -934,7 +931,7 @@ c$$$      end subroutine load0
 ! History:
 ! Version   Date     Comment
 ! -------   ----     -------
-! 1.1       10/2016  Removed /nox/ tauno2(n1) which was set to 0    <Josue Bock>
+! 1.1       10/2016  Removed /nox/ tauno2(nrlay) which was set to 0    <Josue Bock>
 !                      (see SR tau in nard.f for explanations)
 
 !           07/2016  Removal of labeled do loops.                   <Josue Bock>
@@ -957,8 +954,8 @@ c$$$      end subroutine load0
       USE global_params, ONLY :
 ! Imported Parameters:
      & n,
-     & n1,
-     & n4,
+     & nrlay,
+     & nrlev,
      & nka,
      & nkt,
      & mb,
@@ -972,18 +969,19 @@ c$$$      end subroutine load0
       double precision zeit, horang, rlat, rdec, u00, ru0, x0
 
 ! Common blocks:
-      common /cb02/ tx(n4),px(n4),rhox(n4),xm1x(n4),rho2x(n1),frac(n1),
-     & ts,ntypa(n1),ntypd(n1)
+      common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
+     & rho2x(nrlay),frac(nrlay),
+     & ts,ntypa(nrlay),ntypd(nrlay)
       double precision tx,px,rhox,xm1x,rho2x,frac,ts
       integer ntypa,ntypd
 
-      common /cb16/ u0,albedo(mbs),thk(n1)
+      common /cb16/ u0,albedo(mbs),thk(nrlay)
       double precision u0, albedo, thk
 
       common /cb18/ alat,declin                ! for the SZA calculation
       double precision alat,declin
 
-      common /cb19/ berayl(6),bea(mb,n1),baa(mb,n1),ga(mb,n1)
+      common /cb19/ berayl(6),bea(mb,nrlay),baa(mb,nrlay),ga(mb,nrlay)
       double precision berayl, bea, baa, ga
 
       common /cb40/ time,lday,lst,lmin,it,lcl,lct
@@ -1150,8 +1148,8 @@ c$$$      end subroutine load0
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
-     &     n1,
-     &     n4,
+     &     nrlay,
+     &     nrlev,
      &     nka,
      &     mbs
 
@@ -1166,15 +1164,16 @@ c$$$      end subroutine load0
       double precision zeit, horang, rlat, rdec, u00, ru0, x0
 
 ! Common blocks:
-      common /cb02/ tx(n4),px(n4),rhox(n4),xm1x(n4),rho2x(n1),frac(n1),
-     & ts,ntypa(n1),ntypd(n1)
+      common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
+     & rho2x(nrlay),frac(nrlay),
+     & ts,ntypa(nrlay),ntypd(nrlay)
       double precision tx,px,rhox,xm1x,rho2x,frac,ts
       integer ntypa,ntypd
 
-      common /cb15/ fnseb,flgeg,hr(n1)
+      common /cb15/ fnseb,flgeg,hr(nrlay)
       double precision fnseb, flgeg, hr
 
-      common /cb16/ u0,albedo(mbs),thk(n1)
+      common /cb16/ u0,albedo(mbs),thk(nrlay)
       double precision u0, albedo, thk
 
       common /cb18/ alat,declin                ! for the SZA calculation

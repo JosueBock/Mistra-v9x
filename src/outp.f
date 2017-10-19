@@ -68,7 +68,7 @@
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
-     &     n1,
+     &     nrlay,
      &     nb,
      &     nka,
      &     nkt,
@@ -81,7 +81,7 @@
       character (len=1) sub
 
 ! Common blocks:
-      common /cb11/ totrad (mb,n1)
+      common /cb11/ totrad (mb,nrlay)
       double precision totrad
 
       common /cb18/ alat,declin                ! for the SZA calculation
@@ -916,14 +916,14 @@
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
-     &     n1,
+     &     nrlay,
      &     nb,
      &     nka,
      &     nkt
 
       implicit double precision (a-h,o-z)
 
-      common /cb15/ fnseb,flgeg,hr(n1)
+      common /cb15/ fnseb,flgeg,hr(nrlay)
       double precision fnseb, flgeg, hr
 
       common /cb40/ time,lday,lst,lmin,it,lcl,lct
@@ -1087,8 +1087,8 @@
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
-     &     n1,
-     &     n4,
+     &     nrlay,
+     &     nrlev,
      &     nka,
      &     nkt,
      &     mb,
@@ -1096,10 +1096,10 @@
 
       implicit double precision (a-h,o-z)
 
-      common /cb11/ totrad (mb,n1)
+      common /cb11/ totrad (mb,nrlay)
       double precision totrad
 
-      common /cb15/ fnseb,flgeg,hr(n1)
+      common /cb15/ fnseb,flgeg,hr(nrlay)
       double precision fnseb, flgeg, hr
 
       common /cb40/ time,lday,lst,lmin,it,lcl,lct
@@ -1114,10 +1114,11 @@
       double precision enw,ew,rn,rw,en,e,dew,rq
 
       common /cb52/ ff(nkt,nka,n),fsum(n),nar(n)
-      common /kurz/ fs1(n4),fs2(n4),totds(n4),ss(n4),fsn(n4),dtdts(n1)
+      common /kurz/ fs1(nrlev),fs2(nrlev),totds(nrlev),ss(nrlev),
+     &              fsn(nrlev),dtdts(nrlay)
       double precision fs1, fs2, totds, ss, fsn, dtdts
 
-      common /lang/ fl1(n4),fl2(n4),fln(n4),dtdtl(n1)
+      common /lang/ fl1(nrlev),fl2(nrlev),fln(nrlev),dtdtl(nrlay)
       double precision fl1, fl2, fln, dtdtl
 
       double precision i0
@@ -1325,8 +1326,8 @@
       write (26,6195) ka,kw
  6195 format (//,16x,'ka and kw for aqueous phase reactions',21i6)
       write (26,6200)
- 6200 format (//,16x,'dimensions of arrays: n,n1,n2,nb,nka,nkt')
-      write (26,6210) n,n1,n2,nb,nka,nkt
+ 6200 format (//,16x,'dimensions of arrays: n,nrlay,nrlev,nb,nka,nkt')
+      write (26,6210) n,nrlay,nrlev,nb,nka,nkt
  6210 format (/,1x,6i10)
       write (26,6220) alat,declin,wmin,wmax,tw,scaleo3_m
  6220 format (//,6x,'geogr. latitude ',f9.1,' declination ',f9.1,
@@ -1430,7 +1431,7 @@
 ! Imported Parameters:
      &     nf,
      &     n,
-     &     n1,
+     &     nrlay,
      &     nb,
      &     nka,
      &     nkt,
@@ -1438,7 +1439,7 @@
 
       implicit double precision (a-h,o-z)
 
-      common /cb16/ u0,albedo(mbs),thk(n1)
+      common /cb16/ u0,albedo(mbs),thk(nrlay)
       double precision u0, albedo, thk
 
       common /cb40/ time,lday,lst,lmin,it,lcl,lct
@@ -1793,36 +1794,36 @@
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n1,
-     &     n4,
+     &     nrlay,
+     &     nrlev,
      &     mb,
-     &     mbs,
-     &     nrfl
+     &     mbs
 
       implicit double precision (a-h,o-z)
 
-      common /cb02/ t(n4),p(n4),rho(n4),xm1(n4),rho2(n1),frac(n1),
-     & ts,ntypa(n1),ntypd(n1)
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
 
-      common /cb11/ totrad (mb,n1)
+      common /cb11/ totrad (mb,nrlay)
       double precision totrad
 
-      common /cb15/ fnseb,flgeg,hr(n1)
+      common /cb15/ fnseb,flgeg,hr(nrlay)
       double precision fnseb, flgeg, hr
 
-      common /cb16/ u0,albedo(mbs),thk(n1)
+      common /cb16/ u0,albedo(mbs),thk(nrlay)
       double precision u0, albedo, thk
 
       common /cb40/ time,lday,lst,lmin,it,lcl,lct
       double precision time
       integer lday, lst, lmin, it, lcl, lct
 
-      common /kurz/ fs1(n4),fs2(n4),totds(n4),ss(n4),fsn(n4),dtdts(n1)
+      common /kurz/ fs1(nrlev),fs2(nrlev),totds(nrlev),ss(nrlev),
+     &              fsn(nrlev),dtdts(nrlay)
       double precision fs1, fs2, totds, ss, fsn, dtdts
 
-      common /lang/ fl1(n4),fl2(n4),fln(n4),dtdtl(n1)
+      common /lang/ fl1(nrlev),fl2(nrlev),fln(nrlev),dtdtl(nrlay)
       double precision fl1, fl2, fln, dtdtl
 
       write (40,6000) lday,lst,lmin,u0
@@ -1834,18 +1835,18 @@
  6030 format (/,10x,' fs1, fs2, ss, f1l, fl2')
 ! 6040 format (7f14.3,f14.1)
  6010 format (10x,' totrad(l,i) l=1,6, fn, hr, p')
-      do i=1,nrfl
+      do i=1,nrlay
          write (40,6021) (totrad(ib,i),ib=1,mbs),hr(i),p(i)
       enddo
       write (40,6030)
       write (40,6030)
-      do i=1,nrfl
+      do i=1,nrlay
          write (40,6021) (totrad(ib,i),ib=mbs+1,mb)
       enddo
       write (40,6030)
  6021 format(12f10.3)
  6041 format(6f14.3)
-      do i=1,nrfl
+      do i=1,nrlev
          write (40,6041) fs1(i),fs2(i),ss(i),fl1(i),fl2(i)
       enddo
 

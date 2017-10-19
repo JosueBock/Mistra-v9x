@@ -116,13 +116,13 @@
 
       USE global_params, ONLY :
      &     n_m=>n,
-     &     n2_m=>n2
+     &     nrlay
 
       IMPLICIT NONE
 
       INTEGER MAXLAY,MAXWAV,NMOM,NW
       PARAMETER(
-     $     MAXLAY=n2_m-1,           !maximal number of layers         n2=161
+     $     MAXLAY=nrlay,         !maximal number of layers
 c top layer in  MISTRA is already "infinity" in Jochens code "infinity" is layer "0"
      $     MAXWAV=176,          !maximal number of wavelength intervals
      $     NMOM =4,             !number of moments of phase functions
@@ -427,14 +427,13 @@ c   blocks. Upper case variables are from Jochen's code and are passed explicitl
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n1,
-     &     n2,
-     &     n4
+     &     nrlay,
+     &     nrlev
 
       IMPLICIT NONE
 
       INTEGER MAXLAY,MAXWAV,SW4
-      PARAMETER(MAXLAY=n2-1, MAXWAV=176)
+      PARAMETER(MAXLAY=nrlay, MAXWAV=176)
 
 C     OUTPUTS
 
@@ -450,18 +449,18 @@ C     OUTPUTS
      $     ITYPE(MAXLAY)     !aerosol type
 
 c commom blocks from MISTRA:
-      common /cb02/ t_m(n4),p_m(n4),rho_m(n4),xm1_m(n4),rho2_m(n1),
-     &     frac_m(n1),ts_m,ntypa_m(n1),ntypd_m(n1)
+      common /cb02/ t_m(nrlev),p_m(nrlev),rho_m(nrlev),xm1_m(nrlev),
+     &    rho2_m(nrlay),frac_m(nrlay),ts_m,ntypa_m(nrlay),ntypd_m(nrlay)
       double precision t_m,p_m,rho_m,xm1_m,rho2_m,frac_m,ts_m
       integer ntypa_m,ntypd_m
 
-      common /cb16/ u0_m,albedo_m(6),thk_m(n1)
+      common /cb16/ u0_m,albedo_m(6),thk_m(nrlay)
       double precision u0_m, albedo_m, thk_m
 
-      common /ozon/ qmo3_m(n4)
+      common /ozon/ qmo3_m(nrlev)
       double precision qmo3_m
 
-      common /height/ z_mi(n4)
+      common /height/ z_mi(nrlev)
       double precision z_mi
 
       common /band_o3/ scaleo3_m
@@ -557,12 +556,12 @@ C----------------------------------------------------------------------
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n2
+     &     nrlay
 
       IMPLICIT NONE
 
       INTEGER MAXLAY,MAXWAV
-      PARAMETER(MAXLAY=n2-1, MAXWAV=176)
+      PARAMETER(MAXLAY=nrlay, MAXWAV=176)
 
       DOUBLE PRECISION
      $     ALBEDO(MAXWAV),   !shortwave albedo [1]
@@ -632,12 +631,12 @@ C----------------------------------------------------------------------
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n2
+     &     nrlay
 
       IMPLICIT NONE
 
       INTEGER MAXLAY
-      PARAMETER(MAXLAY=n2-1)
+      PARAMETER(MAXLAY=nrlay)
 
 C     input:
 
@@ -756,12 +755,12 @@ C     DIFFERENTIAL O2 AND O3 COLUMNS AND SLANT COLUMNS
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n2
+     &     nrlay
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
 
       INTEGER MAXLAY,MAXWAV
-      PARAMETER(MAXLAY=n2-1, MAXWAV=176)
+      PARAMETER(MAXLAY=nrlay, MAXWAV=176)
 
       COMMON/WL/WAVE(MAXWAV),  !wavelength in the middle of the interval [cm]
      $          DWAVE(MAXWAV)  !width of the wavelength intervals [cm]
@@ -1172,12 +1171,12 @@ c     coefficients for optical depth of Schumann-Runge band above TOA
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n2
+     &     nrlay
 
       IMPLICIT DOUBLE PRECISION(A-H,O-Z)
 
       INTEGER MAXLAY,MAXWAV
-      PARAMETER(MAXLAY=n2-1, MAXWAV=176)
+      PARAMETER(MAXLAY=nrlay, MAXWAV=176)
 
 C     inputs
 
@@ -1552,13 +1551,12 @@ c   blocks. Upper case variables are from Jochen's code and are passed explicitl
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n1,
-     &     n2
+     &     nrlay
 
       IMPLICIT DOUBLE PRECISION(A-H,O-Z)
 
       INTEGER MAXLAY,MAXWAV,NMOM,NW
-      PARAMETER(MAXLAY=n2-1, MAXWAV=176, NMOM =4, NW=7)
+      PARAMETER(MAXLAY=nrlay, MAXWAV=176, NMOM =4, NW=7)
 
       INTEGER
      $     NWS(NW)   !specification of interval: 1 < NWS(L) < MAXWAV
@@ -1611,7 +1609,7 @@ c                                  [photons/(cm^2 s)]
 
 
 c MISTRA common block
-      common /extra_2/ taer_s(n1),taer_a(n1),ga_pl(n1)
+      common /extra_2/ taer_s(nrlay),taer_a(nrlay),ga_pl(nrlay)
       double precision taer_s, taer_a, ga_pl
 C-------------------------------------------------------------------
 C     internal functions
@@ -1717,12 +1715,12 @@ C****************************************************************
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n2
+     &     nrlay
 
       IMPLICIT DOUBLE PRECISION(A-H,O-Z)
 
       INTEGER MAXLAY,NMOM,NW,SW13
-      PARAMETER(MAXLAY=n2-1, NMOM =4,NW=7)
+      PARAMETER(MAXLAY=nrlay, NMOM =4,NW=7)
 
 c     inputs
 
@@ -1890,12 +1888,12 @@ c      CLOSE(22)
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n2
+     &     nrlay
 
       IMPLICIT DOUBLE PRECISION(A-H,O-Z)
 
       INTEGER MAXLAY
-      PARAMETER(MAXLAY=n2-1)
+      PARAMETER(MAXLAY=nrlay)
 
       DOUBLE PRECISION
      $     TT(MAXLAY),
@@ -1972,12 +1970,12 @@ c **********************************************************************
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n2_m=>n2
+     &     nrlay
 
       implicit double precision (a-h,o-z)
 
       INTEGER MAXLAY,ndfs,mdfs
-      PARAMETER (MAXLAY=n2_m-1)
+      PARAMETER (MAXLAY=nrlay)
       parameter (ndfs  = MAXLAY,
      $           mdfs  = MAXLAY + 1)
 
@@ -2071,12 +2069,12 @@ c **********************************************************************
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n2_m=>n2
+     &     nrlay
 
       implicit none
 
       INTEGER MAXLAY,ndfs
-      PARAMETER (MAXLAY=n2_m-1)
+      PARAMETER (MAXLAY=nrlay)
       parameter (ndfs  = MAXLAY)
 
 c input
@@ -2131,12 +2129,12 @@ c **********************************************************************
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n2_m=>n2
+     &     nrlay
 
       implicit double precision (a-h,o-z)
 
       INTEGER MAXLAY,ndfs,ndfs4
-      PARAMETER (MAXLAY=n2_m-1)
+      PARAMETER (MAXLAY=nrlay)
       parameter (ndfs  = MAXLAY,
      $           ndfs4 = 4 * MAXLAY)
 
@@ -2646,12 +2644,12 @@ c **********************************************************************
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n2_m=>n2
+     &     nrlay
 
       implicit double precision (a-h,o-z)
 
       INTEGER MAXLAY,ndfs4
-      PARAMETER (MAXLAY=n2_m-1)
+      PARAMETER (MAXLAY=nrlay)
       parameter (ndfs4 = 4 * MAXLAY)
 
 c input/output
@@ -2805,12 +2803,12 @@ c input/output
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n2
+     &     nrlay
 
       IMPLICIT NONE
 
       INTEGER MAXLAY,MAXWAV,NW
-      PARAMETER (MAXLAY=n2-1, MAXWAV=176, NW=7)
+      PARAMETER (MAXLAY=nrlay, MAXWAV=176, NW=7)
 
       DOUBLE PRECISION
      $      FACT(0:MAXLAY,NW), !act. flux from DISORT
@@ -4227,13 +4225,13 @@ c-------------------------------------------------------------------
 
       USE global_params, ONLY :
 ! Imported Parameters:
-     &     n2
+     &     nrlay
 
 
       IMPLICIT DOUBLE PRECISION(A-H,O-Z)
 
       INTEGER MAXLAY,NW
-      PARAMETER(MAXLAY=n2-1, NW=7)
+      PARAMETER(MAXLAY=nrlay, NW=7)
 *--------------------------------------------------------------------*
 *     LOOK-UP TABLE                                                  *
 *--------------------------------------------------------------------*

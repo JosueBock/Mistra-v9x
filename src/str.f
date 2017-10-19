@@ -60,7 +60,7 @@
      &     nf,
      &     n,
      &     nm,
-     &     n1,
+     &     nrlay,
      &     nka,
      &     nkt,
      &     nphrxn,
@@ -71,7 +71,7 @@
       logical chem,mic,rst,halo,iod,box,netCDF,BL_box,nuc,binout
       logical Napari, Lovejoy, both
 
-      common /cb16/ u0,albedo(mbs),thk(n1)
+      common /cb16/ u0,albedo(mbs),thk(nrlay)
       double precision u0, albedo, thk
 
       common /cb40/ time,lday,lst,lmin,it,lcl,lct
@@ -1232,7 +1232,7 @@
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
-     &     n1,
+     &     nrlay,
      &     nb,
      &     nka,
      &     nkt,
@@ -1241,7 +1241,7 @@
       implicit double precision (a-h,o-z)
 ! vertical profiles of meteorological data if the program is restarted
 
-      common /cb11/ totrad (mb,n1)
+      common /cb11/ totrad (mb,nrlay)
       double precision totrad
 
       common /cb18/ alat,declin                ! for the SZA calculation
@@ -3111,7 +3111,7 @@ c update total liquid water [kg/m^3]
 ! Imported Parameters:
      &     nf,
      &     n,
-     &     n1,
+     &     nrlay,
      &     nka,
      &     nkt,
      &     nkc,
@@ -3120,7 +3120,7 @@ c update total liquid water [kg/m^3]
       implicit double precision (a-h,o-z)
 
       logical chem!,chmic ! jjb defined below, but unused
-      common /cb11/ totrad (mb,n1)
+      common /cb11/ totrad (mb,nrlay)
       double precision totrad
 
       common /cb40/ time,lday,lst,lmin,it,lcl,lct
@@ -3652,7 +3652,7 @@ c update total liquid water [kg/m^3]
 
 ! Author
 ! ------
-!     Josué Bock
+!     Josue Bock
 
 ! History
 ! -------
@@ -4901,7 +4901,7 @@ c update total liquid water [kg/m^3]
 ! Imported Parameters:
      &     nf,
      &     n,
-     &     n1,
+     &     nrlay,
      &     nkc,
      &     mbs
 
@@ -4910,7 +4910,7 @@ c update total liquid water [kg/m^3]
 !      logical chem,halo,iod,fa_lse,BL_box ! jjb unused arguments removed: chem, halo, iod
       logical fa_lse,BL_box
 
-      common /cb16/ u0,albedo(mbs),thk(n1)
+      common /cb16/ u0,albedo(mbs),thk(nrlay)
       double precision u0, albedo, thk
 
       common /cb18/ alat,declin                ! for the SZA calculation

@@ -4960,7 +4960,7 @@ c     pick the values from the designated level: nlevbox
 ! Imported Parameters:
      &     nf,
      &     n,
-     &     n1,
+     &     nrlay,
      &     nka,
      &     nkt,
      &     nkc,
@@ -4970,7 +4970,7 @@ c     pick the values from the designated level: nlevbox
 
       include 'aer_Parameters.h' !additional common blocks and other definitions
 
-      common /cb11/ totrad (mb,n1)
+      common /cb11/ totrad (mb,nrlay)
       double precision totrad
 
       common /cb52/ ff(nkt,nka,n),fsum(n),nar(n)
@@ -5037,7 +5037,7 @@ c     pick the values from the designated level: nlevbox
 ! Imported Parameters:
      &     nf,
      &     n,
-     &     n1,
+     &     nrlay,
      &     nkc,
      &     mb
 
@@ -5045,7 +5045,7 @@ c     pick the values from the designated level: nlevbox
 
       include 'tot_Parameters.h' !additional common blocks and other definitions          
 
-      common /cb11/ totrad (mb,n1)
+      common /cb11/ totrad (mb,nrlay)
       double precision totrad
 
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
@@ -5110,7 +5110,7 @@ c     test output
 ! Imported Parameters:
      &     nf,
      &     n,
-     &     n1,
+     &     nrlay,
      &     nkc,
      &     mb
 
@@ -5118,7 +5118,7 @@ c     test output
 
       include 'aer_Parameters.h' !additional common blocks and other definitions          
 
-      common /cb11/ totrad (mb,n1)
+      common /cb11/ totrad (mb,nrlay)
       double precision totrad
 
       common /cb40/ time,lday,lst,lmin,it,lcl,lct
