@@ -565,9 +565,9 @@
       double precision detw, deta, eta, etw
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
 !      common /cb56/ o3un(52),o3r(52),vis(nrlev),sigea(8,6,4),    ! /cb56/ was only used with SR load0
 !     &              sigaa(8,6,4),gaa(8,6,4),sean(8,4),feux(8)
@@ -816,7 +816,7 @@ c$$$
 c$$$      common /cb40/ time,lday,lst,lmin,it,lcl,lct
 c$$$      common /cb41/ detw(n),deta(n),eta(n),etw(n)
 c$$$      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-c$$$     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+c$$$     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 c$$$      common /cb52/ f(nkt,nka,n),fsum(n),nar(n)
 c$$$      common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
 c$$$      double precision theta, thetl, t, talt, p, rho
@@ -1002,9 +1002,9 @@ c$$$      end subroutine load0
       double precision detw, deta, eta, etw
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb49/ qabs(mb,nkt,nka,3),qext(mb,nkt,nka,3),
      &              asym(mb,nkt,nka,3)
@@ -1197,9 +1197,9 @@ c$$$      end subroutine load0
       double precision detw, deta, eta, etw
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb48/ sk,sl,dtrad(n),dtcon(n)
       double precision sk, sl, dtrad, dtcon

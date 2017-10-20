@@ -653,7 +653,7 @@ c1360.3
       USE constants, ONLY :
 ! Imported Parameters:
      &     pi,
-     &     rhow => water_density ! [kg/m**3]
+     &     rhow                  ! Water density [kg/m**3]
 
       USE global_params, ONLY :
 ! Imported Parameters:

@@ -501,13 +501,12 @@
       implicit double precision (a-h,o-z)
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 ! gravitational acceleration
       data g /9.8065d0/
 ! gas constants
       data r0,r1 /287.05d0, 461.51d0/
-! density of pure water
-      data rhow /1000.d0/
+
 ! chose the water temperature and subsidence velocities depending on 
 ! what version of SR initm is used (see ./special_versions/SR_initm)
 ! water temperature
@@ -702,9 +701,10 @@
 
       subroutine initm (iaertyp,fogtype) !change also SR surf0 !_aerosol_nosub
 
-!      USE constants, ONLY :
-!! Imported Parameters:
-!     & pi
+      USE constants, ONLY :
+! Imported Parameters:
+!     &     pi,
+     &     rhow                  ! Water density [kg/m**3]
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -725,7 +725,7 @@
 
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
@@ -1047,7 +1047,8 @@
 
       USE constants, ONLY :
 ! Imported Parameters:
-     & pi
+     &     pi,
+     &     rhow                  ! Water density [kg/m**3]
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -1061,7 +1062,6 @@
 ! numerical grid for the atmosphere, aerosols and water droplets
 
 ! jjb test new grid
-      double precision, parameter :: rho_water   = 1000  ! [kg/m**3]
       double precision, parameter :: rho_aerosol = 2000  ! [kg/m**3]
       double precision, parameter :: kg_2_mg     = 1.e6  ! [mg/kg]
       double precision, parameter :: vol_fact    = 4./3.*pi ! [-]
@@ -1074,7 +1074,7 @@
       double precision detw, deta, eta, etw
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
      &              ajb,ajq,ajl,ajt,ajd,ajs,ds1,ds2,ajm,reif,tau,trdep
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
@@ -1254,7 +1254,7 @@
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
@@ -1409,7 +1409,7 @@
 
       USE constants, ONLY :
 ! Imported Parameters:
-     & pi
+     &     pi
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -1423,7 +1423,7 @@
 ! new distribution of the particles on their equilibrium positions
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
      &              e(nkt),dew(nkt),rq(nkt,nka)
       double precision enw,ew,rn,rw,en,e,dew,rq
@@ -1904,10 +1904,10 @@ c update total liquid water [kg/m^3]
 
       USE constants, ONLY :
 ! Imported Parameters:
-     &     rho_w => water_density,
      &     gas_const,
      &     m_air,
-     &     g
+     &     g,
+     &     rhow                  ! Water density [kg/m**3]
 
       implicit none
 
@@ -1948,12 +1948,12 @@ c update total liquid water [kg/m^3]
 
       if (a.le.1.d-5) then
          ! Regime 1: see P & K pp. 415-417, equations (10-138) to (10-140)
-         vterm=c1*a*a*(rho_w-rho_a)/eta*(1.+c3*t/(a*p))
+         vterm=c1*a*a*(rhow-rho_a)/eta*(1.+c3*t/(a*p))
          ! 2.17... = 2*g/9, see (10-138)
          ! 3.0849d-5 = 1.26 * lamda_0 * P_0 / T_0 with a mistake over T_0: 273.15 instead of 293.15 in P & K
       else
          ! Regime 2
-         best=c4*a**3*(rho_w-rho_a)*rho_a/(eta*eta) ! equation (10-142) with 104.60267 = 32*g/3
+         best=c4*a**3*(rhow-rho_a)*rho_a/(eta*eta) ! equation (10-142) with 104.60267 = 32*g/3
          x=log(best)
          ! evaluation of BEARD-polynomial with Horner-scheme
          y=b6*x+b5
@@ -1990,7 +1990,7 @@ c update total liquid water [kg/m^3]
       double precision detw, deta, eta, etw
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb45/ u(n),v(n),w(n)
       zeit=lst*3600.+lmin*60.
       u0=dcos(2.*pi*zeit/86400.)
@@ -2028,7 +2028,7 @@ c update total liquid water [kg/m^3]
 
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
@@ -2411,7 +2411,7 @@ c update total liquid water [kg/m^3]
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
@@ -2484,7 +2484,7 @@ c update total liquid water [kg/m^3]
       common /cb42a/ tkeps(n),tkepb(n),tkepd(n)
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
@@ -2641,6 +2641,10 @@ c update total liquid water [kg/m^3]
 
       subroutine soil (dt)
 
+      USE constants, ONLY :
+! Imported Parameters:
+     &     rhow                  ! Water density [kg/m**3]
+
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
@@ -2654,7 +2658,7 @@ c update total liquid water [kg/m^3]
 ! for further details see subroutine difm.
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
      &              ajb,ajq,ajl,ajt,ajd,ajs,ds1,ds2,ajm,reif,tau,trdep
       common /cb57/ xa(n),xb(n),xc(n),xd(n),xe(n),xf(n),oldu(n)
@@ -2722,7 +2726,7 @@ c update total liquid water [kg/m^3]
       double precision detw, deta, eta, etw
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
@@ -2768,7 +2772,9 @@ c update total liquid water [kg/m^3]
 
       USE constants, ONLY :
 ! Imported Parameters:
-     &     cp              ! Specific heat of dry air, in J/(kg.K)
+     &     cp,                   ! Specific heat of dry air, in J/(kg.K)
+     &     rhow                  ! Water density [kg/m**3]
+
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -2786,7 +2792,7 @@ c update total liquid water [kg/m^3]
       double precision detw, deta, eta, etw
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
@@ -3359,7 +3365,7 @@ c update total liquid water [kg/m^3]
 ! new distribution of the particles on their equilibrium positions
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
      &              e(nkt),dew(nkt),rq(nkt,nka)
       double precision enw,ew,rn,rw,en,e,dew,rq
@@ -3430,8 +3436,9 @@ c update total liquid water [kg/m^3]
 
       USE constants, ONLY :
 ! Imported Parameters:
-     &     cp,             ! Specific heat of dry air, in J/(kg.K)
-     &     pi
+     &     cp,                   ! Specific heat of dry air, in J/(kg.K)
+     &     pi,
+     &     rhow                  ! Water density [kg/m**3]
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -3451,7 +3458,7 @@ c update total liquid water [kg/m^3]
       double precision, external :: therm_conduct_air
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb49/ qabs(18,nkt,nka,3),qext(18,nkt,nka,3), ! only qabs is used here
      &              asym(18,nkt,nka,3)
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
@@ -4489,7 +4496,7 @@ c update total liquid water [kg/m^3]
       implicit double precision (a-h,o-z)
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
      &              e(nkt),dew(nkt),rq(nkt,nka)
       double precision enw,ew,rn,rw,en,e,dew,rq
@@ -4558,7 +4565,7 @@ c update total liquid water [kg/m^3]
       double precision detw, deta, eta, etw
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb46/ ustern,gclu,gclt
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
      &              e(nkt),dew(nkt),rq(nkt,nka)
@@ -4677,7 +4684,7 @@ c update total liquid water [kg/m^3]
 
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb46/ ustern,gclu,gclt
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
       double precision theta, thetl, t, talt, p, rho
@@ -5248,7 +5255,7 @@ c update total liquid water [kg/m^3]
       double precision detw, deta, eta, etw
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
       common /cb45/ u(n),v(n),w(n)
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
      &              ajb,ajq,ajl,ajt,ajd,ajs,ds1,ds2,ajm,reif,tau,trdep

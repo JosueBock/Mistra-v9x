@@ -63,7 +63,7 @@ real(kind=dp), parameter :: r1 = gas_const / M_wat               ! [J/kg/mol]
 
 ! Water density
 !     This could be improved by a parameterisation as a function of T and P
-real(kind=dp), parameter :: water_density = 1000.0_dp            ! [kg/m3]
+real(kind=dp), parameter :: rhow = 1000.0_dp                     ! [kg/m3]
 
 ! Gravity
 real(kind=dp), parameter :: g = 9.80665_dp                       ! [m/s2]
