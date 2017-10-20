@@ -536,6 +536,7 @@
       integer i, j, jj, jp, k, na, naf, nafm, nw
       double precision gamma, rf, zj, zjp
       double precision dd, emdd, xdd, xemdd, xnaer
+      double precision dz                         ! Height increment of extra layers up to the tropopause [m]
 
 ! Local arrays:
       double precision etax(nrlev), usav(nrlay)
@@ -616,15 +617,24 @@
 
       close (58)
 
-! actual meteorological profiles in the model domain z(1)-z(n)
+! actual meteorological profiles in the model domain z(1)-z(n-1)
       call load1
       do k=1,n-1
          zx(k)=etw(k)
       enddo
+
+! Even if etw(n-1) should be much lower than 11 km, check anyway
+      if(zx(n-1) >= 11000.d0) then
+         write(0,*) 'Error: etw(n-1) >= 11 km, check the vertical grid'
+         stop 'Stopped by SR initr'
+      end if
+      ! dz: height increment up to the tropopause [m]
+      dz=(11000.-zx(n-1))/7.
+
       gamma=0.0065
       do k=n,n+6
-         zx(k)=zx(k-1)+1000.
-         tx(k)=tx(k-1)-gamma*1000.
+         zx(k)=zx(k-1)+dz
+         tx(k)=tx(k-1)-gamma*dz
          px(k)=px(k-1)*(tx(k)/tx(k-1))**(g/(r0*gamma))
          rf=.3
          xm1x(k)=0.62198*rf/(px(k)/p21(tx(k))-0.37802*rf)
@@ -635,8 +645,8 @@
       k=n+7
       zx(k)=20000.
       tx(k)=tx(k-1)
-      px(k)=px(k-1)*dexp(-g*10000./(r0*tx(k)))
-      rf=.1
+      px(k)=px(k-1)*dexp(-g*(zx(k)-zx(k-1))/(r0*tx(k)))
+      rf=.02
       xm1x(k)=0.62198*rf/(px(k)/p21(tx(k))-0.37802*rf)
       rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
       rnaer(k)=0.
@@ -646,34 +656,34 @@
       gamma=-0.001
       tx(k)=tx(k-1)-gamma*10000.
       px(k)=px(k-1)*(tx(k)/tx(k-1))**(g/(r0*gamma))
-      rf=.8
+      rf=.005
       xm1x(k)=0.62198*rf/(px(k)/p21(tx(k))-0.37802*rf)
       rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
       rnaer(k)=0.
 
       k=k+1
       zx(k)=40000.
-      gamma=-0.0027
+      gamma=-0.0026
       tx(k)=tx(k-1)-gamma*10000.
       px(k)=px(k-1)*(tx(k)/tx(k-1))**(g/(r0*gamma))
-      rf=.05
+      rf=.00005
       xm1x(k)=0.62198*rf/(px(k)/p21(tx(k))-0.37802*rf)
       rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
       rnaer(k)=0.
 
       k=k+1
       zx(k)=50000.
-      gamma=-0.0015
+      gamma=-0.0018
       tx(k)=tx(k-1)-gamma*10000.
       px(k)=px(k-1)*(tx(k)/tx(k-1))**(g/(r0*gamma))
-      rf=.01
+      rf=.000002
       xm1x(k)=0.62198*rf/(px(k)/p21(tx(k))-0.37802*rf)
       rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
       rnaer(k)=0.
 
 ! fictitious level at infinity
       zx(nrlev)=zx(nrlay)+50000.
-      tx(nrlev)=tx(nrlay)
+      tx(nrlev)=210.
       px(nrlev)=0.
       xm1x(nrlev)=0.
       rhox(nrlev)=0.
