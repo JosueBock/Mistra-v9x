@@ -2821,6 +2821,9 @@ c calculation of sea salt aerosol source
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb45/ u(n),v(n),w(n)
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
      &              e(nkt),dew(nkt),rq(nkt,nka)

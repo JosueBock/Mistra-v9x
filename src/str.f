@@ -502,6 +502,9 @@
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
 ! gravitational acceleration
       data g /9.8065d0/
 ! gas constants
@@ -726,6 +729,9 @@
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
@@ -1075,6 +1081,9 @@
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
      &              ajb,ajq,ajl,ajt,ajd,ajs,ds1,ds2,ajm,reif,tau,trdep
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
@@ -1255,6 +1264,9 @@
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
@@ -1424,6 +1436,9 @@
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
      &              e(nkt),dew(nkt),rq(nkt,nka)
       double precision enw,ew,rn,rw,en,e,dew,rq
@@ -1991,6 +2006,9 @@ c update total liquid water [kg/m^3]
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb45/ u(n),v(n),w(n)
       zeit=lst*3600.+lmin*60.
       u0=dcos(2.*pi*zeit/86400.)
@@ -2029,6 +2047,9 @@ c update total liquid water [kg/m^3]
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
@@ -2412,6 +2433,9 @@ c update total liquid water [kg/m^3]
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
@@ -2485,6 +2509,9 @@ c update total liquid water [kg/m^3]
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
@@ -2659,6 +2686,9 @@ c update total liquid water [kg/m^3]
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
      &              ajb,ajq,ajl,ajt,ajd,ajs,ds1,ds2,ajm,reif,tau,trdep
       common /cb57/ xa(n),xb(n),xc(n),xd(n),xe(n),xf(n),oldu(n)
@@ -2727,6 +2757,9 @@ c update total liquid water [kg/m^3]
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
@@ -2793,6 +2826,9 @@ c update total liquid water [kg/m^3]
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
@@ -3366,6 +3402,9 @@ c update total liquid water [kg/m^3]
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
      &              e(nkt),dew(nkt),rq(nkt,nka)
       double precision enw,ew,rn,rw,en,e,dew,rq
@@ -3459,6 +3498,9 @@ c update total liquid water [kg/m^3]
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb49/ qabs(18,nkt,nka,3),qext(18,nkt,nka,3), ! only qabs is used here
      &              asym(18,nkt,nka,3)
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
@@ -4497,6 +4539,9 @@ c update total liquid water [kg/m^3]
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
      &              e(nkt),dew(nkt),rq(nkt,nka)
       double precision enw,ew,rn,rw,en,e,dew,rq
@@ -4566,6 +4611,9 @@ c update total liquid water [kg/m^3]
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb46/ ustern,gclu,gclt
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
      &              e(nkt),dew(nkt),rq(nkt,nka)
@@ -4685,6 +4733,9 @@ c update total liquid water [kg/m^3]
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb46/ ustern,gclu,gclt
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
       double precision theta, thetl, t, talt, p, rho
@@ -5256,6 +5307,9 @@ c update total liquid water [kg/m^3]
 
       common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb45/ u(n),v(n),w(n)
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
      &              ajb,ajq,ajl,ajt,ajd,ajs,ds1,ds2,ajm,reif,tau,trdep

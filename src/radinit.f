@@ -817,6 +817,9 @@ c$$$      common /cb40/ time,lday,lst,lmin,it,lcl,lct
 c$$$      common /cb41/ detw(n),deta(n),eta(n),etw(n)
 c$$$      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
 c$$$     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+c$$$      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+c$$$     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+c$$$
 c$$$      common /cb52/ f(nkt,nka,n),fsum(n),nar(n)
 c$$$      common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
 c$$$      double precision theta, thetl, t, talt, p, rho
