@@ -61,34 +61,43 @@ mistra: precision.o constants.o global_params.o common_modules.o directories.o \
 
 # modules
 global_params.o global_params.mod: global_params.f Makefile
+	rm -f global_params.mod
 	$(FC) $(CFLAGS) -c $<
 
 common_modules.o gas_common.mod: common_modules.f global_params.mod Makefile
+	rm -f gas_common.mod
 	$(FC) $(CFLAGS) -c $<
 
 constants.o constants.mod: constants.f90 Makefile
+	rm -f constants.mod
 	$(FC) $(CFLAGS) -c $<
 
 directories.o directories.mod: directories.f Makefile
+	rm -f directories.mod
 	$(FC) $(CFLAGS) -c $<
 
 mod_out_netCDF.o cdf_var_gas.mod: mod_out_netCDF.f90 Makefile
+	rm -f cdf_var_gas.mod
 	$(FC) $(CFLAGS) -c $<
 
 precision.o precision.mod: precision.f90 Makefile
+	rm -f precision.mod
 	$(FC) $(CFLAGS) -c $<
 
 # files containing modules
 tot.o kpp_tot_parameters.mod kpp_tot_global.mod: tot.f tot_Parameters.h tot_Global.h tot_Sparse.h aer_mk.dat aer_km.dat \
 	constants.mod gas_common.mod global_params.mod Makefile
+	rm -f kpp_tot_parameters.mod kpp_tot_global.mod
 	$(FC) $(CFLAGS) -c $<
 
 aer.o kpp_aer_parameters.mod kpp_aer_global.mod: aer.f aer_Parameters.h aer_Global.h aer_Sparse.h aer_mk.dat aer_km.dat \
 	constants.mod gas_common.mod global_params.mod Makefile
+	rm -f kpp_aer_parameters.mod kpp_aer_global.mod
 	$(FC) $(CFLAGS) -c $<
 
 gas.o kpp_gas_parameters.mod kpp_gas_global.mod: gas.f gas_Parameters.h gas_Global.h gas_Sparse.h \
 	constants.mod gas_common.mod global_params.mod Makefile
+	rm -f kpp_gas_parameters.mod kpp_gas_global.mod
 	$(FC) $(CFLAGS) -c $<
 
 # other files
@@ -118,6 +127,7 @@ jrate.o: jrate.f directories.mod global_params.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
 nuc.o: nuc.f constants.mod global_params.mod gas_common.mod Makefile
+	rm -f mod_nuc.mod
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
 kpp.o: kpp.f tot_Parameters.h tot_Global.h aer_Parameters.h aer_Global.h gas_Parameters.h gas_Global.h \
