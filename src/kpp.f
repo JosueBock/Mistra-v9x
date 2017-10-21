@@ -2819,9 +2819,9 @@ c calculation of sea salt aerosol source
 
       logical mona,smith
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
-      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb45/ u(n),v(n),w(n)

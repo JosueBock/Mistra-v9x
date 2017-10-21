@@ -568,9 +568,9 @@
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
       double precision detw, deta, eta, etw
 
-      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
 !      common /cb56/ o3un(52),o3r(52),vis(nrlev),sigea(8,6,4),    ! /cb56/ was only used with SR load0
@@ -820,9 +820,9 @@ c$$$      double precision berayl, bea, baa, ga
 c$$$
 c$$$      common /cb40/ time,lday,lst,lmin,it,lcl,lct
 c$$$      common /cb41/ detw(n),deta(n),eta(n),etw(n)
-c$$$      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+c$$$      common /cb44/ g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
 c$$$     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-c$$$      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+c$$$      double precision g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
 c$$$     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 c$$$
 c$$$      common /cb52/ f(nkt,nka,n),fsum(n),nar(n)
