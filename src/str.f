@@ -500,15 +500,15 @@
 
       implicit double precision (a-h,o-z)
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
 ! gravitational acceleration
       data g /9.8065d0/
 ! gas constants
-      data r0,r1 /287.05d0, 461.51d0/
+      data r1 /461.51d0/
 
 ! chose the water temperature and subsidence velocities depending on 
 ! what version of SR initm is used (see ./special_versions/SR_initm)
@@ -707,6 +707,7 @@
       USE constants, ONLY :
 ! Imported Parameters:
 !     &     pi,
+     &     r0,                   ! Specific gas constant of dry air, in J/(kg.K)
      &     rhow                  ! Water density [kg/m**3]
 
       USE global_params, ONLY :
@@ -727,9 +728,9 @@
       double precision detw, deta, eta, etw
 
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb45/ u(n),v(n),w(n)
@@ -1079,11 +1080,6 @@
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
       double precision detw, deta, eta, etw
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
      &              ajb,ajq,ajl,ajt,ajd,ajs,ds1,ds2,ajm,reif,tau,trdep
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
@@ -1262,9 +1258,9 @@
 
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb45/ u(n),v(n),w(n)
@@ -1434,9 +1430,9 @@
 ! of humidified aerosol particles at given relative humidity
 ! new distribution of the particles on their equilibrium positions
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
@@ -1485,20 +1481,20 @@
 !-------------------------------------------------------------
 !
 
-      function rgl (r0,a,b,feu)
+      function rgl (r_dry,a,b,feu)
       implicit double precision (a-h,o-z)
 ! equilibrium radius of aerosol particle at given relative humidity
-! r0 dry particle radius; a scaling radius for surface effect
+! r_dry dry particle radius; a scaling radius for surface effect
       f(x)=(x**3-1.)*(x*dlogf-alpha)+b*x
       fstr(x)=(4.*x**3-1.)*dlogf-3.*x*x*alpha+b
       if (feu.ge.1.) then
          write (6,6000)
  6000    format (10x,'initial value of relative humidity exceeding one')
-         rgl=r0
+         rgl=r_dry
          return
       endif
       dlogf=dlog(feu)
-      alpha=a/r0
+      alpha=a/r_dry
 ! initial value
       xalt=dexp(feu)
 ! Newton iteration
@@ -1508,7 +1504,7 @@
          xalt=xneu
       enddo
  2000 continue
-      rgl=r0*xneu
+      rgl=r_dry*xneu
 
       end function rgl
 
@@ -1919,9 +1915,8 @@ c update total liquid water [kg/m^3]
 
       USE constants, ONLY :
 ! Imported Parameters:
-     &     gas_const,
-     &     m_air,
      &     g,
+     &     r0,                   ! Specific gas constant of dry air, in J/(kg.K)
      &     rhow                  ! Water density [kg/m**3]
 
       implicit none
@@ -1942,7 +1937,6 @@ c update total liquid water [kg/m^3]
       double precision, parameter :: b5=+.855176d-4
       double precision, parameter :: b6=-.327815d-5
 
-      double precision, parameter :: r_over_m = gas_const/m_air
       double precision, parameter :: c1 = 2.d0 * g / 9.d0       ! constant factor in equation (10-138)
       double precision, parameter :: c2 = 1.26d0                ! constant in equation (10-139)
       double precision, parameter :: P0 = 101325                ! Standard pressure    [Pa]
@@ -1957,8 +1951,7 @@ c update total liquid water [kg/m^3]
       double precision :: eta   ! dynamic viscosity                            [kg/(m.s)]
       double precision :: y     ! Reynolds number = exp(y) in Regime 2         [-]
 
-      rho_a=p/(r_over_m*t)
-      ! 287.05 = R_gas / Mair with R_gas = 8.314 J/(K.mol) and M_air = 28.9d-3 kg/mol
+      rho_a=p/(r0*t)
       eta=3.7957d-06+4.9d-08*t
 
       if (a.le.1.d-5) then
@@ -2004,9 +1997,9 @@ c update total liquid water [kg/m^3]
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
       double precision detw, deta, eta, etw
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb45/ u(n),v(n),w(n)
@@ -2032,6 +2025,10 @@ c update total liquid water [kg/m^3]
 ! except xd(k) which has another meaning than d(k) of Roache's program.
 ! dirichlet conditions at the surface and at the top of the atmosphere
 
+      USE constants, ONLY :
+! Imported Parameters:
+     &     r0               ! Specific gas constant of dry air, in J/(kg.K)
+
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
@@ -2045,9 +2042,9 @@ c update total liquid water [kg/m^3]
       double precision detw, deta, eta, etw
 
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb45/ u(n),v(n),w(n)
@@ -2431,9 +2428,9 @@ c update total liquid water [kg/m^3]
 
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb45/ u(n),v(n),w(n)
@@ -2507,9 +2504,9 @@ c update total liquid water [kg/m^3]
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb42a/ tkeps(n),tkepb(n),tkepd(n)
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb45/ u(n),v(n),w(n)
@@ -2684,9 +2681,9 @@ c update total liquid water [kg/m^3]
 ! and moisture transport within the soil.
 ! for further details see subroutine difm.
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
@@ -2755,9 +2752,9 @@ c update total liquid water [kg/m^3]
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
       double precision detw, deta, eta, etw
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb45/ u(n),v(n),w(n)
@@ -2824,9 +2821,9 @@ c update total liquid water [kg/m^3]
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
       double precision detw, deta, eta, etw
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb45/ u(n),v(n),w(n)
@@ -3400,9 +3397,9 @@ c update total liquid water [kg/m^3]
 ! of humidified aerosol particles at given relative humidity
 ! new distribution of the particles on their equilibrium positions
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
@@ -3477,6 +3474,7 @@ c update total liquid water [kg/m^3]
 ! Imported Parameters:
      &     cp,                   ! Specific heat of dry air, in J/(kg.K)
      &     pi,
+     &     r0,                   ! Specific gas constant of dry air, in J/(kg.K)
      &     rhow                  ! Water density [kg/m**3]
 
       USE global_params, ONLY :
@@ -3496,9 +3494,9 @@ c update total liquid water [kg/m^3]
       double precision, external :: diff_wat_vap
       double precision, external :: therm_conduct_air
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb49/ qabs(18,nkt,nka,3),qext(18,nkt,nka,3), ! only qabs is used here
@@ -4537,9 +4535,9 @@ c update total liquid water [kg/m^3]
 
       implicit double precision (a-h,o-z)
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
@@ -4609,9 +4607,9 @@ c update total liquid water [kg/m^3]
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
       double precision detw, deta, eta, etw
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb46/ ustern,gclu,gclt
@@ -4731,9 +4729,9 @@ c update total liquid water [kg/m^3]
       double precision detw, deta, eta, etw
 
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb46/ ustern,gclu,gclt
@@ -5305,9 +5303,9 @@ c update total liquid water [kg/m^3]
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
       double precision detw, deta, eta, etw
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb45/ u(n),v(n),w(n)

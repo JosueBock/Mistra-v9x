@@ -93,9 +93,9 @@
 
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb45/ u(n),v(n),w(n)
@@ -1237,7 +1237,8 @@
 
       USE constants, ONLY :
 ! Imported Parameters:
-     &     cp              ! Specific heat of dry air, in J/(kg.K)
+     &     cp,              ! Specific heat of dry air, in J/(kg.K)
+     &     r0               ! Specific gas constant of dry air, in J/(kg.K)
 
 
       implicit double precision (a-h,o-z)
@@ -1252,9 +1253,9 @@
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
       double precision detw, deta, eta, etw
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
@@ -1457,9 +1458,9 @@
 
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+      common /cb44/ r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
-      double precision r0,r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+      double precision r1,g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
       common /cb45/ u(n),v(n),w(n)
