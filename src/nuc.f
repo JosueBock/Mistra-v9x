@@ -401,7 +401,8 @@
 
       USE constants, ONLY :
      &     conv1, ! multiply by conv1 to get cm^3(air)/mlc --> m^3(air)/mol
-     &     pi
+     &     pi,
+     &     r1
 
       USE gas_common, ONLY:
 ! Imported Parameters:
@@ -740,7 +741,7 @@
 !     a0mn = a0m=152200./(r1*rhow)
 !     b0mn = b0m=fcs*xnue*xmol2/xmol3: fcs(ia) fraction of soluble species
 !     xnue number of ions; xmol2 (xmol3) mol masses of water (aerosol)
-        a0mn = 152200. / (461.51 * ro_nuc)
+        a0mn = 152200. / (r1 * ro_nuc)
         b0mn = 1. * 1. * 0.018/m_vapmean  !fcs=1 and xnue=1 are assumed -> please adjust!
         a0 = a0mn/temp
 !       ---  b0=b0m*rho3/rhow; rho3=2000; rhow=1000

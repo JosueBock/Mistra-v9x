@@ -93,8 +93,11 @@
 
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      common /cb44/ g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb45/ u(n),v(n),w(n)
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
      &              ajb,ajq,ajl,ajt,ajd,ajs,ds1,ds2,ajm,reif,tau,trdep
@@ -1139,21 +1142,21 @@
          do ib=mbs+1,mb
             i0(9,k)=i0(9,k)+totrad(ib,k)
          enddo
-         r1=0.
-!         r2=0.
-         r3=0.
+         rsum1=0.
+!         rsum2=0.
+         rsum3=0.
          do ia=1,nka
          do jt=2,nkt
             x0=rq(jt,ia)
             x1=(rw(jt,ia)-rw(jt-1,ia))
-            r1=r1+ff(jt,ia,k)*x0*x1
-!            r2=r2+ff(jt,ia,k)*x0**2*x1
-            r3=r3+ff(jt,ia,k)*x0**3*x1
+            rsum1=rsum1+ff(jt,ia,k)*x0*x1
+!            rsum2=rsum2+ff(jt,ia,k)*x0**2*x1
+            rsum3=rsum3+ff(jt,ia,k)*x0**3*x1
          enddo
          enddo
-         i0(10,k)=r1
-!         i0(11,k)=r2
-         i0(12,k)=r3
+         i0(10,k)=rsum1
+!         i0(11,k)=rsum2
+         i0(12,k)=rsum3
          i0(11,k)=totrad(1,k)
       enddo
 ! only for 1D:
@@ -1234,7 +1237,9 @@
 
       USE constants, ONLY :
 ! Imported Parameters:
-     &     cp              ! Specific heat of dry air, in J/(kg.K)
+     &     cp,              ! Specific heat of dry air, in J/(kg.K)
+     &     r0,              ! Specific gas constant of dry air, in J/(kg.K)
+     &     r1               ! Specific gas constant of water vapour, in J/(kg.K)
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -1258,8 +1263,11 @@
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
       double precision detw, deta, eta, etw
 
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      common /cb44/ g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),
      &              ajb,ajq,ajl,ajt,ajd,ajs,ds1,ds2,ajm,reif,tau,trdep
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
@@ -1460,8 +1468,11 @@
 
       common /cb42/ atke(n),atkh(n),atkm(n),tke(n),tkep(n),buoy(n)
       common /cb43/ gm(n),gh(n),sm(n),sh(n),xl(n)
-      common /cb44/ r0,r1,g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
-     &              bs,rhoc,rhow,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      common /cb44/ g,a0m,b0m(nka),ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+      double precision g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
+     &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
+
       common /cb45/ u(n),v(n),w(n)
       common /cb46/ ustern,gclu,gclt
       common /cb47/ zb(nb),dzb(nb),dzbw(nb),tb(nb),eb(nb),ak(nb),d(nb),

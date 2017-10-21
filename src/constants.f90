@@ -53,17 +53,17 @@ real(kind=dp), parameter :: pi = 3.1415926535897932_dp
 !     ref: Gavioso et al. (2015), Metrologia 52 (S274-S304) doi: 10.1088/0026-1394/52/5/S274
 real(kind=dp), parameter :: gas_const = 8.3144743_dp             ! [J/K/mol]
 
-! Specific gas constant for dry air
+! Specific gas constant of dry air
 !     r0 = R / M_air
-real(kind=dp), parameter :: r0 = gas_const / M_air               ! [J/kg/mol]
+real(kind=dp), parameter :: r0 = gas_const / M_air               ! [J/(kg.K)]
 
-! Specific gas constant for water vapour
+! Specific gas constant of water vapour
 !     r1 = R / M_water
-real(kind=dp), parameter :: r1 = gas_const / M_wat               ! [J/kg/mol]
+real(kind=dp), parameter :: r1 = gas_const / M_wat               ! [J/(kg.K)]
 
 ! Water density
 !     This could be improved by a parameterisation as a function of T and P
-real(kind=dp), parameter :: water_density = 1000.0_dp            ! [kg/m3]
+real(kind=dp), parameter :: rhow = 1000.0_dp                     ! [kg/m3]
 
 ! Gravity
 real(kind=dp), parameter :: g = 9.80665_dp                       ! [m/s2]
