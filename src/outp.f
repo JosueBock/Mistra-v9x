@@ -1236,10 +1236,19 @@
 ! Imported Parameters:
      &     cp              ! Specific heat of dry air, in J/(kg.K)
 
+      USE global_params, ONLY :
+! Imported Parameters:
+     &     nf,
+     &     n,
+     &     nb,
+     &     nka,
+     &     nkt,
+     &     nrlay,
+     &     nrlev
 
       implicit double precision (a-h,o-z)
 ! output of constants and parameters used in the current run
-      parameter (nf=100,n=nf+50,nb=20,nkt=70,nka=70,n1=n+12,n2=n1-1)
+
       logical chem,mic,rst
       common /band_o3/ scaleo3_m
       common /blck06/ kw(nka),ka
