@@ -766,7 +766,7 @@
          endif
       enddo
 
-! no clouds
+! Initialise frac and rho2x: no clouds
       do i=1,nrlay
          frac(i)=0.
          rho2x(i)=0.
@@ -1028,8 +1028,8 @@ c$$$      end subroutine load0
       common /cb54/ xm1(n),xm2(n),feu(n),dfddt(n),xm1a(n),xm2a(n)
       double precision xm1, xm2, feu, dfddt, xm1a, xm2a
 
-      common /neu/ icld ! jjb 13/10/2016: added, see comment at the end of this SR
-      integer icld
+      !common /neu/ icld ! jjb 13/10/2016: added, see comment at the end of this SR
+      !integer icld
 
 !- End of header ---------------------------------------------------------------
 
@@ -1038,12 +1038,14 @@ c$$$      end subroutine load0
       px(1)=p(1)
       xm1x(1)=xm1(2)
       rhox(1)=px(1)/(r0*tx(1)*(1.+.608*xm1x(1)))
+      rho2x(1)=xm2(2)
       do k=2,n-1
          x0=0.5*detw(k)/deta(k)
          tx(k)=t(k)+(t(k+1)-t(k))*x0
          px(k)=p(k)+(p(k+1)-p(k))*x0
          xm1x(k)=xm1(k)+(xm1(k+1)-xm1(k))*x0
          rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
+         rho2x(k)=xm2(k+1)
       enddo
 
 ! calculate u0 from geogr. latitude, declination and hourangle
@@ -1116,9 +1118,10 @@ c$$$      end subroutine load0
 !     However, it is likely that SR load0 will never be used again: if so, some
 !     cleaning and little tuning will be required to completely remove it.
 
-      icld = 0
+      !icld = 0
 
 ! jjb 13/10/2016 >
+
 
       end subroutine load1
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1222,12 +1225,14 @@ c$$$      end subroutine load0
          px(1)=p(1)
          xm1x(1)=xm1(2)                  ! jjb CHECK this! For me, this should be xm1(1) (same as pressure above)
          rhox(1)=px(1)/(r0*tx(1)*(1.+.608*xm1x(1)))
+         rho2x(1)=xm2(2)
          do  k=2,n-1
             x0=0.5*detw(k)/deta(k)
             tx(k)=t(k)+(t(k+1)-t(k))*x0
             px(k)=p(k)+(p(k+1)-p(k))*x0
             xm1x(k)=xm1(k)+(xm1(k+1)-xm1(k))*x0
             rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
+            rho2x(k)=xm2(k+1)
          enddo
          ! calculate u0 from geogr. latitude, declination and hourangle
          ! make correction because of spherical surface of the earth

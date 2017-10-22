@@ -149,8 +149,8 @@
      &     f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
       double precision sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
 
-      common /neu/ icld
-      integer icld
+      !common /neu/ icld
+      !integer icld
 
       common /planci/ pib(nrlev),pibs                              ! black-body radiation
       double precision pib, pibs
@@ -197,7 +197,7 @@ c1360.3
 ! cloud fractions: frr includes the cloud fraction section taken from
 ! the new PIFM code.
 !
-      call frr(icld)
+      call frr!(icld)
 
 ! Initialisation or arrays
       fs1(:) = 0.
@@ -299,7 +299,8 @@ c1360.3
 
 
          ! water droplets
-         call water(ib,icld)
+         !call water(ib,icld)
+         call water(ib)
 
          ! continuum absorption of water vapour
          call gascon(ib)
@@ -477,7 +478,7 @@ c1360.3
 
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-      subroutine frr(icld)
+      subroutine frr!(icld)
 !
 ! Description:
 !    Calculation of random overlapping cloud coverage.
@@ -515,7 +516,7 @@ c1360.3
 
 ! Subroutine arguments
 ! Scalar arguments with intent(in):
-      integer, intent(in) :: icld
+      !integer, intent(in) :: icld
 
 ! Local scalars:
       integer i, ip, j, k
@@ -535,7 +536,7 @@ c1360.3
 
 !- End of header ---------------------------------------------------------------
 
-      if(icld == 0) then
+      !if(icld == 0) then
          do i=1,nrlay
             ip=i+1
             j=nrlay-i+1
@@ -545,7 +546,7 @@ c1360.3
                frac(j)=0.0
             endif
          end do
-      endif
+      !endif
 
       do j=1,nrlay
          i=j-1
@@ -612,7 +613,8 @@ c1360.3
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine water(ib,icld)
+      !subroutine water(ib,icld)
+      subroutine water(ib)
 !
 ! Description:
 ! *********************************************************************
@@ -671,7 +673,7 @@ c1360.3
 ! Subroutine arguments
 ! Scalar arguments with intent(in):
       integer, intent(in) :: ib    ! current wavelength band
-      integer, intent(in) :: icld  ! clouds (/=0) or not (=0)
+      !integer, intent(in) :: icld  ! clouds (/=0) or not (=0)
 
 ! Local scalars:
       integer i, j            ! loop indexes (vertical)
@@ -715,12 +717,11 @@ c1360.3
 
 !- End of header ---------------------------------------------------------------
 
-      if(icld == 0) then
-         t2w(:)=0.0
-         w2w(:)=0.0
-         pl2w(:,:)=0.0
-         return
-      else
+      !if(icld == 0) then
+      !   t2w(:)=0.0
+      !   w2w(:)=0.0
+      !   pl2w(:,:)=0.0
+      !else
          ! Initialisations:
          ! ----------------
          ! Define local name for layer thicknesses
@@ -736,8 +737,7 @@ c1360.3
             znum=0.0
             zdenom=0.0
             do jt=1,nkt
-               r(jt)=0.0001*(3*e(jt)/(4*pi*
-     &              rhow))**0.333333333
+               r(jt)=(3.*e(jt)*1.e-6/(4.*pi*rhow))**0.333333333
                zfix=0.0
                do ia=1,nka
                   zfix=zfix+ff(jt,ia,i)
@@ -759,7 +759,6 @@ c1360.3
                   pl2w(jl,i)=0.0
                end do
             else
-
 ! interpolation for given reff and rho2 from tabulated values
 ! {ret} and {r2wt}
 ! lower limit 4.18 um
@@ -801,7 +800,7 @@ c1360.3
                endif
             endif
          end do
-      endif
+      !endif
 
       end subroutine water
 
