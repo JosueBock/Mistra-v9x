@@ -22,7 +22,7 @@
 
 ! input directory: general data files for Mistra
       character (len=*) inpdir
-      parameter (inpdir='~/Mistra/input/')
+      parameter (inpdir='/local/hmb15gqu/mistra/input/')
 
       character (len=len(inpdir)+9) inpdir_phot       ! input directory for photolysis data files
       parameter ( inpdir_phot = inpdir//'photolys/')
