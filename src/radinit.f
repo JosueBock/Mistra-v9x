@@ -553,6 +553,9 @@
       common /aeag/ seanew(8,mb,4),saanew(8,mb,4),ganew(8,mb,4),ff2(8)
       double precision seanew, saanew, ganew, ff2
 
+      common /cb01/ rew(nrlay)
+      double precision rew
+
       common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
      &              rho2x(nrlay),frac(nrlay),
      & ts,ntypa(nrlay),ntypd(nrlay)
@@ -766,10 +769,11 @@
          endif
       enddo
 
-! Initialise frac and rho2x: no clouds
+! Initialise frac, rho2x, and rew: no clouds
       do i=1,nrlay
          frac(i)=0.
          rho2x(i)=0.
+         rew(i) = 0.d0
       enddo
 
       end subroutine initr
@@ -973,6 +977,7 @@ c$$$      end subroutine load0
       USE global_params, ONLY :
 ! Imported Parameters:
      & n,
+     & nf,
      & nrlay,
      & nrlev,
      & nka,
@@ -986,13 +991,20 @@ c$$$      end subroutine load0
       integer ia, jt, k, ka, ka0, l1
       integer lu0, luf
       double precision zeit, horang, rlat, rdec, u00, ru0, x0
+      double precision znum,zdenom,zfix   ! calculation of effective drop radius
 
 ! Common blocks:
+      common /cb01/ rew(nrlay)
+      double precision rew
+
       common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
      & rho2x(nrlay),frac(nrlay),
      & ts,ntypa(nrlay),ntypd(nrlay)
       double precision tx,px,rhox,xm1x,rho2x,frac,ts
       integer ntypa,ntypd
+
+      common /cb08/ re1(nkt), re2(nkt), re3(nkt)
+      double precision re1, re2, re3
 
       common /cb16/ u0,albedo(mbs),thk(nrlay)
       double precision u0, albedo, thk
@@ -1048,6 +1060,35 @@ c$$$      end subroutine load0
          rho2x(k)=xm2(k+1)
       enddo
 
+! define frac, for use in SR frr,
+!     and rew, for use in SR water
+! start at index 2 (the case lcl = lct = 1 means no clouds)
+!     and go up to index nf+1 (lct should be < nf anyway)
+!     the remaining indexes nf+2:nrlay have been initialised to 0. in SR initr
+      do k=2,nf+1
+         if (k.ge.lcl .and. k.le.lct) then
+            frac(k-1) = 1.d0
+
+            znum=0.d0
+            zdenom=0.d0
+            do jt=1,nkt
+               zfix=0.d0
+               do ia=1,nka
+                  zfix = zfix + ff(jt,ia,k)
+               end do
+               znum   = znum + re3(jt)*zfix
+               zdenom = zdenom + re2(jt)*zfix
+            end do
+            rew(k-1) = znum/zdenom
+
+         else
+            frac(k-1) = 0.d0
+            rew(k-1) = 0.d0
+         end if
+      end do
+
+
+      
 ! calculate u0 from geogr. latitude, declination and hourangle
 ! make correction because of spherical surface of the earth
       zeit=lst*3600.+lmin*60.
@@ -1180,8 +1221,12 @@ c$$$      end subroutine load0
 ! Local scalars:
       integer k
       double precision zeit, horang, rlat, rdec, u00, ru0, x0
+      double precision znum,zdenom,zfix   ! calculation of effective drop radius
 
 ! Common blocks:
+      common /cb01/ rew(nrlay)
+      double precision rew
+
       common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
      & rho2x(nrlay),frac(nrlay),
      & ts,ntypa(nrlay),ntypd(nrlay)
@@ -1234,6 +1279,34 @@ c$$$      end subroutine load0
             rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
             rho2x(k)=xm2(k+1)
          enddo
+
+! define frac, for use in SR frr,
+!     and rew, for use in SR water
+! start at index 2 (the case lcl = lct = 1 means no clouds)
+!     and go up to index nf+1 (lct should be < nf anyway)
+!     the remaining indexes nf+2:nrlay have been initialised to 0. in SR initr
+         do k=2,nf+1
+            if (k.ge.lcl .and. k.le.lct) then
+               frac(k-1) = 1.d0
+
+               znum=0.d0
+               zdenom=0.d0
+               do jt=1,nkt
+                  zfix=0.d0
+                  do ia=1,nka
+                     zfix = zfix + ff(jt,ia,k)
+                  end do
+                  znum   = znum + re3(jt)*zfix
+                  zdenom = zdenom + re2(jt)*zfix
+               end do
+               rew(k-1) = znum/zdenom
+
+            else
+               frac(k-1) = 0.d0
+               rew(k-1) = 0.d0
+            end if
+         end do
+
          ! calculate u0 from geogr. latitude, declination and hourangle
          ! make correction because of spherical surface of the earth
          zeit=lst*3600.+lmin*60.

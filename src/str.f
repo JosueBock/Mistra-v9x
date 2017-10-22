@@ -1075,6 +1075,8 @@
       double precision, parameter :: r_max_dry = 15.    ! [um]
       double precision, parameter :: r_max_wet = 60.    ! [um]
 
+      common /cb08/ re1(nkt), re2(nkt), re3(nkt)
+      double precision re1, re2, re3
 
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
       double precision detw, deta, eta, etw
@@ -1189,6 +1191,14 @@
          e(jt)=0.5*(ew(jt)+ew(jt-1))
          dew(jt)=ew(jt)-ew(jt-1)
       enddo
+
+      ! equivalent radius of (pure) water droplet (in [m]), for effective radius calculation used in the radiative code
+      do jt=1,nkt
+         re1(jt) = (e(jt)*1.e-6/x1)**x0
+         re2(jt) = re1(jt)*re1(jt)
+         re3(jt) = re1(jt)*re2(jt)
+      enddo
+
       do ia=1,nka
       do jt=1,nkt
          rq(jt,ia)=(e(jt)*1.d-06/x1+(rn(ia)*1.d-06)**3)**x0*1.d+06

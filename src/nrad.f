@@ -519,7 +519,10 @@ c1360.3
       !integer, intent(in) :: icld
 
 ! Local scalars:
-      integer i, ip, j, k
+      integer i, j, k
+
+! Local arrays:
+      double precision frac_copy(nrlay)
 
 ! Common blocks:
       common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), ! only: frac
@@ -536,17 +539,12 @@ c1360.3
 
 !- End of header ---------------------------------------------------------------
 
-      !if(icld == 0) then
-         do i=1,nrlay
-            ip=i+1
-            j=nrlay-i+1
-            if(ip >= lcl.and.ip <= lct) then ! lcl and lct are defined in the vertical grid including
-               frac(j)=1.0                   ! the first infinitesimally thin layer (ground) which is
-            else                             ! disregarded when dealing with the radiative code
-               frac(j)=0.0
-            endif
-         end do
-      !endif
+!     Temporary: invert frac direction
+      frac_copy = frac
+      do i=1,nrlay
+         j=nrlay-i+1
+         frac(i) = frac_copy(j)
+      end do
 
       do j=1,nrlay
          i=j-1
@@ -677,17 +675,17 @@ c1360.3
 
 ! Local scalars:
       integer i, j            ! loop indexes (vertical)
-      integer ia, jt          ! 2D aerosol grid indexes
       integer jl, k
       double precision gg                 ! interpolation
-      double precision znum,zdenom,zfix   ! calculation of effective drop radius
 
 ! Local arrays:
       double precision dz(nrlay) ! layer thickness, from bottom to top
-      double precision r(nkt)
-      double precision rew(nrlay), rho2w(nrlay)
+      double precision rho2w(nrlay)
 
 ! Common blocks:
+      common /cb01/ rew(nrlay)
+      double precision rew
+
       common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
@@ -732,22 +730,7 @@ c1360.3
          do i=1,nrlay
             rho2w(i)=rho2(i)
          enddo
-         rew(:) = 0.d0
-! -------------------------------------------------------
-         do i=lcl,lct
-            znum=0.0
-            zdenom=0.0
-            do jt=1,nkt
-               r(jt)=(3.*e(jt)*1.e-6/(4.*pi*rhow))**0.333333333
-               zfix=0.0
-               do ia=1,nka
-                  zfix=zfix+ff(jt,ia,i)
-               enddo
-               znum =znum+(r(jt)**3)*zfix
-               zdenom=zdenom+(r(jt)**2)*zfix
-            enddo
-            rew(i-1)=znum/zdenom
-         enddo
+
 ! -------------------------------------------------------
          do i=1,nrlay ! here, i goes frop the top to the ground
             j=nrlev-i   ! here, j goes frop the ground to the top
