@@ -114,7 +114,7 @@ str.o: str.f constants.mod directories.mod gas_common.mod global_params.mod Make
 radinit.o: radinit.f constants.mod directories.mod global_params.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
-nrad.o: nrad.f constants.mod global_params.mod Makefile
+nrad.o: nrad.f90 constants.mod global_params.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
 outp.o: outp.f constants.mod global_params.mod gas_common.mod Makefile

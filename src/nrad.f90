@@ -104,18 +104,18 @@
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     mb,
-     &     mbs,
-     &     mbir,
-     &     nrlay,
+     &     mb,                  &
+     &     mbs,                 &
+     &     mbir,                &
+     &     nrlay,               &
      &     nrlev
 
       implicit none
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -138,14 +138,14 @@
       common /extra_2/ taer_s(nrlay),taer_a(nrlay),ga_pl(nrlay) ! for photolysis calculation
       double precision taer_s, taer_a, ga_pl
 
-      common /kurz/ fs1(nrlev),fs2(nrlev),totds(nrlev),ss(nrlev),
+      common /kurz/ fs1(nrlev),fs2(nrlev),totds(nrlev),ss(nrlev), &
      &              fsn(nrlev),dtdts(nrlay)
       double precision fs1, fs2, totds, ss, fsn, dtdts          ! integrated radiation fluxes
 
       common /lang/ fl1(nrlev),fl2(nrlev),fln(nrlev),dtdtl(nrlay)           ! integrated radiation fluxes
       double precision fl1, fl2, fln, dtdtl
 
-      common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev),             ! radiation fluxes
+      common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
      &     f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
       double precision sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
 
@@ -179,14 +179,14 @@
       double precision zgaer(nrlay)       ! needed for Legendre-coefficients
       double precision sss(nrlev)
       integer kg(mb)                   ! number of cumulative probabilities
-      data kg / 10, 8, 12, 7, 12, 5,
+      data kg / 10, 8, 12, 7, 12, 5, &
      &     2, 3, 4, 4, 3, 5, 2, 10, 12, 7, 7, 8 /
 !- End of header ---------------------------------------------------------------
 
       s0=1355.3 ! jjb this is the sum of the 4 former wavelength bands (1018.3+230.1+39.2+67.7)
                 !      see paper from Loughlin et al, (1997) QJRMS vol. 123, pp. 1985-2007, table 1
                 !     SHOULD THIS BE UPDATED? see also zfuq1 below: 1340.0
-c1360.3
+! 1360.3
 ! concentrations of trace gases ! jjb improve by reading in the actual values if chemistry is activated
       umco2=330.
       umch4=1.6
@@ -424,16 +424,16 @@ c1360.3
 ! ------------------------------------------------------------------------------
       do j=1,nrlay
          do ib=1,mbs
-            totrad(ib,j)=((dlam(2,j,ib)+dlam(2,j+1,ib))/(2.0*u0))+
-     &                   (dlam(3,j,ib)+dlam(3,j+1,ib)+dlam(4,j,ib)
+            totrad(ib,j)=((dlam(2,j,ib)+dlam(2,j+1,ib))/(2.0*u0))+ &
+     &                   (dlam(3,j,ib)+dlam(3,j+1,ib)+dlam(4,j,ib) &
      &                   +dlam(4,j+1,ib))
          enddo
       enddo
       do j=1,nrlay
          do ib=mbs+1,mb
 !            if(i == 1) then                                 ! jjb problem here, same as below
-               totrad(ib,j)=-(dlam(7,j,ib)+dlam(7,j+1,ib))*2
-     &                      +dlam(5,j,ib)+dlam(6,j,ib)
+               totrad(ib,j)=-(dlam(7,j,ib)+dlam(7,j+1,ib))*2 &
+     &                      +dlam(5,j,ib)+dlam(6,j,ib) &
      &                      +dlam(5,j+1,ib)+dlam(6,j+1,ib)
 !            else
 !               totrad(ib,j)=-(dlam(7,j,ib)+dlam(7,j+1,ib))*2
@@ -502,9 +502,9 @@ c1360.3
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -517,7 +517,7 @@ c1360.3
       integer i, j, k
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), ! only: frac
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), & ! only: frac
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -631,15 +631,15 @@ c1360.3
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     n,
-     &     nrlay,
-     &     nrlev,
-     &     nka,
-     &     nkt,
-     &     ncw,
-     &     mb,
+     &     n, &
+     &     nrlay, &
+     &     nrlev, &
+     &     nka, &
+     &     nkt, &
+     &     ncw, &
+     &     mb, &
      &     mbs
 
       implicit none
@@ -655,8 +655,8 @@ c1360.3
       double precision gg                 ! interpolation
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),
-     & rho2w(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev), &
+     & rho2w(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2w,frac,ts
       integer ntypa,ntypd
@@ -670,7 +670,7 @@ c1360.3
       common /h2o/ t2w(nrlay), w2w(nrlay), pl2w(2,nrlay)
       double precision t2w, w2w, pl2w
 
-      common /was1/ ret(ncw),r2wt(ncw),b2wt(ncw,mb),w2wt(ncw,mb), ! 't' = tabulated values
+      common /was1/ ret(ncw),r2wt(ncw),b2wt(ncw,mb),w2wt(ncw,mb), & ! 't' = tabulated values
      &     g2wt(ncw,mb)
       double precision ret, r2wt, b2wt, w2wt, g2wt
 
@@ -719,15 +719,15 @@ c1360.3
                      k = k + 1
                   end do
 
-                  t2w(i)=thk(i) * rho2w(i) * ( b2wt(k,ib)
-     &                 / r2wt(k) +( b2wt(k+1,ib) / r2wt(k+1) -
-     &                 b2wt(k,ib) / r2wt(k) ) /
-     &                 ( 1.0 / ret(k+1) - 1.0 / ret(k) )
-     &                 * ( 1.0 / rew(i)
+                  t2w(i)=thk(i) * rho2w(i) * ( b2wt(k,ib) &
+     &                 / r2wt(k) +( b2wt(k+1,ib) / r2wt(k+1) - &
+     &                 b2wt(k,ib) / r2wt(k) ) / &
+     &                 ( 1.0 / ret(k+1) - 1.0 / ret(k) ) &
+     &                 * ( 1.0 / rew(i) &
      &                 - 1.0 / ret(k) ) )
-                  w2w(i)=w2wt(k,ib) + ( w2wt(k+1,ib) - w2wt(k,ib) ) /
+                  w2w(i)=w2wt(k,ib) + ( w2wt(k+1,ib) - w2wt(k,ib) ) / &
      &                 ( ret(k+1) - ret(k) ) * ( rew(i) - ret(k) )
-                  gg=g2wt(k,ib) + ( g2wt(k+1,ib) - g2wt(k,ib) ) /
+                  gg=g2wt(k,ib) + ( g2wt(k+1,ib) - g2wt(k,ib) ) / &
      &                 ( ret(k+1) - ret(k) ) * ( rew(i) - ret(k) )
                   do jl=1,2
                      pl2w(jl,i)=dble(2*jl+1)*gg**jl
@@ -767,9 +767,9 @@ c1360.3
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     mb,
+     &     mb, &
      &     nrlay
 
       implicit none
@@ -783,7 +783,7 @@ c1360.3
 
 ! Local arrays:
       double precision vv(mb)
-      data vv / 10*0.0, 1175.0, 1040.0, 890.0, 735.0,
+      data vv / 10*0.0, 1175.0, 1040.0, 890.0, 735.0, &
      &     605.0, 470.0, 340.0, 0.0 /
 
 ! Common blocks:
@@ -837,9 +837,9 @@ c1360.3
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -857,7 +857,7 @@ c1360.3
       double precision ff(nrlev), p1(nrlev)
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -877,7 +877,7 @@ c1360.3
          ff(i)=s * ( p1(i)/100. + r * p(i) ) * w
       enddo
       do i=1,nrlay
-         tgcon(i)=( ff(i) * xm1(i) + ff(i+1) * xm1(i+1) )*
+         tgcon(i)=( ff(i) * xm1(i) + ff(i+1) * xm1(i+1) )* &
      &            ( p(i+1) - p(i) ) * 0.00509892
       enddo
 
@@ -913,14 +913,14 @@ c1360.3
 ! Declarations:
 ! Modules used:
 
-      USE constants, ONLY :
+      USE constants, ONLY : &
 ! Imported Parameters:
      & pi
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
-     &     nrlev,
+     &     nrlay, &
+     &     nrlev, &
      &     mbs
 
       implicit none
@@ -934,11 +934,11 @@ c1360.3
 
 ! Local arrays:
       double precision wvl(13)
-      data wvl / 2200., 1900., 1700., 1400., 1250., 1100., 980.,
+      data wvl / 2200., 1900., 1700., 1400., 1250., 1100., 980., &
      &              800., 670., 540., 400., 280., 0. /
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -988,15 +988,15 @@ c1360.3
       implicit double precision(a-h,o-z)
 
       double precision     xT, WNUMLO, WNUMHI
-      PARAMETER  ( A1=1./3., A2=-1./8., A3=1./60., A4=-1./5040.,
+      PARAMETER  ( A1=1./3., A2=-1./8., A3=1./60., A4=-1./5040., &
      &             A5=1./272160., A6=-1./13305600. )
       INTEGER  SMALLV
 
-      REAL*8     C2, CONC, D(2), EPSIL, EX, MV, P(2), SIGMA, SIGDPI,
+      REAL*8     C2, CONC, D(2), EPSIL, EX, MV, P(2), SIGMA, SIGDPI, &
      &         V(2), VCUT, VCP(7), VSQ
 
       SAVE     CONC, VMAX, EPSIL, SIGDPI
-      DATA     C2 / 1.438786 /,  SIGMA / 5.67032E-8 /,
+      DATA     C2 / 1.438786 /,  SIGMA / 5.67032E-8 /, &
      &         VCUT / 1.5 /, VCP / 10.25, 5.7, 3.9, 2.9, 2.3, 1.9, 0.0 /
       F(X)=X**3 / ( EXP(X) - 1. )
 !
@@ -1010,7 +1010,7 @@ c1360.3
       SIGDPI=SIGMA / PI
       CONC=15. / PI**4
 !
-      IF( xT < 0.0 .OR. WNUMHI <= WNUMLO .OR. WNUMLO < 0.)
+      IF( xT < 0.0 .OR. WNUMHI <= WNUMLO .OR. WNUMLO < 0.) &
      &    print *,'PLKAVG--TEMPERATURE OR WAVENUMS. WRONG'
 !
       IF ( xT < 1.E-4 )  THEN
@@ -1020,7 +1020,7 @@ c1360.3
 !
       V(1)=C2 * WNUMLO / xT
       V(2)=C2 * WNUMHI / xT
-      IF ( V(1) > EPSIL .AND. V(2) < VMAX .AND.
+      IF ( V(1) > EPSIL .AND. V(2) < VMAX .AND. &
      &     (WNUMHI-WNUMLO)/WNUMHI < 1.E-2 )  THEN
 !
 !                          ** WAVENUMBERS ARE VERY CLOSE.  GET INTEGRAL
@@ -1051,7 +1051,7 @@ c1360.3
 ! ** USE POWER SERIES
             SMALLV=SMALLV + 1
             VSQ=V(I)**2
-            P(I)= CONC * VSQ * V(I) * ( A1 + V(I) * ( A2 + V(I) *
+            P(I)= CONC * VSQ * V(I) * ( A1 + V(I) * ( A2 + V(I) * &
      &           ( A3 + VSQ * ( A4 + VSQ * ( A5 + VSQ*A6 ) ) ) ) )
          ELSE
 ! ** USE EXPONENTIAL SERIES
@@ -1066,7 +1066,7 @@ c1360.3
             DO  30  M=1, MMAX
                MV=M * V(I)
                EXM=EX * EXM
-               D(I)=D(I) +
+               D(I)=D(I) + &
      &              EXM * ( 6. + MV*( 6. + MV*( 3. + MV ) ) ) / M**4
  30         CONTINUE
 !
@@ -1086,7 +1086,7 @@ c1360.3
          PLKAVG=D(1) - D(2)
       END IF
       PLKAVG=SIGDPI * xT**4 * PLKAVG
-      IF( PLKAVG == 0.0 )
+      IF( PLKAVG == 0.0 ) &
      &     print *,'PLKAVG--RETURNS ZERO; POSSIBLE UNDERFLOW'
 
       END function plkavg
@@ -1098,61 +1098,61 @@ c1360.3
 !
 ! jjb 24/07/2016 unused, thus commented
 !
-c$$$      subroutine plancktab(ib)
-c$$$!
-c$$$! Description:
-c$$$! ***************************************************************
-c$$$!   Berechnung der ueber den Bereich {ib} integrierten Planck-
-c$$$!   Funktion auf allen Rechenflaechen und der Erdoberflaechen-
-c$$$!   temperatur (kann ungleich der Temperatur der Luft am Boden
-c$$$!   sein)
-c$$$! ***************************************************************
-c$$$!
-c$$$
-c$$$!
-c$$$! History:
-c$$$! Version   Date     Comment
-c$$$! -------   ----     -------
-c$$$! 1.1      07/2016   Header including "USE ... ONLY"  <Josue Bock>
-c$$$!
-c$$$! 1.0       ?        Original code.                   <unknown>
-c$$$!
-c$$$! Code Description:
-c$$$!   Language:          Fortran 77 (with Fortran 90 features)
-c$$$!
-c$$$! Declarations:
-c$$$! Modules used:
-c$$$
-c$$$      USE global_params, ONLY :
-c$$$! Imported Parameters:
-c$$$     &     nrlay,
-c$$$     &     nrlev,
-c$$$     &     mbs
-c$$$
-c$$$      implicit double precision(a-h,o-z)
-c$$$
-c$$$! Common blocks:
-c$$$      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
-c$$$     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-c$$$      double precision t,p,rho,xm1,rho2,frac,ts
-c$$$      integer ntypa,ntypd
-c$$$
-c$$$      common /planci/ pib(nrlev),pibs
-c$$$      double precision pib, pibs
-c$$$!- End of header ---------------------------------------------------------------
-c$$$
-c$$$      do 1 i=1,nrlev
-c$$$      pib(i)=0.
-c$$$ 1         continue
-c$$$      pibs=0.
-c$$$      if(ib <= mbs) return
-c$$$      ibir=ib-mbs
-c$$$      do 2 i=1,nrlev
-c$$$      pib(i)=fst4(ibir,t(i)) ! function fst4 has to be uncommented if used
-c$$$ 2         continue
-c$$$      pibs=fst4(ibir,ts)
-c$$$
-c$$$      end subroutine plancktab
+!!$      subroutine plancktab(ib)
+!!$!
+!!$! Description:
+!!$! ***************************************************************
+!!$!   Berechnung der ueber den Bereich {ib} integrierten Planck-
+!!$!   Funktion auf allen Rechenflaechen und der Erdoberflaechen-
+!!$!   temperatur (kann ungleich der Temperatur der Luft am Boden
+!!$!   sein)
+!!$! ***************************************************************
+!!$!
+!!$
+!!$!
+!!$! History:
+!!$! Version   Date     Comment
+!!$! -------   ----     -------
+!!$! 1.1      07/2016   Header including "USE ... ONLY"  <Josue Bock>
+!!$!
+!!$! 1.0       ?        Original code.                   <unknown>
+!!$!
+!!$! Code Description:
+!!$!   Language:          Fortran 77 (with Fortran 90 features)
+!!$!
+!!$! Declarations:
+!!$! Modules used:
+!!$
+!!$      USE global_params, ONLY : &
+!!$! Imported Parameters:
+!!$     &     nrlay, &
+!!$     &     nrlev, &
+!!$     &     mbs
+!!$
+!!$      implicit double precision(a-h,o-z)
+!!$
+!!$! Common blocks:
+!!$      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+!!$     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+!!$      double precision t,p,rho,xm1,rho2,frac,ts
+!!$      integer ntypa,ntypd
+!!$
+!!$      common /planci/ pib(nrlev),pibs
+!!$      double precision pib, pibs
+!!$!- End of header ---------------------------------------------------------------
+!!$
+!!$      do 1 i=1,nrlev
+!!$      pib(i)=0.
+!!$ 1         continue
+!!$      pibs=0.
+!!$      if(ib <= mbs) return
+!!$      ibir=ib-mbs
+!!$      do 2 i=1,nrlev
+!!$      pib(i)=fst4(ibir,t(i)) ! function fst4 has to be uncommented if used
+!!$ 2         continue
+!!$      pibs=fst4(ibir,ts)
+!!$
+!!$      end subroutine plancktab
 
 !
 ! ---------------------------------------------------------------------
@@ -1162,46 +1162,46 @@ c$$$      end subroutine plancktab
 ! jjb 25/07/2016: used only by SR plancktab, whose call is commented
 !                  -> not used anymore, thus commented out
 !
-c$$$      double precision function fst4(ib,t)
-c$$$!
-c$$$! Description:
-c$$$! ***************************************************************
-c$$$!   Interpolation of black body radiation from tabled values {pibtab}
-c$$$!   for 35 temperatures {ttab}.
-c$$$!   Daten in Block Data PLANC1.
-c$$$! ***************************************************************
-c$$$!
-c$$$
-c$$$!
-c$$$! History:
-c$$$! Version   Date     Comment
-c$$$! -------   ----     -------
-c$$$! 1.1      07/2016   Header including "USE ... ONLY"   <Josue Bock>
-c$$$!
-c$$$! 1.0       ?        Original code.                     <unknown>
-c$$$!
-c$$$! Code Description:
-c$$$!   Language:          Fortran 77 (with Fortran 90 features)
-c$$$!
-c$$$! Declarations:
-c$$$
-c$$$      implicit double precision(a-h,o-z)
-c$$$
-c$$$! Common blocks:
-c$$$      common /plancd/ ttab(35),pibtab(12,35)
-c$$$!- End of header ---------------------------------------------------------------
-c$$$      do 1 k=1,35
-c$$$         kk=k
-c$$$         if(t-ttab(k)) 3,2,1
-c$$$ 1    continue
-c$$$ 2    fst4=pibtab(ib,kk)
-c$$$      return
-c$$$ 3    continue
-c$$$      kkm=kk-1
-c$$$      fst4=pibtab(ib,kkm)+(pibtab(ib,kk)-pibtab(ib,kkm))
-c$$$     &     *(t-ttab(kkm))*0.2
-c$$$
-c$$$      end function fst4
+!!$!      double precision function fst4(ib,t)
+!!$!
+!!$! Description:
+!!$! ***************************************************************
+!!$!   Interpolation of black body radiation from tabled values {pibtab}
+!!$!   for 35 temperatures {ttab}.
+!!$!   Daten in Block Data PLANC1.
+!!$! ***************************************************************
+!!$!
+!!$
+!!$!
+!!$! History:
+!!$! Version   Date     Comment
+!!$! -------   ----     -------
+!!$! 1.1      07/2016   Header including "USE ... ONLY"   <Josue Bock>
+!!$!
+!!$! 1.0       ?        Original code.                     <unknown>
+!!$!
+!!$! Code Description:
+!!$!   Language:          Fortran 77 (with Fortran 90 features)
+!!$!
+!!$! Declarations:
+!!$
+!!$      implicit double precision(a-h,o-z)
+!!$
+!!$! Common blocks:
+!!$      common /plancd/ ttab(35),pibtab(12,35)
+!!$!- End of header ---------------------------------------------------------------
+!!$      do 1 k=1,35
+!!$         kk=k
+!!$         if(t-ttab(k)) 3,2,1
+!!$ 1    continue
+!!$ 2    fst4=pibtab(ib,kk)
+!!$      return
+!!$ 3    continue
+!!$      kkm=kk-1
+!!$      fst4=pibtab(ib,kkm)+(pibtab(ib,kk)-pibtab(ib,kkm)) &
+!!$     &     *(t-ttab(kkm))*0.2
+!!$
+!!$      end function fst4
 
 !
 ! ---------------------------------------------------------------------
@@ -1234,9 +1234,9 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -1289,7 +1289,7 @@ c$$$      end function fst4
       common /band18/ hk18(8), c18h2o(3,19,8)
       double precision hk18, c18h2o
 
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -1539,9 +1539,9 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -1557,11 +1557,11 @@ c$$$      end function fst4
       double precision x1, x2, y1
 ! Local arrays:
       double precision stanp(11)
-      data stanp / 1000., 1580., 2510., 3980., 6310., 10000.,
+      data stanp / 1000., 1580., 2510., 3980., 6310., 10000., &
      &     15800.,25100.,39800.,63100.,100000. /
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -1574,17 +1574,17 @@ c$$$      end function fst4
 ! absorption coefficient for boundary values: pressure lower than 
 ! 10 hPa or higher than 1000 hPa
         if ( p(i) < stanp(1) ) then
-           x1=exp( coefks(1,1) + coefks(2,1) * ( t(i) - 245.0 )
+           x1=exp( coefks(1,1) + coefks(2,1) * ( t(i) - 245.0 ) &
      &          + coefks(3,1) * ( t(i) - 245.0 ) ** 2 )
            fkg(i)=x1 * p(i) / stanp(1)
 
         elseif ( p(i) >= stanp(11) ) then
            y1=( t(i) - 245.0 ) * ( t(i) - 245.0 )
-           x1=exp( coefks(1,10) + coefks(2,10) * ( t(i) - 245.0 )
+           x1=exp( coefks(1,10) + coefks(2,10) * ( t(i) - 245.0 ) &
      &          + coefks(3,10) * y1 )
-           x2=exp( coefks(1,11) + coefks(2,11) * ( t(i) - 245.0 )
+           x2=exp( coefks(1,11) + coefks(2,11) * ( t(i) - 245.0 ) &
      &          + coefks(3,11) * y1 )
-           fkg(i)=x1 + ( x2 - x1 ) / ( stanp(11) - stanp(10) )
+           fkg(i)=x1 + ( x2 - x1 ) / ( stanp(11) - stanp(10) ) &
      &          * ( p(i) - stanp(10) )
 
 ! linear interpolation of absorption coefficients coefks between reference
@@ -1593,11 +1593,11 @@ c$$$      end function fst4
  30        continue
            if ( p(i) >= stanp(i1) ) goto 20
            y1=( t(i) - 245.0 ) * ( t(i) - 245.0 )
-           x1=exp( coefks(1,i1-1) + coefks(2,i1-1) * (t(i)-245.0)
+           x1=exp( coefks(1,i1-1) + coefks(2,i1-1) * (t(i)-245.0) &
      &          + coefks(3,i1-1) * y1 )
-           x2=exp( coefks(1,i1) + coefks(2,i1) * ( t(i) - 245.0 )
+           x2=exp( coefks(1,i1) + coefks(2,i1) * ( t(i) - 245.0 ) &
      &          + coefks(3,i1) * y1 )
-           fkg(i)=x1 + ( x2 - x1 ) / ( stanp(i1) - stanp(i1-1) )
+           fkg(i)=x1 + ( x2 - x1 ) / ( stanp(i1) - stanp(i1-1) ) &
      &          * ( p(i) - stanp(i1-1) )
            goto 5
  20        i1=i1 + 1
@@ -1643,9 +1643,9 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -1661,13 +1661,13 @@ c$$$      end function fst4
       double precision x1, x2, y1
 ! Local arrays:
       double precision stanp(19)
-      data stanp / 25.1,  39.8,  63.1,  100.,  158.,  251.,
-     &     398.,  631., 1000., 1580., 2510., 3980.,
-     &     6310.,10000.,15800.,25100.,39800.,63100.,
+      data stanp / 25.1,  39.8,  63.1,  100.,  158.,  251., &
+     &     398.,  631., 1000., 1580., 2510., 3980., &
+     &     6310.,10000.,15800.,25100.,39800.,63100., &
      &     100000. /
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -1680,16 +1680,16 @@ c$$$      end function fst4
 ! absorption coefficient for boundary values: pressure lower than
 ! 0.25 hPa or higher than 1000 hPa
          if ( p(i) < stanp(1) ) then
-            x1=exp( coefki(1,1) + coefki(2,1) * ( t(i) - 245.0 )
+            x1=exp( coefki(1,1) + coefki(2,1) * ( t(i) - 245.0 ) &
      &           + coefki(3,1) * ( t(i) - 245.0 ) ** 2 )
             fkg(i)=x1 * p(i) / stanp(1)
          elseif ( p(i) >= stanp(19) ) then
             y1=( t(i) - 245.0 ) * ( t(i) - 245.0 )
-            x1=exp( coefki(1,18) + coefki(2,18) * ( t(i) - 245.0 )
+            x1=exp( coefki(1,18) + coefki(2,18) * ( t(i) - 245.0 ) &
      &           + coefki(3,18) * y1 )
-            x2=exp( coefki(1,19) + coefki(2,19) * ( t(i) - 245.0 )
+            x2=exp( coefki(1,19) + coefki(2,19) * ( t(i) - 245.0 ) &
      &           + coefki(3,19) * y1 )
-            fkg(i)=x1 + ( x2 - x1 ) / ( stanp(19) - stanp(18) )
+            fkg(i)=x1 + ( x2 - x1 ) / ( stanp(19) - stanp(18) ) &
      &           * ( p(i) - stanp(18) )
 
 ! linear interpolation of absorption coefficients coefks between reference
@@ -1698,11 +1698,11 @@ c$$$      end function fst4
  30         continue
             if ( p(i) >= stanp(i1) ) goto 20
             y1=( t(i) - 245.0 ) * ( t(i) - 245.0 )
-            x1=exp( coefki(1,i1-1) + coefki(2,i1-1) * (t(i)-245.0)
+            x1=exp( coefki(1,i1-1) + coefki(2,i1-1) * (t(i)-245.0) &
      &           + coefki(3,i1-1) * y1 )
-            x2=exp( coefki(1,i1) + coefki(2,i1) * ( t(i) - 245.0 )
+            x2=exp( coefki(1,i1) + coefki(2,i1) * ( t(i) - 245.0 ) &
      &           + coefki(3,i1) * y1 )
-            fkg(i)=x1 + ( x2 - x1 ) / ( stanp(i1) - stanp(i1-1) )
+            fkg(i)=x1 + ( x2 - x1 ) / ( stanp(i1) - stanp(i1-1) ) &
      &           * ( p(i) - stanp(i1-1) )
             goto 5
  20         i1=i1 + 1
@@ -1748,9 +1748,9 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -1765,13 +1765,13 @@ c$$$      end function fst4
       integer i, i1
       double precision x1, x2, y1
       double precision stanp(19)
-      data stanp / 25.1,  39.8,  63.1,  100.,  158.,  251.,
-     &     398.,  631., 1000., 1580., 2510., 3980.,
-     &     6310.,10000.,15800.,25100.,39800.,63100.,
+      data stanp / 25.1,  39.8,  63.1,  100.,  158.,  251., &
+     &     398.,  631., 1000., 1580., 2510., 3980., &
+     &     6310.,10000.,15800.,25100.,39800.,63100., &
      &     100000. /
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -1784,16 +1784,16 @@ c$$$      end function fst4
 ! absorption coefficient for boundary values: pressure lower than
 ! 0.25 hPa or higher than 1000 hPa
       if ( p(i) < stanp(1) ) then
-         x1=exp( coefki(1,1) + coefki(2,1) * ( t(i) - 250.0 )
+         x1=exp( coefki(1,1) + coefki(2,1) * ( t(i) - 250.0 ) &
      &        + coefki(3,1) * ( t(i) - 250.0 ) ** 2 )
          fkg(i)=x1 * p(i) / stanp(1)
       elseif ( p(i) >= stanp(19) ) then
          y1=( t(i) - 250.0 ) * ( t(i) - 250.0 )
-         x1=exp( coefki(1,18) + coefki(2,18) * ( t(i) - 250.0 )
+         x1=exp( coefki(1,18) + coefki(2,18) * ( t(i) - 250.0 ) &
      &        + coefki(3,18) * y1 )
-         x2=exp( coefki(1,19) + coefki(2,19) * ( t(i) - 250.0 )
+         x2=exp( coefki(1,19) + coefki(2,19) * ( t(i) - 250.0 ) &
      &        + coefki(3,19) * y1 )
-         fkg(i)=x1 + ( x2 - x1 ) / ( stanp(19) - stanp(18) )
+         fkg(i)=x1 + ( x2 - x1 ) / ( stanp(19) - stanp(18) ) &
      &        * ( p(i) - stanp(18) )
 
 ! linear interpolation of absorption coefficients coefks between reference
@@ -1802,11 +1802,11 @@ c$$$      end function fst4
  30      continue
          if ( p(i) >= stanp(i1) ) goto 20
          y1=( t(i) - 250.0 ) * ( t(i) - 250.0 )
-         x1=exp( coefki(1,i1-1) + coefki(2,i1-1) * (t(i)-250.0)
+         x1=exp( coefki(1,i1-1) + coefki(2,i1-1) * (t(i)-250.0) &
      &        + coefki(3,i1-1) * y1 )
-         x2=exp( coefki(1,i1) + coefki(2,i1) * ( t(i) - 250.0 )
+         x2=exp( coefki(1,i1) + coefki(2,i1) * ( t(i) - 250.0 ) &
      &        + coefki(3,i1) * y1 )
-         fkg(i)=x1 + ( x2 - x1 ) / ( stanp(i1) - stanp(i1-1) )
+         fkg(i)=x1 + ( x2 - x1 ) / ( stanp(i1) - stanp(i1-1) ) &
      &        * ( p(i) - stanp(i1-1) )
          goto 5
  20      i1=i1 + 1
@@ -1842,9 +1842,9 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -1860,7 +1860,7 @@ c$$$      end function fst4
       integer i
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -1911,9 +1911,9 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -1928,7 +1928,7 @@ c$$$      end function fst4
       integer i
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -1936,7 +1936,7 @@ c$$$      end function fst4
 !- End of header ---------------------------------------------------------------
 
       do i=1,nrlay
-         tg(i)=( fkg(i) * xm1(i) + fkg(i+1) * xm1(i+1) )
+         tg(i)=( fkg(i) * xm1(i) + fkg(i+1) * xm1(i+1) ) &
      &        * ( p(i+1) - p(i) ) * 6.349205
       end do
 
@@ -1969,9 +1969,9 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -1986,7 +1986,7 @@ c$$$      end function fst4
       integer i
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -2026,9 +2026,9 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -2043,7 +2043,7 @@ c$$$      end function fst4
       integer i
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -2082,9 +2082,9 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -2099,7 +2099,7 @@ c$$$      end function fst4
       integer i
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -2110,7 +2110,7 @@ c$$$      end function fst4
 !- End of header ---------------------------------------------------------------
 
       do i=1,nrlay
-         tg(i)=( fkg(i) * qmo3(i) + fkg(i+1) * qmo3(i+1) )
+         tg(i)=( fkg(i) * qmo3(i) + fkg(i+1) * qmo3(i+1) ) &
      &        * ( p(i+1) - p(i) ) * 2.3808
       end do
 
@@ -2145,9 +2145,9 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay,
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -2156,13 +2156,13 @@ c$$$      end function fst4
 ! Array arguments with intent(in):
       double precision, intent(in) :: fkg(nrlev)
 ! Array arguments with intent(out):
-      double precision , intent(out) ::tg(nrlay)
+      double precision , intent(out) :: tg(nrlay)
 
 ! Local scalars:
       integer i
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -2210,7 +2210,7 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
      &     nrlay
 
@@ -2323,11 +2323,11 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     mbs,
-     &     mbir,
-     &     nrlay,
+     &     mbs, &
+     &     mbir, &
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -2369,7 +2369,7 @@ c$$$      end function fst4
       common /leck1/ a4(2,nrlay),a5(2,nrlay)                          ! matrix coefficients
       double precision a4, a5
 
-      common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev),             ! radiation fluxes
+      common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
      &     f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
       double precision sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
 
@@ -2480,8 +2480,8 @@ c$$$      end function fst4
                         u0red=u0red-delu0
                         if(u0red <= 0.) then
                            write(89,5)          ! jjb improve this by using globaly defined file unit
- 5                         format(/1x,'Error in resonance-case'
-     & //' correction: The sun is moved back below the horizon.'
+ 5                         format(/1x,'Error in resonance-case' &
+     & //' correction: The sun is moved back below the horizon.' &
      & //' Thus it is nighttime and shortwave fluxes are zero')
                            stop 'Error in subroutine kurzw.'
                         end if
@@ -2603,11 +2603,11 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     mbs,
-     &     mbir,
-     &     nrlay,
+     &     mbs, &
+     &     mbir, &
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -2631,7 +2631,7 @@ c$$$      end function fst4
       double precision a6(2,nrlay)                         ! matrix coefficients (local)
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
@@ -2639,7 +2639,7 @@ c$$$      end function fst4
       common /leck1/ a4(2,nrlay),a5(2,nrlay)                          ! matrix coefficients
       double precision a4, a5
 
-      common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev),             ! radiation fluxes
+      common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
      &     f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
       double precision sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
 
@@ -2711,7 +2711,7 @@ c$$$      end function fst4
                   a4(l,i)=e*(1.-rmq)/rn
                   a5(l,i)=rm*(1.-eq)/rn
                   if(alph1+alph2 /= 0.d0) then ! jjb see [Z82] p. 219: indetermination case
-                     a6(l,i)=(1.-a4(l,i)-a5(l,i)) /
+                     a6(l,i)=(1.-a4(l,i)-a5(l,i)) / &
      &                        ((alph1+alph2)*dtau(l,i))
                   else
                      a6(l,i)=1.d0
@@ -2734,8 +2734,8 @@ c$$$      end function fst4
 !
 ! surface
       ii0=ib-mbs
-      agdb=ee(ii0)*(pib(nrlev)-pibs)+(1.-ee(ii0))*
-     & (1.-ee(ii0))*(pib(nrlev)-pib(nrlay))*a6(1,nrlay)*
+      agdb=ee(ii0)*(pib(nrlev)-pibs)+(1.-ee(ii0))* &
+     & (1.-ee(ii0))*(pib(nrlev)-pib(nrlay))*a6(1,nrlay)* &
      & (1.-frac(nrlay))
       f1w(nrlev)=agdb*frac(nrlay)
       f1f(nrlev)=agdb-f1w(nrlev)
@@ -2789,11 +2789,11 @@ c$$$      end function fst4
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY :
+      USE global_params, ONLY : &
 ! Imported Parameters:
-     &     mbs,
-     &     mbir,
-     &     nrlay,
+     &     mbs, &
+     &     mbir, &
+     &     nrlay, &
      &     nrlev
 
       implicit none
@@ -2817,7 +2817,7 @@ c$$$      end function fst4
       common /leck1/ a4(2,nrlay),a5(2,nrlay)                          ! matrix coefficients
       double precision a4, a5
 
-      common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev),             ! radiation fluxes
+      common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
      &     f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
       double precision sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
 
