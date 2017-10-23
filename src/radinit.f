@@ -1207,9 +1207,11 @@ c$$$      end subroutine load0
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
+     &     nf,
      &     nrlay,
      &     nrlev,
      &     nka,
+     &     nkt,
      &     mbs
 
       implicit none
@@ -1219,7 +1221,7 @@ c$$$      end subroutine load0
       logical mic
 
 ! Local scalars:
-      integer k
+      integer k, ia, jt
       double precision zeit, horang, rlat, rdec, u00, ru0, x0
       double precision znum,zdenom,zfix   ! calculation of effective drop radius
 
@@ -1232,6 +1234,9 @@ c$$$      end subroutine load0
      & ts,ntypa(nrlay),ntypd(nrlay)
       double precision tx,px,rhox,xm1x,rho2x,frac,ts
       integer ntypa,ntypd
+
+      common /cb08/ re1(nkt), re2(nkt), re3(nkt)
+      double precision re1, re2, re3
 
       common /cb15/ fnseb,flgeg,hr(nrlay)
       double precision fnseb, flgeg, hr
@@ -1251,6 +1256,10 @@ c$$$      end subroutine load0
 
       common /cb48/ sk,sl,dtrad(n),dtcon(n)
       double precision sk, sl, dtrad, dtcon
+
+      common /cb52/ ff(nkt,nka,n),fsum(n),nar(n)
+      double precision ff,fsum
+      integer nar
 
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
       double precision theta, thetl, t, talt, p, rho
