@@ -3229,7 +3229,8 @@ c update total liquid water [kg/m^3]
          xm1o=xm1a(k)
          feualt=feu(k)
          do ib=1,mb
-            totr(ib)=totrad(ib,k-1)
+            !totr(ib)=totrad(ib,k-1)
+            totr(ib)=totrad(ib,nrlay-k+2)
          enddo
          kr=nar(k)
          do ia=1,nka

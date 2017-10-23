@@ -165,7 +165,7 @@
       double precision umco2,umch4,umn2o
 
 ! Local scalars:
-      integer i, ib, ig, ip, ix, iz, ibanf, j, l
+      integer i, ib, ig, ix, iz, ibanf, j, jp, l
       double precision hk
       double precision s0
       double precision zbsca
@@ -230,8 +230,7 @@ c1360.3
 
          if (ib <= mbs) then
             do i=1,nrlay ! Index i goes from top to bottom
-               j=nrlev-i    ! Index j goes from bottom to top
-               dtaur(i)=berayl(ib)*thk(j)*(rho(j+1)+rho(j))/zdopr
+               dtaur(i)=berayl(ib)*thk(i)*(rho(i)+rho(i+1))/zdopr
                plr(1,i)=0.
                plr(2,i)=0.5
             enddo
@@ -255,22 +254,21 @@ c1360.3
 
          if (ib <= mbs) then
             do iz=1,nrlay        ! Index iz goes from top to bottom
-               j=nrlev-iz          ! Index j goes from bottom to top
-               zbsca=bea(ib,j)-baa(ib,j)
-               taer(iz)=bea(ib,j)*thk(j)
+               zbsca=bea(ib,iz)-baa(ib,iz)
+               taer(iz)=bea(ib,iz)*thk(iz)
                if (ib == 1) then
-                  taer_s(iz)=zbsca*thk(j)            ! photolysis
-                  taer_a(iz)=baa(ib,j)*thk(j)       ! photolysis
+                  taer_s(iz)=zbsca*thk(iz)            ! photolysis
+                  taer_a(iz)=baa(ib,iz)*thk(iz)       ! photolysis
                endif
-               if (zbsca+(dtaur(iz)/thk(j)) >= 1.0e-20) then
-                  zgaer(iz)=ga(ib,j)*zbsca/(zbsca+(dtaur(iz)/thk(j)))
-                  if(ib == 1) ga_pl(iz)=ga(ib,j)     ! photolysis
+               if (zbsca+(dtaur(iz)/thk(iz)) >= 1.0e-20) then
+                  zgaer(iz)=ga(ib,iz)*zbsca/(zbsca+(dtaur(iz)/thk(iz)))
+                  if(ib == 1) ga_pl(iz)=ga(ib,iz)     ! photolysis
                else
                   zgaer(iz)=0.0
                   if(ib == 1) ga_pl(iz)=0.0          ! photolysis
                endif
-               if (bea(ib,j) > 1.e-20) then
-                  waer(iz)=1.0-(baa(ib,j)/bea(ib,j))
+               if (bea(ib,iz) > 1.e-20) then
+                  waer(iz)=1.0-(baa(ib,iz)/bea(ib,iz))
                else
                   waer(iz)=0.0
                endif
@@ -280,12 +278,11 @@ c1360.3
             enddo
          else
             do iz=1,nrlay        ! Index iz goes from top to bottom
-               j=nrlev-iz          ! Index j goes from bottom to top
-               zbsca=bea(ib,j)-baa(ib,j)
-               taer(iz)=bea(ib,j)*thk(j)
-               zgaer(iz)=ga(ib,j)
-               if (bea(ib,j) > 1.e-20) then
-                  waer(iz)=1.0-(baa(ib,j)/bea(ib,j))
+               zbsca=bea(ib,iz)-baa(ib,iz)
+               taer(iz)=bea(ib,iz)*thk(iz)
+               zgaer(iz)=ga(ib,iz)
+               if (bea(ib,iz) > 1.e-20) then
+                  waer(iz)=1.0-(baa(ib,iz)/bea(ib,iz))
                else
                   waer(iz)=0.0
                endif
@@ -331,16 +328,15 @@ c1360.3
 ! fs1   is total diffusive solar upward
                call kurzw(ib,u0)
                call jeanfr(ib)
-               do i=1, nrlev  ! Index i goes from ground to top
-                  j=nrlev-i+1 ! Index j goes from top to bottom
-                  ss(i)=ss(i)+(sf(j)+sw(j))*hk
-                  sss(i)=sss(i)+(ssf(j)+ssw(j))*hk
-                  fs1(i)=fs1(i)+(f1f(j)+f1w(j))*hk
-                  fs2(i)=fs2(i)+(f2f(j)+f2w(j))*hk
-                  dlam(1,i,ib)=dlam(1,i,ib)+(sf(j)+sw(j))*hk
-                  dlam(2,i,ib)=dlam(2,i,ib)+(ssf(j)+ssw(j))*hk
-                  dlam(3,i,ib)=dlam(3,i,ib)+(f1f(j)+f1w(j))*hk
-                  dlam(4,i,ib)=dlam(4,i,ib)+(f2f(j)+f2w(j))*hk
+               do j=1, nrlev  ! Index j goes from top to bottom
+                  ss(j)=ss(j)+(sf(j)+sw(j))*hk
+                  sss(j)=sss(j)+(ssf(j)+ssw(j))*hk
+                  fs1(j)=fs1(j)+(f1f(j)+f1w(j))*hk
+                  fs2(j)=fs2(j)+(f2f(j)+f2w(j))*hk
+                  dlam(1,j,ib)=dlam(1,j,ib)+(sf(j)+sw(j))*hk
+                  dlam(2,j,ib)=dlam(2,j,ib)+(ssf(j)+ssw(j))*hk
+                  dlam(3,j,ib)=dlam(3,j,ib)+(f1f(j)+f1w(j))*hk
+                  dlam(4,j,ib)=dlam(4,j,ib)+(f2f(j)+f2w(j))*hk
                enddo
 
             else
@@ -358,13 +354,12 @@ c1360.3
 
                call langw(ib)
                call jeanfr(ib)
-               do i=1, nrlev  ! Index i goes from ground to top
-                  j=nrlev-i+1 ! Index j goes from top to bottom
-                  fl1(i)=fl1(i)+(pib(j)-f1f(j)-f1w(j))*hk
-                  fl2(i)=fl2(i)+(pib(j)-f2f(j)-f2w(j))*hk
-                  dlam(5,i,ib)=dlam(5,i,ib)+(pib(j)-f1f(j)-f1w(j))*hk
-                  dlam(6,i,ib)=dlam(6,i,ib)+(pib(j)-f2f(j)-f2w(j))*hk
-                  dlam(7,i,ib)=dlam(7,i,ib)+pib(j)*hk
+               do j=1, nrlev  ! Index j goes from top to bottom
+                  fl1(j)=fl1(j)+(pib(j)-f1f(j)-f1w(j))*hk
+                  fl2(j)=fl2(j)+(pib(j)-f2f(j)-f2w(j))*hk
+                  dlam(5,j,ib)=dlam(5,j,ib)+(pib(j)-f1f(j)-f1w(j))*hk
+                  dlam(6,j,ib)=dlam(6,j,ib)+(pib(j)-f2f(j)-f2w(j))*hk
+                  dlam(7,j,ib)=dlam(7,j,ib)+pib(j)*hk
                enddo
             endif
          enddo ! ig
@@ -378,16 +373,16 @@ c1360.3
       zfuq2=pibs * 0.03 *  ee(mbir)
 
       ! Solar wavelength bands corrections
-      do i=1,nrlev ! This loop goes from ground to top
-         ss(i)=ss(i)*zfuq1
-         sss(i)=sss(i)*zfuq1
-         fs1(i)=fs1(i)*zfuq1
-         fs2(i)=fs2(i)*zfuq1
+      do j=1,nrlev ! This loop goes from top to bottom
+         ss(j)=ss(j)*zfuq1
+         sss(j)=sss(j)*zfuq1
+         fs1(j)=fs1(j)*zfuq1
+         fs2(j)=fs2(j)*zfuq1
       enddo
       do ib=1,mbs ! optimised loop order: innermost is leftmost
-         do i=1,nrlev
+         do j=1,nrlev
             do ix=1,4
-               dlam(ix,i,ib)=dlam(ix,i,ib)*zfuq1
+               dlam(ix,j,ib)=dlam(ix,j,ib)*zfuq1
             enddo
          enddo
       enddo
@@ -399,51 +394,51 @@ c1360.3
 ! f1 and f2 are total upward / downward radiation fluxes
 ! fn    is total net radiation flux
 
-      do i=1,nrlev
+      do j=1,nrlev
          ! Delta-Eddington peak (sss-ss) is added to fs2
-         totds(i)=sss(i)+fs2(i)
-         fs2(i)=totds(i)-ss(i)
-         fsn(i)=fs1(i)-totds(i)
-         fl1(i)=fl1(i)+zfuq2
-         dlam(5,i,18)=dlam(5,i,18)+zfuq2 ! jjb mysterious ! fl2?
-         fln(i)=fl1(i)-fl2(i)
+         totds(j)=sss(j)+fs2(j)
+         fs2(j)=totds(j)-ss(j)
+         fsn(j)=fs1(j)-totds(j)
+         fl1(j)=fl1(j)+zfuq2
+         dlam(5,j,18)=dlam(5,j,18)+zfuq2 ! jjb mysterious ! fl2?
+         fln(j)=fl1(j)-fl2(j)
       enddo
 
       ! surface radiation fluxes
-      flgeg=fl2(1)
-      fnseb=fs2(1)+ss(1)-fs1(1)
+      flgeg=fl2(nrlev)
+      fnseb=fs2(nrlev)+ss(nrlev)-fs1(nrlev)
 
 ! calculation of heating rates {hr},
 ! dtdts and dtdtl are the solar / ir heating rates (currently not used)
-      do i=1,nrlay ! This loop goes from ground to top
-         ip=i+1
-         if (i == 1) zfni=fl1(1)-fl2(1)+fs1(1)-ss(1)-fs2(1)
-         zfnip=fl1(ip)-fl2(ip)+fs1(ip)-ss(ip)-fs2(ip)
-         zx0=(thk(i)*(rho(ip)+rho(i))*502.5)
-         dtdts(i)=(fs1(i)-ss(i)-fs2(i)-fs1(ip)+ss(ip)+fs2(ip))/zx0
-         dtdtl(i)=(fl1(i)-fl2(i)-fl1(ip)+fl2(ip))/zx0
-         hr(i)=(zfni-zfnip)/zx0
+      do j=1,nrlay ! This loop goes from top to bottom
+         jp=j+1
+         if (j == 1) zfni=fl1(1)-fl2(1)+fs1(1)-ss(1)-fs2(1)
+         zfnip=fl1(jp)-fl2(jp)+fs1(jp)-ss(jp)-fs2(jp)
+         zx0=(thk(j)*(rho(j)+rho(jp))*502.5)
+         dtdts(j)=(fs1(jp)-ss(jp)-fs2(jp)-fs1(j)+ss(j)+fs2(j))/zx0
+         dtdtl(j)=(fl1(jp)-fl2(jp)-fl1(j)+fl2(j))/zx0
+         hr(j)=(zfnip-zfni)/zx0
          zfni=zfnip
       enddo
 
 ! ------------------------------------------------------------------------------
-      do i=1,nrlay
+      do j=1,nrlay
          do ib=1,mbs
-            totrad(ib,i)=((dlam(2,i,ib)+dlam(2,i+1,ib))/(2.0*u0))+
-     &                   (dlam(3,i,ib)+dlam(3,i+1,ib)+dlam(4,i,ib)
-     &                   +dlam(4,i+1,ib))
+            totrad(ib,j)=((dlam(2,j,ib)+dlam(2,j+1,ib))/(2.0*u0))+
+     &                   (dlam(3,j,ib)+dlam(3,j+1,ib)+dlam(4,j,ib)
+     &                   +dlam(4,j+1,ib))
          enddo
       enddo
-      do i=1,nrlay
+      do j=1,nrlay
          do ib=mbs+1,mb
 !            if(i == 1) then                                 ! jjb problem here, same as below
-               totrad(ib,i)=-(dlam(7,i,ib)+dlam(7,i+1,ib))*2
-     &                      +dlam(5,i,ib)+dlam(6,i,ib)
-     &                      +dlam(5,i+1,ib)+dlam(6,i+1,ib)
+               totrad(ib,j)=-(dlam(7,j,ib)+dlam(7,j+1,ib))*2
+     &                      +dlam(5,j,ib)+dlam(6,j,ib)
+     &                      +dlam(5,j+1,ib)+dlam(6,j+1,ib)
 !            else
-!               totrad(ib,i)=-(dlam(7,i,ib)+dlam(7,i+1,ib))*2
-!     &                      +dlam(5,i,ib)+dlam(6,i,ib)
-!     &                      +dlam(5,i+1,ib)+dlam(6,i+1,ib)
+!               totrad(ib,j)=-(dlam(7,j,ib)+dlam(7,j+1,ib))*2
+!     &                      +dlam(5,j,ib)+dlam(6,j,ib)
+!     &                      +dlam(5,j+1,ib)+dlam(6,j+1,ib)
 !            endif
          enddo
       enddo
@@ -521,30 +516,16 @@ c1360.3
 ! Local scalars:
       integer i, j, k
 
-! Local arrays:
-      double precision frac_copy(nrlay)
-
 ! Common blocks:
       common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), ! only: frac
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
       double precision t,p,rho,xm1,rho2,frac,ts
       integer ntypa,ntypd
 
-      common /cb40/ time,lday,lst,lmin,it,lcl,lct
-      double precision time
-      integer lday, lst, lmin, it, lcl, lct
-
       common /part/ cc(4,nrlay),bb(4,nrlay)
       double precision cc, bb
 
 !- End of header ---------------------------------------------------------------
-
-!     Temporary: invert frac direction
-      frac_copy = frac
-      do i=1,nrlay
-         j=nrlay-i+1
-         frac(i) = frac_copy(j)
-      end do
 
       do j=1,nrlay
          i=j-1
@@ -650,11 +631,6 @@ c1360.3
 ! Declarations:
 ! Modules used:
 
-      USE constants, ONLY :
-! Imported Parameters:
-     &     pi,
-     &     rhow                  ! Water density [kg/m**3]
-
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
@@ -674,37 +650,22 @@ c1360.3
       !integer, intent(in) :: icld  ! clouds (/=0) or not (=0)
 
 ! Local scalars:
-      integer i, j            ! loop indexes (vertical)
+      integer i            ! loop indexes (vertical)
       integer jl, k
       double precision gg                 ! interpolation
 
-! Local arrays:
-      double precision dz(nrlay) ! layer thickness, from bottom to top
-      double precision rho2w(nrlay)
-
 ! Common blocks:
-      common /cb01/ rew(nrlay)
-      double precision rew
-
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),
+     & rho2w(nrlay),
      &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
+      double precision t,p,rho,xm1,rho2w,frac,ts
       integer ntypa,ntypd
+
+      common /cb09/ rew(nrlay)
+      double precision rew
 
       common /cb16/ u0,albedo(mbs),thk(nrlay)
       double precision u0, albedo, thk
-
-      common /cb40/ time,lday,lst,lmin,it,lcl,lct
-      double precision time
-      integer lday, lst, lmin, it, lcl, lct
-
-      common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
-     &     e(nkt),dew(nkt),rq(nkt,nka)
-      double precision enw,ew,rn,rw,en,e,dew,rq
-
-      common /cb52/ ff(nkt,nka,n),fsum(n),nar(n)
-      double precision ff, fsum
-      integer nar
 
       common /h2o/ t2w(nrlay), w2w(nrlay), pl2w(2,nrlay)
       double precision t2w, w2w, pl2w
@@ -722,21 +683,11 @@ c1360.3
       !else
          ! Initialisations:
          ! ----------------
-         ! Define local name for layer thicknesses
-         do i=1,nrlay
-            j=nrlev-i
-            dz(i)=thk(j)
-         enddo
-         do i=1,nrlay
-            rho2w(i)=rho2(i)
-         enddo
-
 ! -------------------------------------------------------
          do i=1,nrlay ! here, i goes frop the top to the ground
-            j=nrlev-i   ! here, j goes frop the ground to the top
 
 ! no clouds
-            if ( rho2w(j) < 1.0e-5 ) then
+            if ( rho2w(i) < 1.0e-5 ) then
                t2w(i)=0.0
                w2w(i)=0.0
                do jl=1,2
@@ -746,16 +697,16 @@ c1360.3
 ! interpolation for given reff and rho2 from tabulated values
 ! {ret} and {r2wt}
 ! lower limit 4.18 um
-               if ( rew(j) <= ret(1) ) then
-                  t2w(i)=dz(i) * rho2w(j)*b2wt(1,ib)/r2wt(1)
+               if ( rew(i) <= ret(1) ) then
+                  t2w(i)=thk(i) * rho2w(i)*b2wt(1,ib)/r2wt(1)
                   w2w(i)=w2wt(1,ib)
                   do jl=1,2
                      pl2w(jl,i)=dble(2*jl+1)*g2wt(1,ib)**jl
                   end do
 
 ! upper limit 31.18 um
-               elseif ( rew(j) >= ret(ncw) ) then
-                  t2w(i)=dz(i) * rho2w(j)*b2wt(ncw,ib)/r2wt(ncw)
+               elseif ( rew(i) >= ret(ncw) ) then
+                  t2w(i)=thk(i) * rho2w(i)*b2wt(ncw,ib)/r2wt(ncw)
                   w2w(i)=w2wt(ncw,ib)
                   do jl=1,2
                      pl2w(jl,i)=dble(2*jl+1)*g2wt(ncw,ib)**jl
@@ -764,20 +715,20 @@ c1360.3
 ! linear interpolation for values between the limits
                else
                   k = 1
-                  do while (rew(j) > ret(k+1))
+                  do while (rew(i) > ret(k+1))
                      k = k + 1
                   end do
 
-                  t2w(i)=dz(i) * rho2w(j) * ( b2wt(k,ib)
+                  t2w(i)=thk(i) * rho2w(i) * ( b2wt(k,ib)
      &                 / r2wt(k) +( b2wt(k+1,ib) / r2wt(k+1) -
      &                 b2wt(k,ib) / r2wt(k) ) /
      &                 ( 1.0 / ret(k+1) - 1.0 / ret(k) )
-     &                 * ( 1.0 / rew(j)
+     &                 * ( 1.0 / rew(i)
      &                 - 1.0 / ret(k) ) )
                   w2w(i)=w2wt(k,ib) + ( w2wt(k+1,ib) - w2wt(k,ib) ) /
-     &                 ( ret(k+1) - ret(k) ) * ( rew(j) - ret(k) )
+     &                 ( ret(k+1) - ret(k) ) * ( rew(i) - ret(k) )
                   gg=g2wt(k,ib) + ( g2wt(k+1,ib) - g2wt(k,ib) ) /
-     &                 ( ret(k+1) - ret(k) ) * ( rew(j) - ret(k) )
+     &                 ( ret(k+1) - ret(k) ) * ( rew(i) - ret(k) )
                   do jl=1,2
                      pl2w(jl,i)=dble(2*jl+1)*gg**jl
                   end do
@@ -898,7 +849,7 @@ c1360.3
       double precision, intent(in) :: vv
 
 ! Local scalars:
-      integer i,j
+      integer i
       double precision r,x,y,zz
       double precision s,w
 
@@ -920,16 +871,14 @@ c1360.3
       zz=0.00787
       r=0.00002
       s=( x + y * exp ( - zz * vv ) ) / 101325.
-      do j=1,nrlev                                            ! jjb should this be nrlay instead ???? CHECK !
-         i=nrlev+1-j
-         p1(i)=p(j) * xm1(j) / ( 0.622 + 0.378 * xm1(j) )
-         w=exp ( 1800.0 / t(j) - 6.08108 )
-         ff(i)=s * ( p1(i)/100. + r * p(j) ) * w
+      do i=1,nrlev                                            ! jjb should this be nrlay instead ???? CHECK !
+         p1(i)=p(i) * xm1(i) / ( 0.622 + 0.378 * xm1(i) )
+         w=exp ( 1800.0 / t(i) - 6.08108 )
+         ff(i)=s * ( p1(i)/100. + r * p(i) ) * w
       enddo
       do i=1,nrlay
-         j=nrlev+1-i
-         tgcon(i)=( ff(i) * xm1(j) + ff(i+1) * xm1(j-1) )*
-     &            ( p(j-1) - p(j) ) * 0.00509892
+         tgcon(i)=( ff(i) * xm1(i) + ff(i+1) * xm1(i+1) )*
+     &            ( p(i+1) - p(i) ) * 0.00509892
       enddo
 
       end subroutine qopcon
@@ -1003,7 +952,7 @@ c1360.3
 
       if(ib <= mbs) return
       do i=1,nrlev
-         pib(i)=pi*plkavg(wvl(ib-5),wvl(ib-6),t(nrlev-i+1))
+         pib(i)=pi*plkavg(wvl(ib-5),wvl(ib-6),t(i))
       enddo
       pibs=pi*plkavg(wvl(ib-5),wvl(ib-6),ts)
 
@@ -1199,7 +1148,7 @@ c$$$      pibs=0.
 c$$$      if(ib <= mbs) return
 c$$$      ibir=ib-mbs
 c$$$      do 2 i=1,nrlev
-c$$$      pib(i)=fst4(ibir,t(nrlev+1-i)) ! function fst4 has to be uncommented if used
+c$$$      pib(i)=fst4(ibir,t(i)) ! function fst4 has to be uncommented if used
 c$$$ 2         continue
 c$$$      pibs=fst4(ibir,ts)
 c$$$
@@ -1299,7 +1248,7 @@ c$$$      end function fst4
       double precision, intent(out) :: hk
 
 ! Local scalars:
-      integer i,j ! loop indexes
+      integer i ! loop indexes
       double precision fk
 
 ! Common blocks:
@@ -1491,10 +1440,9 @@ c$$$      end function fst4
 ! Band 14
 ! In this band ( 800 - 670 cm**-1), we consider the overlapping
 ! absorption of H2O and CO2 by approach two of Fu(1991).
- 14   do j=1, nrlev
-         i=nrlev+1-j
-         if ( p(j) >= 6310. ) then
-            pq(i)=xm1(j)
+ 14   do i=1, nrlev
+         if ( p(i) >= 6310. ) then
+            pq(i)=xm1(i)
          else
             pq(i)=0.0
          endif
@@ -1511,10 +1459,9 @@ c$$$      end function fst4
 ! Band 15:
 ! In this band ( 670 - 540 cm**-1), we consider the overlapping
 ! absorption of H2O and CO2 by approach two of Fu(1991).
- 15   do j=1, nrlev
-         i=nrlev+1-j
-         if ( p(j) >= 6310. ) then
-            pq(i)=xm1(j)
+ 15   do i=1, nrlev
+         if ( p(i) >= 6310. ) then
+            pq(i)=xm1(i)
          else
             pq(i)=0.0
          endif
@@ -1606,7 +1553,7 @@ c$$$      end function fst4
       double precision, intent(out) :: fkg(nrlev)
 
 ! Local scalars:
-      integer i, i1, j
+      integer i, i1
       double precision x1, x2, y1
 ! Local arrays:
       double precision stanp(11)
@@ -1621,38 +1568,37 @@ c$$$      end function fst4
 
 !- End of header ---------------------------------------------------------------
 
-      do 5 j=1, nrlev
+      do 5 i=1, nrlev
         i1=1
-        i=nrlev+1-j
 
 ! absorption coefficient for boundary values: pressure lower than 
 ! 10 hPa or higher than 1000 hPa
-        if ( p(j) < stanp(1) ) then
-           x1=exp( coefks(1,1) + coefks(2,1) * ( t(j) - 245.0 )
-     &          + coefks(3,1) * ( t(j) - 245.0 ) ** 2 )
-           fkg(i)=x1 * p(j) / stanp(1)
+        if ( p(i) < stanp(1) ) then
+           x1=exp( coefks(1,1) + coefks(2,1) * ( t(i) - 245.0 )
+     &          + coefks(3,1) * ( t(i) - 245.0 ) ** 2 )
+           fkg(i)=x1 * p(i) / stanp(1)
 
-        elseif ( p(j) >= stanp(11) ) then
-           y1=( t(j) - 245.0 ) * ( t(j) - 245.0 )
-           x1=exp( coefks(1,10) + coefks(2,10) * ( t(j) - 245.0 )
+        elseif ( p(i) >= stanp(11) ) then
+           y1=( t(i) - 245.0 ) * ( t(i) - 245.0 )
+           x1=exp( coefks(1,10) + coefks(2,10) * ( t(i) - 245.0 )
      &          + coefks(3,10) * y1 )
-           x2=exp( coefks(1,11) + coefks(2,11) * ( t(j) - 245.0 )
+           x2=exp( coefks(1,11) + coefks(2,11) * ( t(i) - 245.0 )
      &          + coefks(3,11) * y1 )
            fkg(i)=x1 + ( x2 - x1 ) / ( stanp(11) - stanp(10) )
-     &          * ( p(j) - stanp(10) )
+     &          * ( p(i) - stanp(10) )
 
 ! linear interpolation of absorption coefficients coefks between reference
 ! values of pressure in array stanp.
         else
  30        continue
-           if ( p(j) >= stanp(i1) ) goto 20
-           y1=( t(j) - 245.0 ) * ( t(j) - 245.0 )
-           x1=exp( coefks(1,i1-1) + coefks(2,i1-1) * (t(j)-245.0)
+           if ( p(i) >= stanp(i1) ) goto 20
+           y1=( t(i) - 245.0 ) * ( t(i) - 245.0 )
+           x1=exp( coefks(1,i1-1) + coefks(2,i1-1) * (t(i)-245.0)
      &          + coefks(3,i1-1) * y1 )
-           x2=exp( coefks(1,i1) + coefks(2,i1) * ( t(j) - 245.0 )
+           x2=exp( coefks(1,i1) + coefks(2,i1) * ( t(i) - 245.0 )
      &          + coefks(3,i1) * y1 )
            fkg(i)=x1 + ( x2 - x1 ) / ( stanp(i1) - stanp(i1-1) )
-     &          * ( p(j) - stanp(i1-1) )
+     &          * ( p(i) - stanp(i1-1) )
            goto 5
  20        i1=i1 + 1
            goto 30
@@ -1711,7 +1657,7 @@ c$$$      end function fst4
       double precision, intent(out) :: fkg(nrlev)
 
 ! Local scalars:
-      integer i, i1, j
+      integer i, i1
       double precision x1, x2, y1
 ! Local arrays:
       double precision stanp(19)
@@ -1728,37 +1674,36 @@ c$$$      end function fst4
 
 !- End of header ---------------------------------------------------------------
 
-      do 5 j=1, nrlev
+      do 5 i=1, nrlev
          i1=1
-         i=nrlev+1-j
 
 ! absorption coefficient for boundary values: pressure lower than
 ! 0.25 hPa or higher than 1000 hPa
-         if ( p(j) < stanp(1) ) then
-            x1=exp( coefki(1,1) + coefki(2,1) * ( t(j) - 245.0 )
-     &           + coefki(3,1) * ( t(j) - 245.0 ) ** 2 )
-            fkg(i)=x1 * p(j) / stanp(1)
-         elseif ( p(j) >= stanp(19) ) then
-            y1=( t(j) - 245.0 ) * ( t(j) - 245.0 )
-            x1=exp( coefki(1,18) + coefki(2,18) * ( t(j) - 245.0 )
+         if ( p(i) < stanp(1) ) then
+            x1=exp( coefki(1,1) + coefki(2,1) * ( t(i) - 245.0 )
+     &           + coefki(3,1) * ( t(i) - 245.0 ) ** 2 )
+            fkg(i)=x1 * p(i) / stanp(1)
+         elseif ( p(i) >= stanp(19) ) then
+            y1=( t(i) - 245.0 ) * ( t(i) - 245.0 )
+            x1=exp( coefki(1,18) + coefki(2,18) * ( t(i) - 245.0 )
      &           + coefki(3,18) * y1 )
-            x2=exp( coefki(1,19) + coefki(2,19) * ( t(j) - 245.0 )
+            x2=exp( coefki(1,19) + coefki(2,19) * ( t(i) - 245.0 )
      &           + coefki(3,19) * y1 )
             fkg(i)=x1 + ( x2 - x1 ) / ( stanp(19) - stanp(18) )
-     &           * ( p(j) - stanp(18) )
+     &           * ( p(i) - stanp(18) )
 
 ! linear interpolation of absorption coefficients coefks between reference
 ! values of pressure in array stanp.
          else
  30         continue
-            if ( p(j) >= stanp(i1) ) goto 20
-            y1=( t(j) - 245.0 ) * ( t(j) - 245.0 )
-            x1=exp( coefki(1,i1-1) + coefki(2,i1-1) * (t(j)-245.0)
+            if ( p(i) >= stanp(i1) ) goto 20
+            y1=( t(i) - 245.0 ) * ( t(i) - 245.0 )
+            x1=exp( coefki(1,i1-1) + coefki(2,i1-1) * (t(i)-245.0)
      &           + coefki(3,i1-1) * y1 )
-            x2=exp( coefki(1,i1) + coefki(2,i1) * ( t(j) - 245.0 )
+            x2=exp( coefki(1,i1) + coefki(2,i1) * ( t(i) - 245.0 )
      &           + coefki(3,i1) * y1 )
             fkg(i)=x1 + ( x2 - x1 ) / ( stanp(i1) - stanp(i1-1) )
-     &           * ( p(j) - stanp(i1-1) )
+     &           * ( p(i) - stanp(i1-1) )
             goto 5
  20         i1=i1 + 1
             goto 30
@@ -1817,7 +1762,7 @@ c$$$      end function fst4
       double precision, intent(out) :: fkg(nrlev)
 
 ! Local arrays:
-      integer i, i1, j
+      integer i, i1
       double precision x1, x2, y1
       double precision stanp(19)
       data stanp / 25.1,  39.8,  63.1,  100.,  158.,  251.,
@@ -1833,37 +1778,36 @@ c$$$      end function fst4
 
 !- End of header ---------------------------------------------------------------
 
-      do 5 j=1, nrlev
+      do 5 i=1, nrlev
       i1=1
-      i=nrlev+1-j
 
 ! absorption coefficient for boundary values: pressure lower than
 ! 0.25 hPa or higher than 1000 hPa
-      if ( p(j) < stanp(1) ) then
-         x1=exp( coefki(1,1) + coefki(2,1) * ( t(j) - 250.0 )
-     &        + coefki(3,1) * ( t(j) - 250.0 ) ** 2 )
-         fkg(i)=x1 * p(j) / stanp(1)
-      elseif ( p(j) >= stanp(19) ) then
-         y1=( t(j) - 250.0 ) * ( t(j) - 250.0 )
-         x1=exp( coefki(1,18) + coefki(2,18) * ( t(j) - 250.0 )
+      if ( p(i) < stanp(1) ) then
+         x1=exp( coefki(1,1) + coefki(2,1) * ( t(i) - 250.0 )
+     &        + coefki(3,1) * ( t(i) - 250.0 ) ** 2 )
+         fkg(i)=x1 * p(i) / stanp(1)
+      elseif ( p(i) >= stanp(19) ) then
+         y1=( t(i) - 250.0 ) * ( t(i) - 250.0 )
+         x1=exp( coefki(1,18) + coefki(2,18) * ( t(i) - 250.0 )
      &        + coefki(3,18) * y1 )
-         x2=exp( coefki(1,19) + coefki(2,19) * ( t(j) - 250.0 )
+         x2=exp( coefki(1,19) + coefki(2,19) * ( t(i) - 250.0 )
      &        + coefki(3,19) * y1 )
          fkg(i)=x1 + ( x2 - x1 ) / ( stanp(19) - stanp(18) )
-     &        * ( p(j) - stanp(18) )
+     &        * ( p(i) - stanp(18) )
 
 ! linear interpolation of absorption coefficients coefks between reference
 ! values of pressure in array stanp.
       else
  30      continue
-         if ( p(j) >= stanp(i1) ) goto 20
-         y1=( t(j) - 250.0 ) * ( t(j) - 250.0 )
-         x1=exp( coefki(1,i1-1) + coefki(2,i1-1) * (t(j)-250.0)
+         if ( p(i) >= stanp(i1) ) goto 20
+         y1=( t(i) - 250.0 ) * ( t(i) - 250.0 )
+         x1=exp( coefki(1,i1-1) + coefki(2,i1-1) * (t(i)-250.0)
      &        + coefki(3,i1-1) * y1 )
-         x2=exp( coefki(1,i1) + coefki(2,i1) * ( t(j) - 250.0 )
+         x2=exp( coefki(1,i1) + coefki(2,i1) * ( t(i) - 250.0 )
      &        + coefki(3,i1) * y1 )
          fkg(i)=x1 + ( x2 - x1 ) / ( stanp(i1) - stanp(i1-1) )
-     &        * ( p(j) - stanp(i1-1) )
+     &        * ( p(i) - stanp(i1-1) )
          goto 5
  20      i1=i1 + 1
          goto 30
@@ -1913,7 +1857,7 @@ c$$$      end function fst4
 
 ! Local scalars:
       double precision fq
-      integer i,j
+      integer i
 
 ! Common blocks:
       common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
@@ -1928,8 +1872,7 @@ c$$$      end function fst4
 
       fq=2.3808 * fk
       do i=1,nrlay
-         j=nrlev+1-i
-         tg(i)=( qmo3(j) + qmo3(j-1) ) * ( p(j-1) - p(j) ) * fq
+         tg(i)=( qmo3(i) + qmo3(i+1) ) * ( p(i+1) - p(i) ) * fq
       end do
 
       end subroutine qopo3s
@@ -1982,7 +1925,7 @@ c$$$      end function fst4
       double precision, intent(out) :: tg(nrlay)
 
 ! Local scalars:
-      integer i,j
+      integer i
 
 ! Common blocks:
       common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
@@ -1993,9 +1936,8 @@ c$$$      end function fst4
 !- End of header ---------------------------------------------------------------
 
       do i=1,nrlay
-         j=nrlev-i+1
-         tg(i)=( fkg(i) * xm1(j) + fkg(i+1) * xm1(j-1) )
-     &        * ( p(j-1) - p(j) ) * 6.349205
+         tg(i)=( fkg(i) * xm1(i) + fkg(i+1) * xm1(i+1) )
+     &        * ( p(i+1) - p(i) ) * 6.349205
       end do
 
       end subroutine qoph2o
@@ -2041,7 +1983,7 @@ c$$$      end function fst4
       double precision, intent(out) :: tg(nrlay)
 
 ! Local scalars:
-      integer i,j
+      integer i
 
 ! Common blocks:
       common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
@@ -2052,8 +1994,7 @@ c$$$      end function fst4
 !- End of header ---------------------------------------------------------------
 
       do i=1,nrlay
-         j=nrlev+1-i
-         tg(i)=( fkg(i)+fkg(i+1) ) * ( p(j-1)-p(j) ) * 6.3119e-6
+         tg(i)=( fkg(i)+fkg(i+1) ) * ( p(i+1)-p(i) ) * 6.3119e-6
       end do
 
       end subroutine qopch4
@@ -2099,7 +2040,7 @@ c$$$      end function fst4
       double precision, intent(out) :: tg(nrlay)
 
 ! Local scalars:
-      integer i,j
+      integer i
 
 ! Common blocks:
       common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
@@ -2110,8 +2051,7 @@ c$$$      end function fst4
 !- End of header ---------------------------------------------------------------
 
       do i=1,nrlay
-         j=nrlev+1-i
-         tg(i)=( fkg(i)+fkg(i+1) ) * ( p(j-1)-p(j) ) * 1.10459e-6
+         tg(i)=( fkg(i)+fkg(i+1) ) * ( p(i+1)-p(i) ) * 1.10459e-6
       end do
 
       end subroutine qopn2o
@@ -2156,7 +2096,7 @@ c$$$      end function fst4
       double precision, intent(out) :: tg(nrlay)
 
 ! Local scalars:
-      integer i,j
+      integer i
 
 ! Common blocks:
       common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
@@ -2170,9 +2110,8 @@ c$$$      end function fst4
 !- End of header ---------------------------------------------------------------
 
       do i=1,nrlay
-         j=nrlev+1-i
-         tg(i)=( fkg(i) * qmo3(j) + fkg(i+1) * qmo3(j-1) )
-     &        * ( p(j-1) - p(j) ) * 2.3808
+         tg(i)=( fkg(i) * qmo3(i) + fkg(i+1) * qmo3(i+1) )
+     &        * ( p(i+1) - p(i) ) * 2.3808
       end do
 
       end subroutine qopo3i
@@ -2220,7 +2159,7 @@ c$$$      end function fst4
       double precision , intent(out) ::tg(nrlay)
 
 ! Local scalars:
-      integer i,j
+      integer i
 
 ! Common blocks:
       common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
@@ -2231,8 +2170,7 @@ c$$$      end function fst4
 !- End of header ---------------------------------------------------------------
 
       do i=1,nrlay
-         j=nrlev+1-i
-         tg(i)=( fkg(i) + fkg(i+1) ) * ( p(j-1) - p(j) ) * 0.005
+         tg(i)=( fkg(i) + fkg(i+1) ) * ( p(i+1) - p(i) ) * 0.005
       end do
 ! See page 86 of Fu (1991).
 

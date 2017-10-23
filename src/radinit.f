@@ -285,7 +285,8 @@
       implicit none
 
 ! Local scalars:
-      integer istr, k, lmin0, lst0
+      integer istr, k, lmin0, lst0, jtd
+      logical linit
 ! Common blocks:
       common /cb15/ fnseb,flgeg,hr(nrlay)
       double precision fnseb, flgeg, hr
@@ -305,6 +306,10 @@
 ! --------------------------------
       call ipdata
       call initr
+
+      linit = .true.
+      call rotate_in(linit)
+
       call nstrahl
       call profr
 
@@ -314,8 +319,9 @@
       sl=sl0
       dtrad(1)=0.d0
       do k=2,n
-         dtrad(k)=hr(k-1)
-         dtrad0(k)=hr(k-1)
+         jtd=nrlay-k+2
+         dtrad(k)=hr(jtd)
+         dtrad0(k)=hr(jtd)
       end do
       istr=30
 
@@ -333,13 +339,19 @@
       time0=time2
 
       call load1
+
+      linit = .false.
+      call rotate_in(linit)
+
       call nstrahl
       call profr
 
       sk1=fnseb
       sl1=flgeg
+      dtrad(1)=0.d0
       do k=2,n
-         dtrad1(k)=hr(k-1)
+         jtd=nrlay-k+2
+         dtrad1(k)=hr(jtd)
       end do
 
 ! recorrection of time
@@ -553,14 +565,14 @@
       common /aeag/ seanew(8,mb,4),saanew(8,mb,4),ganew(8,mb,4),ff2(8)
       double precision seanew, saanew, ganew, ff2
 
-      common /cb01/ rew(nrlay)
-      double precision rew
-
-      common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
-     &              rho2x(nrlay),frac(nrlay),
-     & ts,ntypa(nrlay),ntypd(nrlay)
-      double precision tx,px,rhox,xm1x,rho2x,frac,ts
-      integer ntypa,ntypd
+      common /cb01/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
+     &              rho2wx(nrlay),fracx(nrlay),zx(nrlev),thkx(nrlay),
+     &              beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),
+     &              qmo3x(nrlev),rewx(nrlay), tsx,
+     &              ntypax(nrlay),ntypdx(nrlay)
+      double precision tx,px,rhox,xm1x,rho2wx,fracx,zx,thkx,
+     &     beax, baax, gax, qmo3x, rewx, tsx
+      integer ntypax,ntypdx
 
       common /cb16/ u0,albedo(mbs),thk(nrlay)
       double precision u0, albedo, thk
@@ -581,12 +593,6 @@
 !      double precision o3un,o3r,vis,sigea,sigaa,gaa,sean,feux
       double precision o3un(52),o3r(52),sigea(8,6,4),          ! keep this for array size declaration
      &               sigaa(8,6,4),gaa(8,6,4),sean(8,4),feux(8) ! and potential backward compatibility
-
-      common /height/ zx(nrlev)
-      double precision zx
-
-      common /ozon/ qmo3(nrlev)
-      double precision qmo3
 
       common /tmp2/ as(mbs),ee(mbir)
       double precision as, ee
@@ -697,14 +703,14 @@
 
 ! Layer thicknesses calculated during initialisation
       do i=1,nrlay
-         thk(i)=zx(i+1)-zx(i)
+         thkx(i)=zx(i+1)-zx(i)
       end do
 
 ! aerosol type: 1 rural 2 urban 3 maritme 4 tropospheric
 ! droplet type: 1-3 cumulus 4 best
       do k=1,nrlay
-         ntypa(k)=2
-         ntypd(k)=4
+         ntypax(k)=2
+         ntypdx(k)=4
       enddo
 
 ! interpolate unreduced and reduced ozone amounts from craig
@@ -736,13 +742,13 @@
       do i=1,nrlay
          j=nrlev-i
          jp=j+1
-         qmo3(i)=usav(j)/(2.3808*(px(j)-px(jp)))
+         qmo3x(i)=usav(j)/(2.3808*(px(j)-px(jp)))
       end do
-      qmo3(nrlev)=0.
+      qmo3x(nrlev)=0.
 
       do i=n,nrlay
 !        ip=i+1         ! jjb potential problem here, ip is defined but not used
-         na=ntypa(i)
+         na=ntypax(i)
          if (na.gt.0.and.rnaer(i).gt.0.) then
             rf=xm1x(i)*px(i)/(p21(tx(i))*(.62198+.37802*xm1x(i)))
             xnaer=rnaer(i)*1.d+06
@@ -756,24 +762,24 @@
             xdd=xnaer*dd
             xemdd=xnaer*emdd
             do k=1,mb
-               bea(k,i)=xemdd*seanew(nafm,k,na)+xdd*seanew(naf,k,na)
-               baa(k,i)=xemdd*saanew(nafm,k,na)+xdd*saanew(naf,k,na)
-               ga(k,i)=emdd*ganew(nafm,k,na)+dd*ganew(naf,k,na)
+               beax(k,i)=xemdd*seanew(nafm,k,na)+xdd*seanew(naf,k,na)
+               baax(k,i)=xemdd*saanew(nafm,k,na)+xdd*saanew(naf,k,na)
+               gax(k,i)=emdd*ganew(nafm,k,na)+dd*ganew(naf,k,na)
             enddo
          else
             do k=1,mb
-               bea(k,i)=0.
-               baa(k,i)=0.
-               ga(k,i)=0.
+               beax(k,i)=0.
+               baax(k,i)=0.
+               gax(k,i)=0.
             end do
          endif
       enddo
 
-! Initialise frac, rho2x, and rew: no clouds
+! Initialise frac, rho2wx, and rew: no clouds
       do i=1,nrlay
-         frac(i)=0.
-         rho2x(i)=0.
-         rew(i) = 0.d0
+         fracx(i)=0.
+         rho2wx(i)=0.
+         rewx(i) = 0.d0
       enddo
 
       end subroutine initr
@@ -785,7 +791,7 @@
 !     28/07/2016: updated nevertheless, pi taken from module 'constants'
 !     05/10/2016: removed unused CB49
 !     13/10/2016: there was probably a problem with variable icld, which is not
-!                 initialised (only defined to 1 if rho2x(i).ge.1.0e-5)
+!                 initialised (only defined to 1 if rho2wx(i).ge.1.0e-5)
 !
 c$$$      subroutine load0
 c$$$
@@ -808,9 +814,9 @@ c$$$
 c$$$      double precision rnaer(nrlay) ! jjb removed from cb02, now local variable.
 c$$$
 c$$$      common /aeag/ seanew(8,mb,4),saanew(8,mb,4),ganew(8,mb,4),ff2(8)
-c$$$      common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),rho2x(nrlay),
+c$$$      common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),rho2wx(nrlay),
 c$$$     & frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-c$$$      double precision tx,px,rhox,xm1x,rho2x,fracx,ts
+c$$$      double precision tx,px,rhox,xm1x,rho2wx,fracx,ts
 c$$$      integer ntypa,ntypd
 c$$$
 c$$$      common /cb16/ u0,albedo(mbs),thk(nrlay)
@@ -850,7 +856,7 @@ c$$$      tx(1)=t(2)
 c$$$      px(1)=p(1)
 c$$$      xm1x(1)=xm1(2)
 c$$$      rhox(1)=px(1)/(r0*tx(1)*(1.+.608*xm1x(1)))
-c$$$      rho2x(1)=xm2(2)*p(2)/(r0*t(2))
+c$$$      rho2wx(1)=xm2(2)*p(2)/(r0*t(2))
 c$$$      rnaer(1)=fsum(2)+fsum0
 c$$$      do 1000 k=2,n-1
 c$$$         x0=0.5*detw(k+1)/deta(k)
@@ -858,7 +864,7 @@ c$$$         tx(k)=(1.-x0)*t(k+1)+x0*t(k)
 c$$$         px(k)=(1.-x0)*p(k+1)+x0*p(k)
 c$$$         xm1x(k)=(1.-x0)*xm1(k+1)+x0*xm1(k)
 c$$$         rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
-c$$$         rho2x(k)=xm2(k+1)*p(k+1)/(r0*t(k+1))
+c$$$         rho2wx(k)=xm2(k+1)*p(k+1)/(r0*t(k+1))
 c$$$         rnaer(k)=fsum(k+1)+fsum0
 c$$$ 1000    continue
 c$$$! calculate u0 from geogr. latitude, declination and hourangle
@@ -877,8 +883,8 @@ c$$$      do 1010 i=1,nrlay
 c$$$         ntypa(i)=2
 c$$$         ntypd(i)=4
 c$$$         if (ntypd(i).ge.4) goto 2000
-c$$$         if (rho2x(i).gt.0.25e-3) ntypd(i)=2
-c$$$         if (rho2x(i).gt.0.6e-3) ntypd(i)=3
+c$$$         if (rho2wx(i).gt.0.25e-3) ntypd(i)=2
+c$$$         if (rho2wx(i).gt.0.6e-3) ntypd(i)=3
 c$$$ 2000    continue
 c$$$         ip=i+1
 c$$$         na=ntypa(i)
@@ -928,7 +934,7 @@ c$$$! fractional cloudiness
 c$$$!!      clouds=0.                 ! jjb 12/10/2016 'clouds' removed from /cb20/, was not used
 c$$$      do 1050 i=1,nrlay
 c$$$         j=nrlay+1-i
-c$$$         if(rho2x(i).ge.1.0e-5) then
+c$$$         if(rho2wx(i).ge.1.0e-5) then
 c$$$            frac(j)=1.0
 c$$$            icld=1
 c$$$         else
@@ -994,14 +1000,14 @@ c$$$      end subroutine load0
       double precision znum,zdenom,zfix   ! calculation of effective drop radius
 
 ! Common blocks:
-      common /cb01/ rew(nrlay)
-      double precision rew
-
-      common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
-     & rho2x(nrlay),frac(nrlay),
-     & ts,ntypa(nrlay),ntypd(nrlay)
-      double precision tx,px,rhox,xm1x,rho2x,frac,ts
-      integer ntypa,ntypd
+      common /cb01/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
+     &              rho2wx(nrlay),fracx(nrlay),zx(nrlev),thkx(nrlay),
+     &              beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),
+     &              qmo3x(nrlev),rewx(nrlay), tsx,
+     &              ntypax(nrlay),ntypdx(nrlay)
+      double precision tx,px,rhox,xm1x,rho2wx,fracx,zx,thkx,
+     &     beax, baax, gax, qmo3x, rewx, tsx
+      integer ntypax,ntypdx
 
       common /cb08/ re1(nkt), re2(nkt), re3(nkt)
       double precision re1, re2, re3
@@ -1011,9 +1017,6 @@ c$$$      end subroutine load0
 
       common /cb18/ alat,declin                ! for the SZA calculation
       double precision alat,declin
-
-      common /cb19/ berayl(6),bea(mb,nrlay),baa(mb,nrlay),ga(mb,nrlay)
-      double precision berayl, bea, baa, ga
 
       common /cb40/ time,lday,lst,lmin,it,lcl,lct
       double precision time
@@ -1045,19 +1048,19 @@ c$$$      end subroutine load0
 
 !- End of header ---------------------------------------------------------------
 
-      ts=t(1)
+      tsx=t(1)
       tx(1)=t(2)                               ! jjb CHECK this! For me, this should be t(1) (same as pressure below)
       px(1)=p(1)
       xm1x(1)=xm1(2)
       rhox(1)=px(1)/(r0*tx(1)*(1.+.608*xm1x(1)))
-      rho2x(1)=xm2(2)
+      rho2wx(1)=xm2(2)
       do k=2,n-1
          x0=0.5*detw(k)/deta(k)
          tx(k)=t(k)+(t(k+1)-t(k))*x0
          px(k)=p(k)+(p(k+1)-p(k))*x0
          xm1x(k)=xm1(k)+(xm1(k+1)-xm1(k))*x0
          rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
-         rho2x(k)=xm2(k+1)
+         rho2wx(k)=xm2(k+1)
       enddo
 
 ! define frac, for use in SR frr,
@@ -1067,7 +1070,7 @@ c$$$      end subroutine load0
 !     the remaining indexes nf+2:nrlay have been initialised to 0. in SR initr
       do k=2,nf+1
          if (k.ge.lcl .and. k.le.lct) then
-            frac(k-1) = 1.d0
+            fracx(k-1) = 1.d0
 
             znum=0.d0
             zdenom=0.d0
@@ -1079,11 +1082,11 @@ c$$$      end subroutine load0
                znum   = znum + re3(jt)*zfix
                zdenom = zdenom + re2(jt)*zfix
             end do
-            rew(k-1) = znum/zdenom
+            rewx(k-1) = znum/zdenom
 
          else
-            frac(k-1) = 0.d0
-            rew(k-1) = 0.d0
+            fracx(k-1) = 0.d0
+            rewx(k-1) = 0.d0
          end if
       end do
 
@@ -1110,9 +1113,9 @@ c$$$      end subroutine load0
       ! Initialisation
       do k=1,n-1
          do l1=lu0,luf
-            baa(l1,k)=0.
-            bea(l1,k)=0.
-            ga(l1,k)=0.
+            baax(l1,k)=0.
+            beax(l1,k)=0.
+            gax(l1,k)=0.
          end do
       end do
 
@@ -1127,16 +1130,16 @@ c$$$      end subroutine load0
             do jt=1,nkt
                   x0=pi*1.d-6*rq(jt,ia)**2*ff(jt,ia,k+1)
                do l1=lu0,luf
-                  baa(l1,k)=baa(l1,k)+qabs(l1,jt,ia,ka)*x0
-                  bea(l1,k)=bea(l1,k)+qext(l1,jt,ia,ka)*x0
-                  ga(l1,k)=ga(l1,k)+asym(l1,jt,ia,ka)*x0
+                  baax(l1,k)=baax(l1,k)+qabs(l1,jt,ia,ka)*x0
+                  beax(l1,k)=beax(l1,k)+qext(l1,jt,ia,ka)*x0
+                  gax(l1,k)=gax(l1,k)+asym(l1,jt,ia,ka)*x0
      &                 *(qext(l1,jt,ia,ka)-qabs(l1,jt,ia,ka))
                end do
             end do
          end do
 
          do l1=lu0,luf
-            ga(l1,k)=ga(l1,k)/(bea(l1,k)-baa(l1,k)+.1e-15)
+            gax(l1,k)=gax(l1,k)/(beax(l1,k)-baax(l1,k)+.1e-15)
          end do
 
       end do ! k loop over vertical layers
@@ -1212,6 +1215,7 @@ c$$$      end subroutine load0
      &     nrlev,
      &     nka,
      &     nkt,
+     &     mb,
      &     mbs
 
       implicit none
@@ -1221,19 +1225,19 @@ c$$$      end subroutine load0
       logical mic
 
 ! Local scalars:
-      integer k, ia, jt
+      integer ia, jt, jtd, k
       double precision zeit, horang, rlat, rdec, u00, ru0, x0
       double precision znum,zdenom,zfix   ! calculation of effective drop radius
 
 ! Common blocks:
-      common /cb01/ rew(nrlay)
-      double precision rew
-
-      common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
-     & rho2x(nrlay),frac(nrlay),
-     & ts,ntypa(nrlay),ntypd(nrlay)
-      double precision tx,px,rhox,xm1x,rho2x,frac,ts
-      integer ntypa,ntypd
+      common /cb01/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
+     &              rho2wx(nrlay),fracx(nrlay),zx(nrlev),thkx(nrlay),
+     &              beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),
+     &              qmo3x(nrlev),rewx(nrlay), tsx,
+     &              ntypax(nrlay),ntypdx(nrlay)
+      double precision tx,px,rhox,xm1x,rho2wx,fracx,zx,thkx,
+     &     beax, baax, gax, qmo3x, rewx, tsx
+      integer ntypax,ntypdx
 
       common /cb08/ re1(nkt), re2(nkt), re3(nkt)
       double precision re1, re2, re3
@@ -1274,19 +1278,19 @@ c$$$      end subroutine load0
          ! difference is nearly unplottable (cloudless case) but saves 20 % CPU time !
       else
 ! next lines are copied from SR load1
-         ts=t(1)
+         tsx=t(1)
          tx(1)=t(2)                      ! jjb CHECK this! For me, this should be t(1) (same as pressure below)
          px(1)=p(1)
          xm1x(1)=xm1(2)                  ! jjb CHECK this! For me, this should be xm1(1) (same as pressure above)
          rhox(1)=px(1)/(r0*tx(1)*(1.+.608*xm1x(1)))
-         rho2x(1)=xm2(2)
+         rho2wx(1)=xm2(2)
          do  k=2,n-1
             x0=0.5*detw(k)/deta(k)
             tx(k)=t(k)+(t(k+1)-t(k))*x0
             px(k)=p(k)+(p(k+1)-p(k))*x0
             xm1x(k)=xm1(k)+(xm1(k+1)-xm1(k))*x0
             rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
-            rho2x(k)=xm2(k+1)
+            rho2wx(k)=xm2(k+1)
          enddo
 
 ! define frac, for use in SR frr,
@@ -1296,7 +1300,7 @@ c$$$      end subroutine load0
 !     the remaining indexes nf+2:nrlay have been initialised to 0. in SR initr
          do k=2,nf+1
             if (k.ge.lcl .and. k.le.lct) then
-               frac(k-1) = 1.d0
+               fracx(k-1) = 1.d0
 
                znum=0.d0
                zdenom=0.d0
@@ -1308,11 +1312,11 @@ c$$$      end subroutine load0
                   znum   = znum + re3(jt)*zfix
                   zdenom = zdenom + re2(jt)*zfix
                end do
-               rew(k-1) = znum/zdenom
+               rewx(k-1) = znum/zdenom
 
             else
-               frac(k-1) = 0.d0
-               rew(k-1) = 0.d0
+               fracx(k-1) = 0.d0
+               rewx(k-1) = 0.d0
             end if
          end do
 
@@ -1333,7 +1337,169 @@ c$$$      end subroutine load0
       sl=flgeg
       dtrad(1)=0.
       do k=2,n
-         dtrad(k)=hr(k-1)
+         jtd=nrlay-k+2
+         dtrad(k)=hr(jtd)
       end do
 
       end subroutine str
+! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+      subroutine rotate_in(linit)
+
+! Description :
+! -----------
+!    Rotate arrays filled from main program, that are indexed from ground to top (bottom-up: _bu),
+!    towards radiative code input arrays, indexed from top to ground (top-down: _td)
+
+
+! Interface :
+! ---------
+!    SR rotate_in is called by SR initstr during initialisation, and by SR str during the run
+
+! Input :
+! -----
+!    - /cb01/ contains all "_bu" arrays that need to be rotated to be used in the radiative code
+
+! Output :
+! ------
+!    - /cb02/
+!    - /cb16/    thk(nrlay)
+!    - /height/  zx (nrlev)
+
+! Externals :
+! ---------
+!    none
+
+
+! Method :
+! ------
+!    All extra layer variables (T, P, ...) are constant.
+!    Thus, the arrays are rotated over all layers/levels during initialisation only.
+!    Else, only the meteorological layers will be rotated.
+
+
+
+! Author :
+! ------
+!    Josué Bock
+
+
+! Modifications :
+! -------------
+!    02-Apr-2017  Josué Bock   First version of this routine
+!
+! End modifications
+!-----------------------------------------------------------------------------------------------------------------------
+
+
+
+! Declarations:
+! ------------
+! Modules used:
+
+      USE global_params, ONLY :
+! Imported Parameters:
+     &     n,
+     &     nrlay,
+     &     nrlev,
+     &     mb, mbs
+
+      USE precision, ONLY :
+! Imported Parameters:
+     &     dp
+
+      implicit none
+
+      logical, intent(in) :: linit          ! called during initialisation, or not.
+
+      integer :: jlbu, jltd                 ! running indexes (bu = bottom-up, td = top-down)
+      integer :: nmin
+
+      common /cb01/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),
+     &            rho2wx(nrlay),fracx(nrlay),zx_bu(nrlev),thkx(nrlay),
+     &              beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),
+     &              qmo3x(nrlev),rewx(nrlay), tsx,
+     &              ntypax(nrlay),ntypdx(nrlay)
+      real (kind=dp) :: tx,px,rhox,xm1x,rho2wx,fracx,zx_bu,thkx,
+     &     beax, baax, gax, qmo3x, rewx, tsx
+      integer ntypax,ntypdx
+
+
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),
+     & rho2w(nrlay),
+     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+      double precision t, p, rho, xm1, rho2w, frac, ts
+      integer ntypa,ntypd
+
+      common /cb09/ rew(nrlay)
+      double precision rew
+
+      common /cb16/ u0,albedo(mbs),thk(nrlay)
+      double precision u0, albedo, thk
+
+      common /cb19/ berayl(6),bea(mb,nrlay),baa(mb,nrlay),ga(mb,nrlay)
+      double precision berayl, bea, baa, ga
+
+      common /height/ zx(nrlev)        ! Level height [m] indexed from ground to top
+      double precision zx
+
+      common /ozon/ qmo3(nrlev)
+      double precision qmo3
+
+
+! Vertical grid arrays: rotate only during initialisation
+      if(linit) then
+         ! thk(nrlay)
+         do jltd = 1,nrlay
+            jlbu = nrlay - jltd + 1
+
+            thk(jltd) = thkx(jlbu)
+         end do
+         ! zx(nrlev)
+         do jltd = 1,nrlev
+            jlbu = nrlev - jltd + 1
+
+            zx(jltd) = zx_bu(jlbu)
+         end do
+      end if
+
+
+! Define max index that will be rotated
+      if(linit) then
+         nmin = 1
+      else
+         nmin = nrlev - n + 1 ! fits nrlev size arrays. For nrlev size arrays, use nmin+1 instead
+         !nmin = 1 ! fits nrlev size arrays. For nrlev size arrays, use nmin+1 instead
+      end if
+
+      do jltd = nmin, nrlev
+         jlbu = nrlev - jltd + 1
+
+         t(jltd) = tx(jlbu)
+         p(jltd) = px(jlbu)
+         rho(jltd) = rhox(jlbu)
+         xm1(jltd) = xm1x(jlbu)
+         qmo3(jltd) = qmo3x(jlbu)
+         !(jltd) = x(jlbu)
+      end do
+
+      do jltd = MAX(nmin-1,1), nrlay
+         jlbu = nrlay - jltd + 1
+
+         rho2w(jltd) = rho2wx(jlbu)
+         rew(jltd) = rewx(jlbu)
+         frac(jltd) = fracx(jlbu)
+         ntypa(jltd) = ntypax(jlbu)
+         ntypd(jltd) = ntypdx(jlbu)
+         bea(:,jltd) = beax(:,jlbu)
+         baa(:,jltd) = baax(:,jlbu)
+         ga(:,jltd) = gax(:,jlbu)
+
+      end do
+
+      ts = tsx
+
+      end subroutine rotate_in
