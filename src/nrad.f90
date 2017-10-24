@@ -100,32 +100,33 @@ subroutine nstrahl
 
 ! Modifications :
 ! -------------
-  !              ?              Original code, PIFM1
-  !              ?              Upgraded from 6 to 18 spectral bands: PIFM2
+  !                       Original code, PIFM1
+  !                       Upgraded from 6 to 18 spectral bands: PIFM2
   !
-  !          ?      Roland      Introduced specific outputs that are further used in the
-  !                 von Glasow  photolysis module: taer_s, taer_a, ga_pl
+  !           Roland      Introduced specific outputs that are further used in the
+  !           von Glasow  photolysis module: taer_s, taer_a, ga_pl
   !
-  !       Jul-2015  Josue Bock  First check of the code using Forcheck (Mistra v7.3.3)
-  !                             minor cleaning
-  !       Mar-2016  Josue Bock  Transferred to Mistra v7.4.1, further cleaning
-  !       Jul-2016  Josue Bock  BUGFIX: berayl was defined twice, in SR berayl (4 values only,
-  !                             read from file: likely from PIFM1) and here with a data instruction.
-  !                             But the data instruction was not correct Fortran:
-  !                             "[223 W] initialization of named COMMON should be in BLOCKDATA" (Forcheck W)
-  !                             thus the first four values already initialised were not overwritten!
+  ! Jul-2015  Josue Bock  First check of the code using Forcheck (Mistra v7.3.3)
+  !                       minor cleaning
+  ! Mar-2016  Josue Bock  Transferred to Mistra v7.4.1, further cleaning
+  ! Jul-2016  Josue Bock  BUGFIX: berayl was defined twice, in SR berayl (4 values only,
+  !                       read from file: likely from PIFM1) and here with a data instruction.
+  !                       But the data instruction was not correct Fortran:
+  !                       "[223 W] initialization of named COMMON should be in BLOCKDATA" (Forcheck W)
+  !                       thus the first four values already initialised were not overwritten!
   !
-  !                             Plus cosmetic: header, comments and cleaning (namely /cb07/, which
-  !                             was defined in this routine, but used nowhere else)
+  !                       Plus cosmetic: header, comments and cleaning (namely /cb07/, which
+  !                       was defined in this routine, but used nowhere else)
   !
-  !       Oct-2016  Josue Bock  Major work, cleaning, debuging, ...
-  !                             Checked consistency of array size throughout the code
-  !                             Reindexed some arrays (totrad, ...) to improve efficiency
-  !                             Cosmetic: rearranged the routines order to facilitate reading
+  ! Oct-2016  Josue Bock  Major work, cleaning, debuging, ...
+  !                       Checked consistency of array size throughout the code
+  !                       Reindexed some arrays (totrad, ...) to improve efficiency
+  !                       Cosmetic: rearranged the routines order to facilitate reading
   !
-  !       Mar-2017  Josue Bock  Reindexed all arrays from top to bottom. This version was not in the
-  !                             first GitHub release, and has been done again in a more readable way.
+  ! Mar-2017  Josue Bock  Reindexed all arrays from top to bottom. This version was not in the
+  !                       first GitHub release, and has been done again in a more readable way.
   !
+  ! Oct-2017  Josue Bock  Converted to f90, further cleaning/improvements in the code
 
 ! == End of header =============================================================
 
@@ -222,7 +223,7 @@ subroutine nstrahl
                  !      see paper from Loughlin et al, (1997) QJRMS vol. 123, pp. 1985-2007, table 1
                  !     SHOULD THIS BE UPDATED? see also zfuq1 below: 1340.0
 ! s0 = 1360.3_dp
-  
+
 ! concentrations of trace gases ! jjb improve by reading in namelist
   umco2 = 330._dp
   umch4 = 1.6_dp
@@ -277,7 +278,7 @@ subroutine nstrahl
 ! aerosols and clouds particles with explicit optical depth
 ! (taer = optical depth)
 !
-!     Output of this section: 
+!     Output of this section:
 !     taer, waer and plaer, for use in SR tau.
 !
 !     In the solar case (band 1 only), also calculate variables for the
@@ -490,119 +491,135 @@ end subroutine nstrahl
 
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-      subroutine frr!(icld)
+subroutine frr
 !
-! Description:
+! Description :
+! -----------
 !    Calculation of random overlapping cloud coverage.
-! -----------------------------------------------------------------------------
+!    --------------------------------------------------------------------------
 !    bb: cloud free part, cc: cloudy part
-!
-!    See Zdunkowski et al., Betrei. Phys. Atmosph. Vol. 55 No. 3, August 1982
-!        pp. 215-238 (see page 219: coefficients b_1,i to b_4,i).
-!    And reference therein.
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.2      10/2016   Rewritten with if...else... structure  <Josue Bock>
-!
-! 1.1      07/2016   Header including "USE ... ONLY"        <Josue Bock>
-!                    Declarations and implicit none
-!
-! 1.0       ?        Original code.                         <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+! References :
+! ----------  
+!    Geleyn and Hollingsworth, Betrei. Phys. Atmosph. Vol. 52 No. 1, February 1979
+!        see page 7, formulas 16. Hereafter GH.
+!  
+!    also cited by Zdunkowski et al., Betrei. Phys. Atmosph. Vol. 55 No. 3, August 1982
+!        pp. 215-238 (see page 219: coefficients b_1,i to b_4,i) Note that these authors
+!        oriented the vertical indexes from bottom to top
+
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY", reference
+  !                       Declarations and implicit none
+  !
+  ! Oct-2016  Josue Bock  BUGFIX 1: frac was indexed in the wrong line (ground -> top)
+  !                       BUGFIX 2a: the general definitions are valid and have to be applied
+  !                                  to b1 and b3 for the bottom layer,
+  !                                  and to b2 and b4 for the top layer.
+  !                       BUGFIX 2b: the initialisation bb(1,1)=1.-frac(1) was thus wrong (but
+  !                                  probably without effect since frac(1) was 0.)
+  !                       Rewritten with if...else... structure. The way it is done avoids
+  !                       to have equalities in if tests.
+  !
+  ! Oct-2017  Josue Bock  Converted to f90, further cleaning/improvements in the code
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev
+       nrlay, &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
 
-! Subroutine arguments
-! Scalar arguments with intent(in):
-      !integer, intent(in) :: icld
+  implicit none
 
 ! Local scalars:
-      integer i, j, k
+  integer :: jz, jzm, jzp
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), & ! only: frac
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), & ! only: frac
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
 
-      common /part/ cc(4,nrlay),bb(4,nrlay)
-      double precision cc, bb
+  common /part/ cc(4,nrlay),bb(4,nrlay)
+  real (kind=dp) :: cc, bb
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
-      do j=1,nrlay
-         i=j-1
-         k=j+1
+  do jz = 1,nrlay
+     jzm = jz-1
+     jzp = jz+1
 
-         if(j==1)then
-            bb(1,1)=1.
-            bb(3,1)=1.
-         else
-            if(frac(i) > 0.) then
-               if(frac(i) < 1.) then
-                  if(frac(i) < frac(j)) then
-                     bb(3,j)=1.
-                     bb(1,j)=(1.-frac(j))/(1.-frac(i))
-                  else
-                     bb(3,j)=frac(j)/frac(i)
-                     bb(1,j)=1.
-                  end if
-               else             ! frac(i) = 1
-                  bb(3,j)=frac(j)
-                  bb(1,j)=1.
-               end if
-            else                ! frac(i) = 0
-               bb(3,j)=1.
-               bb(1,j)=1.-frac(j)
-            end if
-         end if
+     ! GH equation 16a: b(1,j) = (1 - max(C(j),C(j-1))) / (1 - C(j-1))
+     ! GH equation 16c: b(3,j) = min(C(j),C(j-1)) / C(j-1)
+     !   where C = frac
+     !   all indetermination cases = 1
+     if (jz==1)then
+        bb(1,1) = 1._dp
+        bb(3,1) = 1._dp
+     else
+        if (frac(jzm) > 0._dp) then
+           if (frac(jzm) < 1._dp) then
+              if (frac(jzm) <= frac(jz)) then
+                 bb(1,jz) = (1._dp-frac(jz)) / (1._dp-frac(jzm))
+                 bb(3,jz) = 1._dp
+              else ! 0. < frac(jz) < frac(jzm) < 1.
+                 bb(1,jz) = 1._dp
+                 bb(3,jz) = frac(jz) / frac(jzm)
+              end if
+           else    ! frac(jzm) = 1
+              bb(1,jz) = 1._dp
+              bb(3,jz) = frac(jz)
+           end if
+        else       ! frac(jzm) = 0
+           bb(1,jz) = 1._dp - frac(jz)
+           bb(3,jz) = 1._dp
+        end if
+     end if
 
-         if(j==nrlay)then
-            bb(2,nrlay)=1.
-            bb(4,nrlay)=1.
-         else
-            if(frac(k) > 0.) then
-               if(frac(k) < 1.) then
-                  if(frac(j) > frac(k)) then
-                     bb(4,j)=1.
-                     bb(2,j)=(1.-frac(j))/(1.-frac(k))
-                  else
-                     bb(4,j)=frac(j)/frac(k)
-                     bb(2,j)=1.
-                  end if
-               else             ! frac(k) = 1
-                  bb(4,j)=frac(j)
-                  bb(2,j)=1.
-               end if
-            else                ! frac(k) = 0
-               bb(4,j)=1.
-               bb(2,j)=1.-frac(j)
-            end if
-         end if
+     ! GH equation 16b: b(2,j) = (1 - max(C(j),C(j+1))) / (1 - C(j+1))
+     ! GH equation 16d: b(4,j) = min(C(j),C(j+1)) / C(j+1)
+     !   where C = frac
+     !   all indetermination cases = 1
+     if (jz==nrlay) then
+        bb(2,nrlay) = 1._dp
+        bb(4,nrlay) = 1._dp
+     else
+        if (frac(jzp) > 0._dp) then
+           if (frac(jzp) < 1._dp) then
+              if (frac(jz) >= frac(jzp)) then
+                 bb(2,jz) = (1._dp-frac(jz)) / (1._dp-frac(jzp))
+                 bb(4,jz) = 1._dp
+              else ! 0. < frac(jz) < frac(jzp) < 1.
+                 bb(2,jz) = 1._dp
+                 bb(4,jz) = frac(jz) / frac(jzp)
+              end if
+           else    ! frac(jzp) = 1
+              bb(2,jz) = 1._dp
+              bb(4,jz) = frac(jz)
+           end if
+        else       ! frac(jzp) = 0
+           bb(2,jz) = 1._dp-frac(jz)
+           bb(4,jz) = 1._dp
+        end if
+     end if
 
-      end do
+  end do
 
-      do i=1,nrlay
-         do j=1,4
-            cc(j,i)=1.-bb(j,i)
-         end do
-      enddo
+  ! cloudy part: cc = 1 - bb
+  cc(:,:) = 1._dp - bb(:,:)
 
-      end subroutine frr
+end subroutine frr
 
 !
 ! ---------------------------------------------------------------------
@@ -621,7 +638,7 @@ end subroutine nstrahl
 !   rho2 and reff are the partial density of cloud water and the effective
 !   radius of the cloud droplets. Effective radii lower or higher than the
 !   boundary values of 4.18 um and 31.18 um are set to the corresponding
-!   boundary values. Clouds with rho2 less than 10**-5 kg m**-3 are not 
+!   boundary values. Clouds with rho2 less than 10**-5 kg m**-3 are not
 !   calculated.
 ! *********************************************************************
 !
@@ -635,7 +652,7 @@ end subroutine nstrahl
 !                        the tests ( <=  ret(1), then  >  ret(k))
 !                        This also avoids that the calculations after "30 continue" could be
 !                        done twice (case rew(i) == ret(k)).
-!                    Missing initialisation for 
+!                    Missing initialisation for
 !
 !           07/2016  Header including "USE ... ONLY"                                   <Josue Bock>
 !                    pi no longer hardcoded
@@ -830,7 +847,7 @@ end subroutine nstrahl
 !   e-Type- and continuum absorption after eq (A.19) of
 !   dissertation Fu. (1991)
 !   vv are the central wavenumbers of the spectral bands in in cm**-1.
-!   All other variables in MKS: 
+!   All other variables in MKS:
 !   p1  =  partial pressure of water vapour in Pa
 !   ff  =  continuum/ e-Type- absorption coefficients in m**2 kg**-1
 !   delta-tau  =  ff * xm1 *rho * delta-z  =  - ff * xm1 * delta-p / gE,
@@ -986,7 +1003,7 @@ end subroutine nstrahl
 ! ***************************************************************
 !   Calculation of black body radiation for given temperature {xt}
 !   For low wavenumbers the calculation is done with power series, for high
-!   wavenumbers with exponential series. Critical wavenumber is 'vcut'. 
+!   wavenumbers with exponential series. Critical wavenumber is 'vcut'.
 ! ***************************************************************
 !
 
@@ -1232,7 +1249,7 @@ end subroutine nstrahl
 !    The subroutines qks (solar) and qki (ir) calculate the absorption
 !    coefficients 'fkg' from tabled values.
 !    tg(nrlay) are the optical depths due to nongray gaseous absorption, in
-!    nrlay layers for a given band ib and cumulative probability ig. They are 
+!    nrlay layers for a given band ib and cumulative probability ig. They are
 !    calculated from fkg in the subroutines qop{'gas formula'}.
 
 !
@@ -1528,7 +1545,7 @@ end subroutine nstrahl
 !
 ! Description:
 !     Calculation of the absorption coefficients for solar spectral bands.
-! 
+!
 ! fkg(nrlev) are the gaseous absorption coefficients in units of (cm-atm)**-1
 ! for a given cumulative probability in nrlev layers. coefks(3,11)
 ! are the coefficients to calculate the absorption coefficient at the
@@ -1588,7 +1605,7 @@ end subroutine nstrahl
       do 5 i=1, nrlev
         i1=1
 
-! absorption coefficient for boundary values: pressure lower than 
+! absorption coefficient for boundary values: pressure lower than
 ! 10 hPa or higher than 1000 hPa
         if ( p(i) < stanp(1) ) then
            x1=exp( coefks(1,1) + coefks(2,1) * ( t(i) - 245.0 ) &
