@@ -18,6 +18,10 @@
 
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ! nrad.f : radiation
+! ------------------
+! calculation of radiative fluxes for 18 spectral bands using the
+! cumulative probability method of Fu (1991)
+! ---------------------------------------------------------------
 !
 ! contains the following subroutines and functions:
 !     - nstrahl
@@ -48,20 +52,29 @@
 
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-      subroutine nstrahl
+subroutine nstrahl
 !
-! Description:
+! Description :
+! -----------
 !    Main program of the radiation module:
 !    Calls subroutines for calculation of radiative transfer equation for 18
 !    spectral bands (6 solar and 12 ir) and associated cumulative probabilities.
 !    Finally integrates results over the spectral intervals
 !
-!    Changes were done in the old part of the program to upgrade it to 18 spectral
+!    Changes were done in the old part of the program (PIFM1) to upgrade it to 18 spectral
 !    bands. This includes reading in more information in the routine 'initr'
 !    with qext, qabs, and asymm. The upgrade then follows on to other variables
 !    which are calculated from these three, namely bea baa and ga. There are also
 !    changes in the arrays which store the radiation data as a function of wavelength.
 !
+
+
+! Author :
+! ------
+!    developed at the University of Mainz by W.-G. Panhans and others
+
+
+! Main variables:
 !     as  is the surface albedo for the 6 solar spectral regions
 !     ee  is the emissivity of the ground
 !
@@ -83,240 +96,263 @@
 !     hr(i) is the radiative heating rate in Kelvin per second
 !
 !     s0 is solar constant
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 2.2       10/2016  Major work, cleaning, debuging                 <Josue Bock>
-!                    Consistency of array size throughout the code
-!
-!           07/2016  Header, comments and cleaning                  <Josue Bock>
-!
-! 2.1       ?        Original code, PIFM2                           <Andreas Bott>
-!
-! 1.0       ?        Original code, PIFM1                           <Andreas Bott>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  !              ?              Original code, PIFM1
+  !              ?              Upgraded from 6 to 18 spectral bands: PIFM2
+  !
+  !          ?      Roland      Introduced specific outputs that are further used in the
+  !                 von Glasow  photolysis module: taer_s, taer_a, ga_pl
+  !
+  !       Jul-2015  Josue Bock  First check of the code using Forcheck (Mistra v7.3.3)
+  !                             minor cleaning
+  !       Mar-2016  Josue Bock  Transferred to Mistra v7.4.1, further cleaning
+  !       Jul-2016  Josue Bock  BUGFIX: berayl was defined twice, in SR berayl (4 values only,
+  !                             read from file: likely from PIFM1) and here with a data instruction.
+  !                             But the data instruction was not correct Fortran:
+  !                             "[223 W] initialization of named COMMON should be in BLOCKDATA" (Forcheck W)
+  !                             thus the first four values already initialised were not overwritten!
+  !
+  !                             Plus cosmetic: header, comments and cleaning (namely /cb07/, which
+  !                             was defined in this routine, but used nowhere else)
+  !
+  !       Oct-2016  Josue Bock  Major work, cleaning, debuging, ...
+  !                             Checked consistency of array size throughout the code
+  !                             Reindexed some arrays (totrad, ...) to improve efficiency
+  !                             Cosmetic: rearranged the routines order to facilitate reading
+  !
+  !       Mar-2017  Josue Bock  Reindexed all arrays from top to bottom. This version was not in the
+  !                             first GitHub release, and has been done again in a more readable way.
+  !
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     mb,                  &
-     &     mbs,                 &
-     &     mbir,                &
-     &     nrlay,               &
-     &     nrlev
+       mb,                  &
+       mbs,                 &
+       mbir,                &
+       nrlay,               &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
 
-! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  implicit none
 
-      common /cb11/ totrad (mb,nrlay)
-      double precision totrad
-
-      common /cb15/ fnseb,flgeg,hr(nrlay)
-      double precision fnseb, flgeg, hr
-
-      common /cb16/ u0,albedo(mbs),thk(nrlay)
-      double precision u0, albedo, thk
-
-      common /cb19/ berayl(6),bea(mb,nrlay),baa(mb,nrlay),ga(mb,nrlay)
-      double precision berayl, bea, baa, ga
-
-      common /extra/ waer(nrlay),taer(nrlay),plaer(2,nrlay)
-      double precision waer, taer, plaer
-
-      common /extra_2/ taer_s(nrlay),taer_a(nrlay),ga_pl(nrlay) ! for photolysis calculation
-      double precision taer_s, taer_a, ga_pl
-
-      common /kurz/ fs1(nrlev),fs2(nrlev),totds(nrlev),ss(nrlev), &
-     &              fsn(nrlev),dtdts(nrlay)
-      double precision fs1, fs2, totds, ss, fsn, dtdts          ! integrated radiation fluxes
-
-      common /lang/ fl1(nrlev),fl2(nrlev),fln(nrlev),dtdtl(nrlay)           ! integrated radiation fluxes
-      double precision fl1, fl2, fln, dtdtl
-
-      common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
-     &     f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
-      double precision sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
-
-      !common /neu/ icld
-      !integer icld
-
-      common /planci/ pib(nrlev),pibs                              ! black-body radiation
-      double precision pib, pibs
-
-      common /ray/ dtaur(nrlay), plr(2,nrlay)                         ! rayleigh
-      double precision dtaur, plr
-
-      common /tmp2/ as(mbs),ee(mbir)                            ! albedo, and emissivity of the surface
-      double precision as, ee
-
-      common /umcon/ umco2,umch4,umn2o                          ! gas concentrations
-      double precision umco2,umch4,umn2o
+! Local parameterss:
+  real (kind=dp), parameter :: u0min = 1.0e-2_dp ! minimum solar angle to compute solar bands
 
 ! Local scalars:
-      integer i, ib, ig, ix, iz, ibanf, j, jp, l
-      double precision hk
-      double precision s0
-      double precision zbsca
-      double precision zdopr
-      double precision zfni, zfnip
-      double precision zfuq1, zfuq2
-      double precision zx0
+  integer :: ib, ig, ibanf
+  integer :: jl      ! Loop index for Legendre coefficients
+  integer :: jz, jzp ! Loop indexes in the vertical dimension (top-down)
+  real (kind=dp) :: hk
+  real (kind=dp) :: s0
+  real (kind=dp) :: zbsca ! scattering coefficient for aerosols
+  real (kind=dp) :: zdopr
+  real (kind=dp) :: zfni, zfnip
+  real (kind=dp) :: zfuq1, zfuq2
+  real (kind=dp) :: zx0
 
 ! Local arrays:
-      double precision dlam(7,nrlev,mb)   ! array with solar/ir rad. fluxes
-      double precision zgaer(nrlay)       ! needed for Legendre-coefficients
-      double precision sss(nrlev)
-      integer kg(mb)                   ! number of cumulative probabilities
-      data kg / 10, 8, 12, 7, 12, 5, &
-     &     2, 3, 4, 4, 3, 5, 2, 10, 12, 7, 7, 8 /
-!- End of header ---------------------------------------------------------------
+  integer :: kg(mb)                   ! number of cumulative probabilities
+  data kg / 10, 8, 12, 7, 12, 5, 2, 3, 4, 4, 3, 5, 2, 10, 12, 7, 7, 8 /
+  real (kind=dp) :: dlam(7,nrlev,mb)   ! array with solar/ir rad. fluxes
+  real (kind=dp) :: zgaer(nrlay)       ! needed for Legendre-coefficients
+  real (kind=dp) :: sss(nrlev)
 
-      s0=1355.3 ! jjb this is the sum of the 4 former wavelength bands (1018.3+230.1+39.2+67.7)
-                !      see paper from Loughlin et al, (1997) QJRMS vol. 123, pp. 1985-2007, table 1
-                !     SHOULD THIS BE UPDATED? see also zfuq1 below: 1340.0
-! 1360.3
-! concentrations of trace gases ! jjb improve by reading in the actual values if chemistry is activated
-      umco2=330.
-      umch4=1.6
-      umn2o=0.28
+! Common blocks:
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
+
+  common /cb11/ totrad (mb,nrlay)
+  real (kind=dp) :: totrad
+
+  common /cb15/ fnseb,flgeg,hr(nrlay)
+  real (kind=dp) :: fnseb, flgeg, hr
+
+  common /cb16/ u0,albedo(mbs),thk(nrlay)
+  real (kind=dp) :: u0, albedo, thk
+
+  common /cb19/ berayl(6),bea(mb,nrlay),baa(mb,nrlay),ga(mb,nrlay)
+  real (kind=dp) :: berayl, bea, baa, ga
+
+  common /extra/ waer(nrlay),taer(nrlay),plaer(2,nrlay)
+  real (kind=dp) :: waer, taer, plaer
+
+  common /extra_2/ taer_s(nrlay),taer_a(nrlay),ga_pl(nrlay) ! for photolysis calculation
+  real (kind=dp) :: taer_s, taer_a, ga_pl
+
+  common /kurz/ fs1(nrlev),fs2(nrlev),totds(nrlev),ss(nrlev), &
+                fsn(nrlev),dtdts(nrlay)
+  real (kind=dp) :: fs1, fs2, totds, ss, fsn, dtdts          ! integrated radiation fluxes
+
+  common /lang/ fl1(nrlev),fl2(nrlev),fln(nrlev),dtdtl(nrlay)           ! integrated radiation fluxes
+  real (kind=dp) :: fl1, fl2, fln, dtdtl
+
+  common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
+                 f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
+  real (kind=dp) :: sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
+
+  common /planci/ pib(nrlev),pibs                              ! black-body radiation
+  real (kind=dp) :: pib, pibs
+
+  common /ray/ dtaur(nrlay), plr(2,nrlay)                         ! rayleigh
+  real (kind=dp) :: dtaur, plr
+
+  common /tmp2/ as(mbs),ee(mbir)                            ! albedo, and emissivity of the surface
+  real (kind=dp) :: as, ee
+
+  common /umcon/ umco2,umch4,umn2o                          ! gas concentrations
+  real (kind=dp) :: umco2,umch4,umn2o
+
+! == End of declarations =======================================================
+
+  s0 = 1355.3_dp ! jjb this is the sum of the 4 former wavelength bands (1018.3+230.1+39.2+67.7)
+                 !      see paper from Loughlin et al, (1997) QJRMS vol. 123, pp. 1985-2007, table 1
+                 !     SHOULD THIS BE UPDATED? see also zfuq1 below: 1340.0
+! s0 = 1360.3_dp
+  
+! concentrations of trace gases ! jjb improve by reading in namelist
+  umco2 = 330._dp
+  umch4 = 1.6_dp
+  umn2o = 0.28_dp
 
 !
 ! ----------------------------------------------------------------------
 ! cloud fractions: frr includes the cloud fraction section taken from
 ! the new PIFM code.
 !
-      call frr!(icld)
+  call frr
 
 ! Initialisation or arrays
-      fs1(:) = 0.
-      fs2(:) = 0.
-      ss(:)  = 0.
-      sss(:) = 0.
-      totds(:) = 0.
-      fsn(:) = 0.
-      fl1(:) = 0.
-      fl2(:) = 0.
-      fln(:) = 0.
-      totrad(:,:) = 0.
-      dlam(:,:,:) = 0.
+  fs1(:) = 0._dp
+  fs2(:) = 0._dp
+  ss(:)  = 0._dp
+  sss(:) = 0._dp
+  totds(:) = 0._dp
+  fsn(:) = 0._dp
+  fl1(:) = 0._dp
+  fl2(:) = 0._dp
+  fln(:) = 0._dp
+  totrad(:,:) = 0._dp
+  dlam(:,:,:) = 0._dp
 
 ! at night: no solar radiation (ibanf=7)
-      if ( u0 <= 1.0e-2 ) then
-         ibanf=mbs + 1
-      else
-         ibanf=1
-      endif
-
-      zdopr=2.*rho(1)
+  if ( u0 <= u0min ) then
+     ibanf = mbs + 1
+  else
+     ibanf = 1
+  endif
 
 
 ! loop for 18 spectral bands
 !---------------------------
-      do ib=ibanf,mb
+  do ib = ibanf,mb
 
 ! rayleigh scattering
-
-         if (ib <= mbs) then
-            do i=1,nrlay ! Index i goes from top to bottom
-               dtaur(i)=berayl(ib)*thk(i)*(rho(i)+rho(i+1))/zdopr
-               plr(1,i)=0.
-               plr(2,i)=0.5
-            enddo
-         else
-            do i=1,nrlay
-               dtaur(i)=0.0
-               plr(1,i)=0.0
-               plr(2,i)=0.0
-            enddo
-         endif
+     zdopr = 2._dp * rho(1)
+     if (ib <= mbs) then
+        do jz=1,nrlay
+           dtaur(jz) = berayl(ib) * thk(jz) * (rho(jz)+rho(jz+1))/zdopr
+           plr(1,jz) = 0.0_dp
+           plr(2,jz) = 0.5_dp
+        enddo
+     else
+        dtaur(:) = 0.0_dp
+        plr(:,:) = 0.0_dp
+     endif
 
 ! ......................................................................
-! aerosols (taer = optical depth)
+! aerosols and clouds particles with explicit optical depth
+! (taer = optical depth)
 !
-!     First define local variable zgaer (2 cases, solar or IR), which is
-!     then used to calculate the output of this section: 
+!     Output of this section: 
 !     taer, waer and plaer, for use in SR tau.
 !
 !     In the solar case (band 1 only), also calculate variables for the
 !     photolysis model: taer_s, taer_a and ga_pl
 
-         if (ib <= mbs) then
-            do iz=1,nrlay        ! Index iz goes from top to bottom
-               zbsca=bea(ib,iz)-baa(ib,iz)
-               taer(iz)=bea(ib,iz)*thk(iz)
-               if (ib == 1) then
-                  taer_s(iz)=zbsca*thk(iz)            ! photolysis
-                  taer_a(iz)=baa(ib,iz)*thk(iz)       ! photolysis
-               endif
-               if (zbsca+(dtaur(iz)/thk(iz)) >= 1.0e-20) then
-                  zgaer(iz)=ga(ib,iz)*zbsca/(zbsca+(dtaur(iz)/thk(iz)))
-                  if(ib == 1) ga_pl(iz)=ga(ib,iz)     ! photolysis
-               else
-                  zgaer(iz)=0.0
-                  if(ib == 1) ga_pl(iz)=0.0          ! photolysis
-               endif
-               if (bea(ib,iz) > 1.e-20) then
-                  waer(iz)=1.0-(baa(ib,iz)/bea(ib,iz))
-               else
-                  waer(iz)=0.0
-               endif
-               do l=1,2
-                  plaer(l,iz)=dble(2*l+1)*zgaer(iz)**l
-               enddo
-            enddo
-         else
-            do iz=1,nrlay        ! Index iz goes from top to bottom
-               zbsca=bea(ib,iz)-baa(ib,iz)
-               taer(iz)=bea(ib,iz)*thk(iz)
-               zgaer(iz)=ga(ib,iz)
-               if (bea(ib,iz) > 1.e-20) then
-                  waer(iz)=1.0-(baa(ib,iz)/bea(ib,iz))
-               else
-                  waer(iz)=0.0
-               endif
-               do l=1,2
-                  plaer(l,iz)=dble(2*l+1)*zgaer(iz)**l
-               enddo
-            enddo
-         endif
+     if (ib <= mbs) then
+        do jz = 1, nrlay
+           ! -- taer
+           taer(jz) = bea(ib,jz) * thk(jz)
+           zbsca = bea(ib,jz) - baa(ib,jz)
+           if (ib == 1) then
+              taer_s(jz) = zbsca * thk(jz)            ! photolysis
+              taer_a(jz) = baa(ib,jz) * thk(jz)       ! photolysis
+           endif
+
+           ! -- plaer
+           if (zbsca+(dtaur(jz)/thk(jz)) >= 1.0e-20_dp) then
+              zgaer(jz) = ga(ib,jz) * zbsca / (zbsca + (dtaur(jz) / thk(jz)) )
+              do jl = 1, 2
+                 plaer(jl,jz) = real(2*jl+1,dp) * zgaer(jz)**jl
+              enddo
+              if(ib == 1) ga_pl(jz) = ga(ib,jz)       ! photolysis
+           else
+              plaer(:,jz) = 0.0_dp
+              if(ib == 1) ga_pl(jz) = 0.0_dp          ! photolysis
+           endif
+
+           ! -- waer
+           if (bea(ib,jz) > 1.e-20_dp) then
+              waer(jz) = 1.0_dp - (baa(ib,jz)/bea(ib,jz))
+           else
+              waer(jz) = 0.0_dp
+           endif
+        enddo
+     else
+        do jz=1,nrlay
+           ! -- taer
+           taer(jz) = bea(ib,jz) * thk(jz)
+           ! -- plaer
+           do jl=1,2
+              plaer(jl,jz)=real(2*jl+1,dp)*ga(ib,jz)**jl
+           enddo
+           ! -- waer
+           if (bea(ib,jz) > 1.e-20_dp) then
+              waer(jz)=1.0_dp - (baa(ib,jz)/bea(ib,jz))
+           else
+              waer(jz)=0.0_dp
+           endif
+        enddo
+     endif
 ! ......................................................................
 
 
 
-         ! water droplets
-         !call water(ib,icld)
-         call water(ib)
+     ! water droplets
+     call water(ib)
 
-         ! continuum absorption of water vapour
-         call gascon(ib)
+     ! continuum absorption of water vapour
+     call gascon(ib)
 
-         ! black body radiation
-             ! planck: explicit calculation
-             ! plancktab: calculation from tabulated values by interpolation
-         call planck(ib)
-         ! call plancktab(ib)
+     ! black body radiation
+         ! planck: explicit calculation
+         ! plancktab: calculation from tabulated values by interpolation
+     call planck(ib)
+     ! call plancktab(ib)
 
 ! gas absorption, loop for cumulative probabilities
 !--------------------------------------------------
-         do ig=1,kg(ib)
-            call gase(ib,ig,hk)
+     do ig=1,kg(ib)
+        call gase(ib,ig,hk)
 
-            ! total optical depth:
-            call tau(ib)
+        ! total optical depth:
+        call tau(ib)
 
-            if ( ib <= mbs ) then
+        if ( ib <= mbs ) then ! solar bands
 
 ! solution of short-wave radiative transfer equation
 !---------------------------------------------------
@@ -324,68 +360,63 @@
 ! radiation fluxes:
 ! ss    is direct solar downward
 ! sss   is direct solar downward + Delta-Eddington peak
-! fs2   is diffusive solar downward
 ! fs1   is total diffusive solar upward
-               call kurzw(ib,u0)
-               call jeanfr(ib)
-               do j=1, nrlev  ! Index j goes from top to bottom
-                  ss(j)=ss(j)+(sf(j)+sw(j))*hk
-                  sss(j)=sss(j)+(ssf(j)+ssw(j))*hk
-                  fs1(j)=fs1(j)+(f1f(j)+f1w(j))*hk
-                  fs2(j)=fs2(j)+(f2f(j)+f2w(j))*hk
-                  dlam(1,j,ib)=dlam(1,j,ib)+(sf(j)+sw(j))*hk
-                  dlam(2,j,ib)=dlam(2,j,ib)+(ssf(j)+ssw(j))*hk
-                  dlam(3,j,ib)=dlam(3,j,ib)+(f1f(j)+f1w(j))*hk
-                  dlam(4,j,ib)=dlam(4,j,ib)+(f2f(j)+f2w(j))*hk
-               enddo
+! fs2   is diffusive solar downward
 
-            else
+           call kurzw(ib,u0)
+           call jeanfr(ib)
+
+           ss(:)  =  ss(:) + ( sf(:) +  sw(:))*hk
+           sss(:) = sss(:) + (ssf(:) + ssw(:))*hk
+           fs1(:) = fs1(:) + (f1f(:) + f1w(:))*hk
+           fs2(:) = fs2(:) + (f2f(:) + f2w(:))*hk
+           dlam(1,:,ib) = dlam(1,:,ib) + ( sf(:) +  sw(:))*hk
+           dlam(2,:,ib) = dlam(2,:,ib) + (ssf(:) + ssw(:))*hk
+           dlam(3,:,ib) = dlam(3,:,ib) + (f1f(:) + f1w(:))*hk
+           dlam(4,:,ib) = dlam(4,:,ib) + (f2f(:) + f2w(:))*hk
+
+        else ! IR bands
 
 ! solution of long-wave radiative transfer equation
 !--------------------------------------------------
 
 ! radiation fluxes:
-! fl2   is longwave downward
 ! fl1   is longwave upward
+! fl2   is longwave downward
 !
 ! dlam contains the different contributions from solar diffuse and ir
-! in each of the middle index (see above). the first index is the
-! wavelength bin identifier and the last is the height.
+! in each of the first index (see above). The last index is the
+! wavelength bin identifier and the middle index is the height.
+! Note that dlam is only filled over (1:4,:,1:mbs) and (5:7,:,mbs+1:mb)
 
-               call langw(ib)
-               call jeanfr(ib)
-               do j=1, nrlev  ! Index j goes from top to bottom
-                  fl1(j)=fl1(j)+(pib(j)-f1f(j)-f1w(j))*hk
-                  fl2(j)=fl2(j)+(pib(j)-f2f(j)-f2w(j))*hk
-                  dlam(5,j,ib)=dlam(5,j,ib)+(pib(j)-f1f(j)-f1w(j))*hk
-                  dlam(6,j,ib)=dlam(6,j,ib)+(pib(j)-f2f(j)-f2w(j))*hk
-                  dlam(7,j,ib)=dlam(7,j,ib)+pib(j)*hk
-               enddo
-            endif
-         enddo ! ig
-      enddo ! ib
+           call langw(ib)
+           call jeanfr(ib)
+
+           fl1(:) = fl1(:) + (pib(:) - f1f(:) - f1w(:))*hk
+           fl2(:) = fl2(:) + (pib(:) - f2f(:) - f2w(:))*hk
+           dlam(5,:,ib) = dlam(5,:,ib) + (pib(:) - f1f(:) - f1w(:))*hk
+           dlam(6,:,ib) = dlam(6,:,ib) + (pib(:) - f2f(:) - f2w(:))*hk
+           dlam(7,:,ib) = dlam(7,:,ib) + pib(:)*hk
+
+        endif
+     enddo ! ig
+  enddo ! ib
 
 !---------------------------------------------------------------------------
 
 ! flux correction for given solar constant s0 and emissivity ee
 
-      zfuq1=s0/ 1340.0
-      zfuq2=pibs * 0.03 *  ee(mbir)
+  zfuq1 = s0 / 1340.0_dp
+  zfuq2 = pibs * 0.03_dp * ee(mbir)
 
-      ! Solar wavelength bands corrections
-      do j=1,nrlev ! This loop goes from top to bottom
-         ss(j)=ss(j)*zfuq1
-         sss(j)=sss(j)*zfuq1
-         fs1(j)=fs1(j)*zfuq1
-         fs2(j)=fs2(j)*zfuq1
-      enddo
-      do ib=1,mbs ! optimised loop order: innermost is leftmost
-         do j=1,nrlev
-            do ix=1,4
-               dlam(ix,j,ib)=dlam(ix,j,ib)*zfuq1
-            enddo
-         enddo
-      enddo
+  ! Solar wavelength bands corrections
+  if ( u0 > u0min ) then
+     ss(:)  =  ss(:)*zfuq1
+     sss(:) = sss(:)*zfuq1
+     fs1(:) = fs1(:)*zfuq1
+     fs2(:) = fs2(:)*zfuq1
+     dlam(:4,:,:mbs) = dlam(:4,:,:mbs)*zfuq1
+  end if
 
 ! dummy variables for additional output:
 ! totds is total solar downward
@@ -394,69 +425,55 @@
 ! f1 and f2 are total upward / downward radiation fluxes
 ! fn    is total net radiation flux
 
-      do j=1,nrlev
-         ! Delta-Eddington peak (sss-ss) is added to fs2
-         totds(j)=sss(j)+fs2(j)
-         fs2(j)=totds(j)-ss(j)
-         fsn(j)=fs1(j)-totds(j)
-         fl1(j)=fl1(j)+zfuq2
-         dlam(5,j,18)=dlam(5,j,18)+zfuq2 ! jjb mysterious ! fl2?
-         fln(j)=fl1(j)-fl2(j)
-      enddo
+  ! Delta-Eddington peak (sss-ss) is added to fs2
+  if ( u0 > u0min ) then
+     totds(:) = sss(:) + fs2(:)
+     fs2(:) = totds(:) - ss(:)
+     fsn(:) = fs1(:) - totds(:)
+  end if
+  fl1(:) = fl1(:) + zfuq2
+  dlam(5,:,18) = dlam(5,:,18) + zfuq2 ! jjb mysterious ! fl2?
+  fln(:) = fl1(:) - fl2(:)
 
-      ! surface radiation fluxes
-      flgeg=fl2(nrlev)
-      fnseb=fs2(nrlev)+ss(nrlev)-fs1(nrlev)
+  ! surface radiation fluxes
+  flgeg = fl2(nrlev)
+  fnseb = fs2(nrlev) + ss(nrlev) - fs1(nrlev)
 
 ! calculation of heating rates {hr},
 ! dtdts and dtdtl are the solar / ir heating rates (currently not used)
-      do j=1,nrlay ! This loop goes from top to bottom
-         jp=j+1
-         if (j == 1) zfni=fl1(1)-fl2(1)+fs1(1)-ss(1)-fs2(1)
-         zfnip=fl1(jp)-fl2(jp)+fs1(jp)-ss(jp)-fs2(jp)
-         zx0=(thk(j)*(rho(j)+rho(jp))*502.5)
-         dtdts(j)=(fs1(jp)-ss(jp)-fs2(jp)-fs1(j)+ss(j)+fs2(j))/zx0
-         dtdtl(j)=(fl1(jp)-fl2(jp)-fl1(j)+fl2(j))/zx0
-         hr(j)=(zfnip-zfni)/zx0
-         zfni=zfnip
-      enddo
+  do jz = 1, nrlay
+     jzp = jz+1
+     if (jz == 1) zfni = fl1(1) - fl2(1) + fs1(1) - ss(1) - fs2(1)
+     zfnip     = fl1(jzp) - fl2(jzp) + fs1(jzp) - ss(jzp) - fs2(jzp)
+     zx0       = (thk(jz) * (rho(jz) + rho(jzp)) * 502.5_dp)
+     dtdts(jz) = (fs1(jzp)-ss(jzp)-fs2(jzp) - fs1(jz)+ss(jz)+fs2(jz)) / zx0
+     dtdtl(jz) = (fl1(jzp)-fl2(jzp) - fl1(jz)+fl2(jz)) / zx0
+     hr(jz)    = (zfnip-zfni) / zx0
+     zfni      = zfnip
+  enddo
 
 ! ------------------------------------------------------------------------------
-      do j=1,nrlay
-         do ib=1,mbs
-            totrad(ib,j)=((dlam(2,j,ib)+dlam(2,j+1,ib))/(2.0*u0))+ &
-     &                   (dlam(3,j,ib)+dlam(3,j+1,ib)+dlam(4,j,ib) &
-     &                   +dlam(4,j+1,ib))
-         enddo
-      enddo
-      do j=1,nrlay
-         do ib=mbs+1,mb
-!            if(i == 1) then                                 ! jjb problem here, same as below
-               totrad(ib,j)=-(dlam(7,j,ib)+dlam(7,j+1,ib))*2 &
-     &                      +dlam(5,j,ib)+dlam(6,j,ib) &
-     &                      +dlam(5,j+1,ib)+dlam(6,j+1,ib)
-!            else
-!               totrad(ib,j)=-(dlam(7,j,ib)+dlam(7,j+1,ib))*2
-!     &                      +dlam(5,j,ib)+dlam(6,j,ib)
-!     &                      +dlam(5,j+1,ib)+dlam(6,j+1,ib)
-!            endif
-         enddo
-      enddo
+  do jz=1,nrlay
+     jzp = jz+1
+     do ib=1,mbs
+        totrad(ib,jz)=((dlam(2,jz,ib)+dlam(2,jzp,ib))/(2.0_dp*u0))+ &
+                      (dlam(3,jz,ib)+dlam(3,jzp,ib)+ &
+                       dlam(4,jz,ib)+dlam(4,jzp,ib))
+     enddo
+     do ib=mbs+1,mb
+!       if(jz == 1) then                                        ! jjb problem here, same as below
+        totrad(ib,jz)=-(dlam(7,jz,ib)+dlam(7,jzp,ib))*2._dp  & !     Should there be a different
+                      +dlam(6,jz,ib)+dlam(6,jzp,ib) &          !     calculation for the first
+                      +dlam(5,jz,ib)+dlam(5,jzp,ib)            !     (or last = ground) level?
+!       else
+!       totrad(ib,jz)=-(dlam(7,jz,ib)+dlam(7,jz+1,ib))*2._dp
+!                     +dlam(6,jz,ib)+dlam(6,jz+1,ib)
+!                     +dlam(5,jz,ib)+dlam(5,jz+1,ib)
+!       endif
+     enddo
+  enddo
 
-! ss    is down sol
-! fs2   is down diff
-! totds is total downward
-! fs1   is up diff
-! fsn   is total net
-!
-! fl2   is longwave down
-! fl1   is longwave up
-!
-! dlam now contains the different contributions from solar diffuse and ir
-! in each of the middle index (see above). the first index is the
-! wavelength bin identifier and the last is the height.
-!
-      end subroutine nstrahl
+end subroutine nstrahl
 
 !
 ! ---------------------------------------------------------------------
@@ -1162,7 +1179,7 @@
 ! jjb 25/07/2016: used only by SR plancktab, whose call is commented
 !                  -> not used anymore, thus commented out
 !
-!!$!      double precision function fst4(ib,t)
+!!$      double precision function fst4(ib,t)
 !!$!
 !!$! Description:
 !!$! ***************************************************************
