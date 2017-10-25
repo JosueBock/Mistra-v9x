@@ -626,152 +626,145 @@ end subroutine frr
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      !subroutine water(ib,icld)
-      subroutine water(ib)
+subroutine water(ib)
 !
-! Description:
-! *********************************************************************
+! Description :
+! -----------
 !   Calculation of optical depth {t2w}, single scattering albedo {w2w} and
 !   Legendre coefficients {pl2w} of the phase-function for Mie-scattering
 !   of cloud droplets. (eqs. 4.25 - 4.27 diss. Fu (1991))
-!------------------------------------------------------------------------------
+!-------------------------------------------------------------------------
 !   rho2 and reff are the partial density of cloud water and the effective
 !   radius of the cloud droplets. Effective radii lower or higher than the
 !   boundary values of 4.18 um and 31.18 um are set to the corresponding
 !   boundary values. Clouds with rho2 less than 10**-5 kg m**-3 are not
 !   calculated.
-! *********************************************************************
+!-------------------------------------------------------------------------
 !
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1       10/2016  Correction of size of array r(nkt)                                <Josue Bock>
-!                    Avoided a division by 0 in w2w and gg definitions, by slighly changing
-!                        the tests ( <=  ret(1), then  >  ret(k))
-!                        This also avoids that the calculations after "30 continue" could be
-!                        done twice (case rew(i) == ret(k)).
-!                    Missing initialisation for
-!
-!           07/2016  Header including "USE ... ONLY"                                   <Josue Bock>
-!                    pi no longer hardcoded
-!
-! 1.0       ?        Original code.                                                    <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  !                       pi no longer hardcoded (removed in a later version)
+  !
+  ! Oct-2016  Josue Bock  Correction of size of array r(nkt) instead of r(150)
+  !                       Missing initialisation for rew -- probably no consequence
+  !                         since rew was defined from nfog0 to nfog1 (lcl to lct),
+  !                         and apart from this range rho2w < threshold=1e-5
+  !                       BUGFIX: rho2w(i) was used instead of rhow in r(jt) calculation
+  !
+  ! Oct-2017  Josue Bock  Reactivated this routine by removing the inactivation switch
+  !                       icld, and correction of several bugs:
+  !                       BUGFIX 1: r(jt) was 0.01 times too small (error in units conversion)
+  !                       BUGFIX 2: rew(jz) must be shifted by -1 as compared to ff, to account
+  !                                 that layer 2 (not 1) in Mistra corresponds to layer nrlay
+  !                                 in the radiative code.
+  !
+  !                       Moved the definition of rew(jz) in SR load1 (with the calculation of
+  !                         r(nkt) in SR grid, since this doesn't change with time)
+  !
+  !                       Conversion of the code in Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     n, &
-     &     nrlay, &
-     &     nrlev, &
-     &     nka, &
-     &     nkt, &
-     &     ncw, &
-     &     mb, &
-     &     mbs
+       nrlay, &
+       nrlev, &
+       ncw, &
+       mb, &
+       mbs
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Scalar arguments with intent(in):
-      integer, intent(in) :: ib    ! current wavelength band
-      !integer, intent(in) :: icld  ! clouds (/=0) or not (=0)
+  integer, intent(in) :: ib    ! current wavelength band
 
 ! Local scalars:
-      integer i            ! loop indexes (vertical)
-      integer jl, k
-      double precision gg                 ! interpolation
+  integer :: jl         ! Loop index for Legendre coefficients
+  integer :: jz         ! Loop index in the vertical dimension (top-down)
+  integer :: k          ! Lower index of tabulated ret values such that ret(k) < rew=reff <= ret(k+1)
+  real (kind=dp) :: gg  ! g2wt interpolation
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev), &
-     & rho2w(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2w,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer ntypa,ntypd
 
-      common /cb09/ rew(nrlay)
-      double precision rew
+  common /cb09/ rew(nrlay)
+  real (kind=dp) :: rew
 
-      common /cb16/ u0,albedo(mbs),thk(nrlay)
-      double precision u0, albedo, thk
+  common /cb16/ u0,albedo(mbs),thk(nrlay)
+  real (kind=dp) :: u0, albedo, thk
 
-      common /h2o/ t2w(nrlay), w2w(nrlay), pl2w(2,nrlay)
-      double precision t2w, w2w, pl2w
+  common /h2o/ t2w(nrlay), w2w(nrlay), pl2w(2,nrlay)
+  real (kind=dp) :: t2w, w2w, pl2w
 
-      common /was1/ ret(ncw),r2wt(ncw),b2wt(ncw,mb),w2wt(ncw,mb), & ! 't' = tabulated values
-     &     g2wt(ncw,mb)
-      double precision ret, r2wt, b2wt, w2wt, g2wt
+  common /was1/ ret(ncw),r2wt(ncw),b2wt(ncw,mb),w2wt(ncw,mb), g2wt(ncw,mb) ! 't' = tabulated values
+  real (kind=dp) :: ret, r2wt, b2wt, w2wt, g2wt
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
-      !if(icld == 0) then
-      !   t2w(:)=0.0
-      !   w2w(:)=0.0
-      !   pl2w(:,:)=0.0
-      !else
-         ! Initialisations:
-         ! ----------------
-! -------------------------------------------------------
-         do i=1,nrlay ! here, i goes frop the top to the ground
+  do jz=1,nrlay
 
 ! no clouds
-            if ( rho2w(i) < 1.0e-5 ) then
-               t2w(i)=0.0
-               w2w(i)=0.0
-               do jl=1,2
-                  pl2w(jl,i)=0.0
-               end do
-            else
+     if ( rho2(jz) < 1.0e-5_dp ) then
+        t2w(jz)=0.0_dp
+        w2w(jz)=0.0_dp
+        pl2w(:,jz)=0.0_dp
+     else
+
 ! interpolation for given reff and rho2 from tabulated values
 ! {ret} and {r2wt}
-! lower limit 4.18 um
-               if ( rew(i) <= ret(1) ) then
-                  t2w(i)=thk(i) * rho2w(i)*b2wt(1,ib)/r2wt(1)
-                  w2w(i)=w2wt(1,ib)
-                  do jl=1,2
-                     pl2w(jl,i)=dble(2*jl+1)*g2wt(1,ib)**jl
-                  end do
 
-! upper limit 31.18 um
-               elseif ( rew(i) >= ret(ncw) ) then
-                  t2w(i)=thk(i) * rho2w(i)*b2wt(ncw,ib)/r2wt(ncw)
-                  w2w(i)=w2wt(ncw,ib)
-                  do jl=1,2
-                     pl2w(jl,i)=dble(2*jl+1)*g2wt(ncw,ib)**jl
-                  end do
+        ! lower limit 4.18 um
+        if ( rew(jz) <= ret(1) ) then
+           t2w(jz) = thk(jz) * rho2(jz) * b2wt(1,ib) / r2wt(1)
+           w2w(jz) = w2wt(1,ib)
+           do jl=1,2
+              pl2w(jl,jz) = real(2*jl+1,dp) * g2wt(1,ib)**jl
+           end do
 
-! linear interpolation for values between the limits
-               else
-                  k = 1
-                  do while (rew(i) > ret(k+1))
-                     k = k + 1
-                  end do
+        ! upper limit 31.18 um
+        elseif ( rew(jz) >= ret(ncw) ) then
+           t2w(jz) = thk(jz) * rho2(jz) * b2wt(ncw,ib) / r2wt(ncw)
+           w2w(jz) = w2wt(ncw,ib)
+           do jl=1,2
+              pl2w(jl,jz) = real(2*jl+1,dp) * g2wt(ncw,ib)**jl
+           end do
 
-                  t2w(i)=thk(i) * rho2w(i) * ( b2wt(k,ib) &
-     &                 / r2wt(k) +( b2wt(k+1,ib) / r2wt(k+1) - &
-     &                 b2wt(k,ib) / r2wt(k) ) / &
-     &                 ( 1.0 / ret(k+1) - 1.0 / ret(k) ) &
-     &                 * ( 1.0 / rew(i) &
-     &                 - 1.0 / ret(k) ) )
-                  w2w(i)=w2wt(k,ib) + ( w2wt(k+1,ib) - w2wt(k,ib) ) / &
-     &                 ( ret(k+1) - ret(k) ) * ( rew(i) - ret(k) )
-                  gg=g2wt(k,ib) + ( g2wt(k+1,ib) - g2wt(k,ib) ) / &
-     &                 ( ret(k+1) - ret(k) ) * ( rew(i) - ret(k) )
-                  do jl=1,2
-                     pl2w(jl,i)=dble(2*jl+1)*gg**jl
-                  end do
-               endif
-            endif
-         end do
-      !endif
+        ! linear interpolation for values between the limits
+        else
+           k = 1
+           do while (rew(jz) > ret(k+1))
+              k = k + 1
+           end do
+           t2w(jz) = thk(jz) * rho2(jz) * ( b2wt(k,ib)/r2wt(k) + &
+                    ( b2wt(k+1,ib)/r2wt(k+1) - b2wt(k,ib)/r2wt(k) ) / &
+                    ( 1.0_dp/ret(k+1) - 1.0_dp/ret(k) ) * &
+                    ( 1.0_dp/rew(jz)  - 1.0_dp/ret(k) ) )
+           w2w(jz) = w2wt(k,ib) + ( w2wt(k+1,ib) - w2wt(k,ib) ) / &
+                    ( ret(k+1) - ret(k) ) * ( rew(jz) - ret(k) )
+           gg = g2wt(k,ib) + ( g2wt(k+1,ib) - g2wt(k,ib) ) / &
+                    ( ret(k+1) - ret(k) ) * ( rew(jz) - ret(k) )
+           do jl=1,2
+              pl2w(jl,jz) = real(2*jl+1,dp) * gg**jl
+           end do
+        endif
+     endif
+  end do
 
-      end subroutine water
+end subroutine water
 
 !
 ! ---------------------------------------------------------------------
