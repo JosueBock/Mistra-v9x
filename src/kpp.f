@@ -40,7 +40,8 @@ c initialization of chemistry module
      &     s1_init_top,
      &     es1,
 ! Imported Array Variables with intent (out):
-     &     s3
+     &     s3,
+     &     vg
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -170,6 +171,13 @@ c initialization of chemistry module
 ! initiate all ions with marginal concentration to avoid computational problems
       sion1(:,:,:) = 0.d0
       sl1(:,:,:) = 0.d0
+
+! jjb 25-10-2017
+! initialise vg so that the first call to sedc/sedc_box see defined values
+! It might be necessary to check the order the subroutines are called, and/or
+! the calls hereafter: gasdrydep should probably be included as well
+! but need to check
+      vg(:) = 0.d0
 
 ! jjb 14/02/2017
 !     initialise the reaction rate arrays
