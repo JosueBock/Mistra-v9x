@@ -771,62 +771,63 @@ end subroutine water
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine gascon ( ib )
+subroutine gascon ( ib )
 !
-! Description: continuum absorption of water vapour, bands 11 - 17
-!
-!              for partial reference, see Loughlin et al. 1997, QJRMS vol 123 (543), pp. 1985-2007
-!              doi: 10.1002/qj.49712354311
-!
+! Description :
+! -----------
+!    Continuum absorption of water vapour, bands 11 - 17
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      10/2016   implicit none
-!          07/2016   Header including "USE ... ONLY"    <Josue Bock>
-!
-! 1.0       ?        Original code.                     <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+! References :
+! ----------  
+!    For partial reference, see Loughlin et al. 1997, QJRMS vol 123 (543),
+!       pp. 1985-2007 doi: 10.1002/qj.49712354311
+
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  ! Oct-2016  Josue Bock  implicit none
+  ! Oct-2017  Josue Bock  Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     mb, &
-     &     nrlay
+       mb, &
+       nrlay
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Scalar arguments with intent(in):
-      integer, intent(in) :: ib
-
-! Local scalars:
-      integer i
+  integer, intent(in) :: ib
 
 ! Local arrays:
-      double precision vv(mb)
-      data vv / 10*0.0, 1175.0, 1040.0, 890.0, 735.0, &
-     &     605.0, 470.0, 340.0, 0.0 /
+  real (kind=dp) :: vv(mb)
+  data vv / 10*0.0_dp, 1175.0_dp, 1040.0_dp, 890.0_dp, 735.0_dp, &
+             605.0_dp,  470.0_dp,  340.0_dp,   0.0_dp /
 
 ! Common blocks:
-      common /con/ tgcon(nrlay)
-      double precision tgcon
-!- End of header ---------------------------------------------------------------
+  common /con/ tgcon(nrlay)
+  real (kind=dp) :: tgcon
 
-      if ( ib >= 11 .and. ib <= 17 ) then
-         call qopcon ( vv(ib) )
-      else
-         do i=1, nrlay
-            tgcon(i)=0.0
-         enddo
-      endif
+! == End of declarations =======================================================
 
-      end subroutine gascon
+  if ( ib >= 11 .and. ib <= 17 ) then
+     call qopcon ( vv(ib) )
+  else
+     tgcon(:)=0.0_dp
+  endif
+
+end subroutine gascon
 
 !
 ! ---------------------------------------------------------------------
