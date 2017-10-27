@@ -840,7 +840,7 @@ subroutine qopcon ( vv )
 ! -----------
 !    e-Type- and continuum absorption after eq (A.19) of
 !    dissertation Fu. (1991)
-
+!
 !    vv are the central wavenumbers of the spectral bands in in cm**-1.
 !    All other variables in MKS:
 !    p1  =  partial pressure of water vapour in Pa
@@ -920,75 +920,78 @@ end subroutine qopcon
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine planck(ib)
+subroutine planck(ib)
 !
-! Description:
-! ***************************************************************
+! Description :
+! -----------
 !   Calculation of over {ib} integrated Planck-function for every model layer,
 !   and of the radiation temperature of the surface.
-! ***************************************************************
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header including "USE ... ONLY"   <Josue Bock>
-!                    implicit none
-!                    pi defined through a module
-!
-! 1.0       ?        Original code.                    <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  !                       implicit none
+  !                       pi imported from constants module
+  !
+  ! Oct-2017  Josue Bock  Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE constants, ONLY : &
+  USE constants, ONLY : &
 ! Imported Parameters:
-     & pi
+       pi
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev, &
-     &     mbs
+       nrlay,               &
+       nrlev,               &
+       mbs
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Scalar arguments with intent(in):
-      integer, intent(in) :: ib
+  integer, intent(in) :: ib
 
 ! Local scalars:
-      integer i
+  integer :: jz
 
 ! Local arrays:
-      double precision wvl(13)
-      data wvl / 2200., 1900., 1700., 1400., 1250., 1100., 980., &
-     &              800., 670., 540., 400., 280., 0. /
+  real (kind=dp) :: wvl(13)
+  data wvl / 2200._dp, 1900._dp, 1700._dp, 1400._dp, 1250._dp, 1100._dp, &
+              980._dp,  800._dp,  670._dp,  540._dp,  400._dp,  280._dp, 0._dp /
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer ntypa,ntypd
 
-      common /planci/ pib(nrlev),pibs
-      double precision pib, pibs
+  common /planci/ pib(nrlev),pibs
+  real (kind=dp) :: pib, pibs
 
 ! External function:
-      double precision plkavg
-!- End of header ---------------------------------------------------------------
+  real (kind=dp), external :: plkavg
 
-      if(ib <= mbs) return
-      do i=1,nrlev
-         pib(i)=pi*plkavg(wvl(ib-5),wvl(ib-6),t(i))
-      enddo
-      pibs=pi*plkavg(wvl(ib-5),wvl(ib-6),ts)
+! == End of declarations =======================================================
 
-      end subroutine planck
+  if(ib > mbs) then
+     do jz=1,nrlev
+        pib(jz)=pi*plkavg(wvl(ib-5),wvl(ib-6),t(jz))
+     enddo
+     pibs=pi*plkavg(wvl(ib-5),wvl(ib-6),ts)
+  end if
+
+end subroutine planck
 
 !
 ! ---------------------------------------------------------------------
