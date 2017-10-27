@@ -500,10 +500,10 @@ subroutine frr
 !    bb: cloud free part, cc: cloudy part
 
 ! References :
-! ----------  
+! ----------
 !    Geleyn and Hollingsworth, Betrei. Phys. Atmosph. Vol. 52 No. 1, February 1979
 !        see page 7, formulas 16. Hereafter GH.
-!  
+!
 !    also cited by Zdunkowski et al., Betrei. Phys. Atmosph. Vol. 55 No. 3, August 1982
 !        pp. 215-238 (see page 219: coefficients b_1,i to b_4,i) Note that these authors
 !        oriented the vertical indexes from bottom to top
@@ -778,7 +778,7 @@ subroutine gascon ( ib )
 !    Continuum absorption of water vapour, bands 11 - 17
 
 ! References :
-! ----------  
+! ----------
 !    For partial reference, see Loughlin et al. 1997, QJRMS vol 123 (543),
 !       pp. 1985-2007 doi: 10.1002/qj.49712354311
 
@@ -811,7 +811,7 @@ subroutine gascon ( ib )
   integer, intent(in) :: ib
 
 ! Local arrays:
-  real (kind=dp) :: vv(mb)
+  real (kind=dp) :: vv(mb)     ! central wavenumbers of the spectral bands in in cm**-1
   data vv / 10*0.0_dp, 1175.0_dp, 1040.0_dp, 890.0_dp, 735.0_dp, &
              605.0_dp,  470.0_dp,  340.0_dp,   0.0_dp /
 
@@ -834,82 +834,86 @@ end subroutine gascon
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine qopcon ( vv )
+subroutine qopcon ( vv )
 !
-! Description:
-! **************************************************************
-!   e-Type- and continuum absorption after eq (A.19) of
-!   dissertation Fu. (1991)
-!   vv are the central wavenumbers of the spectral bands in in cm**-1.
-!   All other variables in MKS:
-!   p1  =  partial pressure of water vapour in Pa
-!   ff  =  continuum/ e-Type- absorption coefficients in m**2 kg**-1
-!   delta-tau  =  ff * xm1 *rho * delta-z  =  - ff * xm1 * delta-p / gE,
-!   ff * xm1 arithmetical mean values
-! **************************************************************
+! Description :
+! -----------
+!    e-Type- and continuum absorption after eq (A.19) of
+!    dissertation Fu. (1991)
+
+!    vv are the central wavenumbers of the spectral bands in in cm**-1.
+!    All other variables in MKS:
+!    p1  =  partial pressure of water vapour in Pa
+!    ff  =  continuum/ e-Type- absorption coefficients in m**2 kg**-1
+!    delta-tau  =  ff * xm1 *rho * delta-z  =  - ff * xm1 * delta-p / gE,
+!    ff * xm1 arithmetical mean values
 !
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      10/2016   Removed arithmetic do loops       <Josue Bock>
-!                    Implicit none
-!          07/2016   Header including "USE ... ONLY"
-!
-! 1.0       ?        Original code.                    <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  ! Oct-2016  Josue Bock  implicit none, removed arithmetic do loops
+  ! Oct-2017  Josue Bock  Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev
+       nrlay, &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Scalar arguments with intent(in):
-      double precision, intent(in) :: vv
+  real (kind=dp), intent(in) :: vv
 
 ! Local scalars:
-      integer i
-      double precision r,x,y,zz
-      double precision s,w
+  integer :: jz
+  real (kind=dp), parameter :: &
+       r = 0.00002_dp,         &
+       x = 418._dp,            &
+       y = 557780._dp,         &
+       zz = 0.00787_dp
+  real (kind=dp) :: s,w
 
 ! Local arrays:
-      double precision ff(nrlev), p1(nrlev)
+  real (kind=dp) :: ff(nrlev), p1(nrlev)
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
 
-      common /con/ tgcon(nrlay)
-      double precision tgcon
-!- End of header ---------------------------------------------------------------
+  common /con/ tgcon(nrlay)
+  real (kind=dp) :: tgcon
 
-      x=418.
-      y=557780.
-      zz=0.00787
-      r=0.00002
-      s=( x + y * exp ( - zz * vv ) ) / 101325.
-      do i=1,nrlev                                            ! jjb should this be nrlay instead ???? CHECK !
-         p1(i)=p(i) * xm1(i) / ( 0.622 + 0.378 * xm1(i) )
-         w=exp ( 1800.0 / t(i) - 6.08108 )
-         ff(i)=s * ( p1(i)/100. + r * p(i) ) * w
-      enddo
-      do i=1,nrlay
-         tgcon(i)=( ff(i) * xm1(i) + ff(i+1) * xm1(i+1) )* &
-     &            ( p(i+1) - p(i) ) * 0.00509892
-      enddo
+! == End of declarations =======================================================
 
-      end subroutine qopcon
+  s = ( x + y * exp ( - zz * vv ) ) / 101325._dp
+
+  do jz=1,nrlev
+     p1(jz) = p(jz) * xm1(jz) / ( 0.622_dp + 0.378_dp * xm1(jz) )
+     w = exp ( 1800.0_dp / t(jz) - 6.08108_dp )
+     ff(jz) = s * ( p1(jz)/100._dp + r * p(jz) ) * w
+  enddo
+
+  do jz=1,nrlay
+     tgcon(jz) = ( ff(jz) * xm1(jz) + ff(jz+1) * xm1(jz+1) )* &
+                 ( p(jz+1) - p(jz) ) * 0.00509892_dp
+  enddo
+
+end subroutine qopcon
 
 !
 ! ---------------------------------------------------------------------
