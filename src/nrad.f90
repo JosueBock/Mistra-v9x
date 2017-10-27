@@ -920,7 +920,7 @@ end subroutine qopcon
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-subroutine planck(ib)
+subroutine planck ( ib )
 !
 ! Description :
 ! -----------
@@ -998,133 +998,155 @@ end subroutine planck
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      double precision function plkavg( WNUMLO, WNUMHI, xT )
+function plkavg ( WNUMLO, WNUMHI, xT )
 !
-! Description:
-! ***************************************************************
+! Description :
+! -----------
 !   Calculation of black body radiation for given temperature {xt}
 !   For low wavenumbers the calculation is done with power series, for high
 !   wavenumbers with exponential series. Critical wavenumber is 'vcut'.
-! ***************************************************************
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header, comments and cleaning  <Josue Bock>
-!
-! 1.0       ?        Original code.                 <Andreas Bott>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
-      implicit double precision(a-h,o-z)
 
-      double precision     xT, WNUMLO, WNUMHI
-      PARAMETER  ( A1=1./3., A2=-1./8., A3=1./60., A4=-1./5040., &
-     &             A5=1./272160., A6=-1./13305600. )
-      INTEGER  SMALLV
+! Modifications :
+! -------------
+  ! 16-Jul-2015  Josue Bock  First Forcheck correction, real*4 => real*8 (inconsistency)
+  !    Jul-2016  Josue Bock  Header, comments and cleaning
+  !
+  ! 15-Mar-2017  Josue Bock  removed unused part of code (situation that never happen,
+  !                            due to the calling structure, with tabulated values for
+  !                            wnumlo and wnumhi)
+  !                          use module constants for pi (instead of defining it as asin(1.0) )
+  !                          missing declarations and implicit none
+  !                          explicit conversion I -> R using real( )
+  !                          updated labeled do loops
+  !
+  ! 28-Oct-2017  Josue Bock  Fortran90
+  !                          replaced final test == 0. by < tiny_dp
 
-      REAL*8     C2, CONC, D(2), EPSIL, EX, MV, P(2), SIGMA, SIGDPI, &
-     &         V(2), VCUT, VCP(7), VSQ
+! == End of header =============================================================
 
-      SAVE     CONC, VMAX, EPSIL, SIGDPI
-      DATA     C2 / 1.438786 /,  SIGMA / 5.67032E-8 /, &
-     &         VCUT / 1.5 /, VCP / 10.25, 5.7, 3.9, 2.9, 2.3, 1.9, 0.0 /
-      F(X)=X**3 / ( EXP(X) - 1. )
-!
-!
-      PI=2. * ASIN( 1.0 )
-!      VMAX=DLOG( D1MACH(2) )
-!      EPSIL=D1MACH(3)
-      VMAX=DLOG( huge(1d0) ) ! jjb this should probably be tested: shouldn't that be a log10? If so, could be replaced by range(1d0)
-      EPSIL=epsilon(1d0)
+! Declarations :
+! ------------
+! Modules used:
 
-      SIGDPI=SIGMA / PI
-      CONC=15. / PI**4
-!
-      IF( xT < 0.0 .OR. WNUMHI <= WNUMLO .OR. WNUMLO < 0.) &
-     &    print *,'PLKAVG--TEMPERATURE OR WAVENUMS. WRONG'
-!
-      IF ( xT < 1.E-4 )  THEN
-         PLKAVG=0.0
-         RETURN
-      ENDIF
-!
-      V(1)=C2 * WNUMLO / xT
-      V(2)=C2 * WNUMHI / xT
-      IF ( V(1) > EPSIL .AND. V(2) < VMAX .AND. &
-     &     (WNUMHI-WNUMLO)/WNUMHI < 1.E-2 )  THEN
-!
-!                          ** WAVENUMBERS ARE VERY CLOSE.  GET INTEGRAL
-!                          ** BY ITERATING SIMPSON RULE TO CONVERGENCE.
-         HH=V(2) - V(1)
-         OLDVAL=0.0
-         xx1=V(1)
-         xx2=V(2)
-         VAL0=F( xx1 ) + F( xx2 )
-!
-         DO  2  N=1, 10
-            DEL=HH / (2*N)
-            VAL=VAL0
-            DO  1  K=1, 2*N-1
-               VAL=VAL + 2*(1+MOD(K,2)) * F( V(1) + K*DEL )
-    1       CONTINUE
-            VAL=DEL/3. * VAL
-            IF ( ABS( (VAL-OLDVAL)/VAL ) <= 1.E-6 )  GO TO 3
-            OLDVAL=VAL
-    2    CONTINUE
-         print *,'PLKAVG--SIMPSON RULE DIDNT CONVERGE'
-    3    PLKAVG=SIGDPI * xT**4 * CONC * VAL
-         RETURN
-      END IF
-      SMALLV=0
-      DO  50  I=1, 2
-         IF( V(I) < VCUT )  THEN
-! ** USE POWER SERIES
-            SMALLV=SMALLV + 1
-            VSQ=V(I)**2
-            P(I)= CONC * VSQ * V(I) * ( A1 + V(I) * ( A2 + V(I) * &
-     &           ( A3 + VSQ * ( A4 + VSQ * ( A5 + VSQ*A6 ) ) ) ) )
-         ELSE
-! ** USE EXPONENTIAL SERIES
-            MMAX=0
-! ** FIND UPPER LIMIT OF SERIES
- 20         MMAX=MMAX + 1
-            IF ( V(I) < VCP( MMAX ) )  GO TO 20
-            EX=EXP( - V(I) )
-            EXM=1.0
-            D(I)=0.0
-!
-            DO  30  M=1, MMAX
-               MV=M * V(I)
-               EXM=EX * EXM
-               D(I)=D(I) + &
-     &              EXM * ( 6. + MV*( 6. + MV*( 3. + MV ) ) ) / M**4
- 30         CONTINUE
-!
-            D(I)=CONC * D(I)
-         END IF
-!
- 50   CONTINUE
-!
-      IF ( SMALLV == 2 ) THEN
-! ** WNUMLO AND WNUMHI BOTH SMALL
-         PLKAVG=P(2) - P(1)
-      ELSE IF ( SMALLV == 1 ) THEN
-! ** WNUMLO SMALL, WNUMHI LARGE
-         PLKAVG=1. - P(1) - D(2)
-      ELSE
-! ** WNUMLO AND WNUMHI BOTH LARGE
-         PLKAVG=D(1) - D(2)
-      END IF
-      PLKAVG=SIGDPI * xT**4 * PLKAVG
-      IF( PLKAVG == 0.0 ) &
-     &     print *,'PLKAVG--RETURNS ZERO; POSSIBLE UNDERFLOW'
+  USE constants, ONLY : &
+! Imported Parameters:
+       pi
 
-      END function plkavg
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp,                  &
+       tiny_dp
+
+  implicit none
+
+! Function declaration:
+  real (kind=dp) :: plkavg
+
+! Function arguments
+! Scalar arguments with intent(in):
+  real (kind=dp), intent(in) :: &
+       wnumlo, wnumhi,          &  ! wavenumbers
+       xt                          ! temperature
+
+! Local parameters:
+  real (kind=dp), parameter :: &   ! coefficients for power series
+       a1 = 1._dp/3._dp,       &
+       a2 =-1._dp/8._dp,       &
+       a3 = 1._dp/60._dp,      &
+       a4 =-1._dp/5040._dp,    &
+       a5 = 1._dp/272160._dp,  &
+       a6 =-1._dp/13305600._dp
+
+  real (kind=dp), parameter :: &
+       c2 = 1.438786_dp,       &   ! Planck radiation constant (K*m*10^2)
+       conc = 15._dp / pi**4,  &
+       sigma = 5.67032E-8_dp,  &
+       sigdpi = sigma / pi,    &
+       vcut = 1.5_dp               ! critical wave number
+  real (kind=dp), parameter :: &
+       vcp(7) = (/10.25_dp, 5.7_dp, 3.9_dp, 2.9_dp, 2.3_dp, 1.9_dp, 0.0_dp/) ! wavenumbers for exp series
+
+! Local scalars:
+  integer :: ismallv              ! number of "small" cases (v<vcut ==> power series)
+  integer :: jj, jm               ! loop indexes
+  integer :: mmax
+  real (kind=dp) :: ex, exm, mv   ! exponential series
+  real (kind=dp) :: vsq           ! power series, v squared
+
+! Local arrays:
+  real (kind=dp) :: d(2), p(2), v(2)
+
+! == End of declarations =======================================================
+
+! Check input temperature
+  if( xt < 0.0_dp ) then
+     write(0,*)'Error in SR PLKAVG -- negative temperature'
+     stop 'Stopped by SR plkavg (radiative code)'
+  end if
+
+  if ( xt < 1.e-4_dp ) then
+     plkavg = 0.0_dp
+     return
+  endif
+
+! planck
+  v(1) = c2 * wnumlo / xt
+  v(2) = c2 * wnumhi / xt
+
+
+  ismallv = 0
+  ! lower (1) and upper (2) wavenumber
+  do  jj = 1, 2
+
+     if ( v(jj) < vcut ) then
+! ** use power series
+        ismallv = ismallv + 1
+        vsq = v(jj)**2
+        p(jj) = conc * vsq * v(jj) * ( a1 + v(jj) * ( a2 + v(jj) * &
+                ( a3 + vsq * ( a4 + vsq * ( a5 + vsq * a6 ) ) ) ) )
+
+     else
+! ** use exponential series
+        mmax = 1
+        ! ** find upper limit of series
+        do while ( v(jj) < vcp(mmax) )
+           mmax = mmax + 1
+        end do
+        ex = exp ( - v(jj) )
+        exm = 1.0_dp
+        d(jj) = 0.0_dp
+
+        do jm = 1, mmax
+           mv = real(jm,dp) * v(jj)
+           exm = ex * exm
+           d(jj) = d(jj) + exm * ( 6._dp + mv * ( 6._dp + mv * ( 3._dp + mv ) ) ) &
+                / real(jm**4,dp)
+        end do
+        d(jj) = conc * d(jj)
+     end if
+  end do
+
+! black-body radiation in current spectral band:
+! difference between integral of upper and lower boundary
+  if ( ismallv == 2 ) then
+     ! ** wnumlo and wnumhi both small
+     plkavg = p(2) - p(1)
+  else if ( ismallv == 1 ) then
+     ! ** wnumlo small, wnumhi large
+     plkavg = 1._dp - p(1) - d(2)
+  else
+     ! ** wnumlo and wnumhi both large
+     plkavg = d(1) - d(2)
+  end if
+  plkavg = sigdpi * xt**4 * plkavg
+
+! Final test: warn if zero
+  if ( plkavg < tiny_dp ) then
+     print*,'plkavg--returns zero; possible underflow'
+  end if
+
+end function plkavg
 
 !
 ! ---------------------------------------------------------------------
