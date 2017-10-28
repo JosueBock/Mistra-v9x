@@ -1263,7 +1263,7 @@ end function plkavg
 !!$! Function declaration:
 !!$  real (kind=dp) :: fst4
 !!$
-!!$! Subroutine arguments
+!!$! Function arguments
 !!$! Scalar arguments with intent(in):
 !!$  integer, intent(in) :: ibir
 !!$  real(kind=dp), intent(in) :: t
@@ -1296,299 +1296,289 @@ end function plkavg
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine gase ( ib, ig, hk )
+subroutine gase ( ib, ig, hk )
 !
-! Description:
+! Description :
+! -----------
 !    Calculation of gas absorption for different gases and 18 spectral bands.
 !    The subroutines qks (solar) and qki (ir) calculate the absorption
-!    coefficients 'fkg' from tabled values.
+!    coefficients 'fkg' from tabulated values.
 !    tg(nrlay) are the optical depths due to nongray gaseous absorption, in
 !    nrlay layers for a given band ib and cumulative probability ig. They are
 !    calculated from fkg in the subroutines qop{'gas formula'}.
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header                                              <Josue Bock>
-!                    Explicit array index (start:end) in several calls
-!                    Removal of labeled do-loops, cleaning
-!
-! 1.0       ?        Original code.                                      <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header
+  !                       Explicit array index (start:end) in several calls
+  !                       Removal of labeled do-loops, cleaning
+  !
+  ! Oct-2017  Josue Bock  Fortran90, plus select case instead of "computed" goto
+  !                       matrix operations instead of vertical loops
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev
+       nrlay, &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Scalar arguments with intent(in):
-      integer, intent(in) :: ib, ig
+  integer, intent(in) :: ib, ig
+
 ! Scalar arguments with intent(out):
-      double precision, intent(out) :: hk
+  real (kind=dp), intent(out) :: hk
 
 ! Local scalars:
-      integer i ! loop indexes
-      double precision fk
-
-! Common blocks:
-      common /band1/ hk1(10), fk1o3(10)
-      double precision hk1, fk1o3
-      common /band2/ hk2(8), c2h2o(3,11,8)
-      double precision hk2, c2h2o
-      common /band3/ hk3(12), c3h2o(3,11,12)
-      double precision hk3, c3h2o
-      common /band4/ hk4(7), c4h2o(3,11,7)
-      double precision hk4, c4h2o
-      common /band5/ hk5(12), c5h2o(3,11,12)
-      double precision hk5, c5h2o
-      common /band6/ hk6(5), c6h2o(3,11,5)
-      double precision hk6, c6h2o
-      common /band7/ hk7(2), c7h2o(3,19,2)
-      double precision hk7, c7h2o
-      common /band8/ hk8(3), c8h2o(3,19,3)
-      double precision hk8, c8h2o
-      common /band9/ hk9(4), c9h2o(3,19,4)
-      double precision hk9, c9h2o
-      common /band10/ hk10(4),c10h2o(3,19,4),c10ch4(3,19),c10n2o(3,19)
-      double precision hk10, c10h2o, c10ch4, c10n2o
-      common /band11/ hk11(3),c11h2o(3,19,3),c11ch4(3,19),c11n2o(3,19)
-      double precision hk11, c11h2o, c11ch4, c11n2o
-      common /band12/ hk12(5), c12o3(3,19,5), c12h2o(3,19)
-      double precision hk12, c12o3, c12h2o
-      common /band13/ hk13(2), c13h2o(3,19,2)
-      double precision hk13, c13h2o
-      common /band14/ hk14(10), c14hca(3,19,10), c14hcb(3,19,10)
-      double precision hk14, c14hca, c14hcb
-      common /band15/ hk15(12), c15hca(3,19,12), c15hcb(3,19,12)
-      double precision hk15, c15hca, c15hcb
-      common /band16/ hk16(7), c16h2o(3,19,7)
-      double precision hk16, c16h2o
-      common /band17/ hk17(7), c17h2o(3,19,7)
-      double precision hk17, c17h2o
-      common /band18/ hk18(8), c18h2o(3,19,8)
-      double precision hk18, c18h2o
-
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
-
-      common /gas/ tg(nrlay)
-      double precision tg
-
-      common /umcon/ umco2,umch4,umn2o
-      double precision umco2,umch4,umn2o
+  integer :: jz ! loop indexes
+  real (kind=dp) :: fk
 
 ! Local arrays:
-      double precision fkg(nrlev), fkga(nrlev), fkgb(nrlev), pq(nrlev)
-      double precision tg1(nrlay), tg2(nrlay), tg3(nrlay)
-!- End of header ---------------------------------------------------------------
+  real (kind=dp) :: fkg(nrlev), fkga(nrlev), fkgb(nrlev) ! absorption coefficients
+  real (kind=dp) :: pq(nrlev)                            ! specific humidity for bands 14 and 15
+  real (kind=dp) :: tg1(nrlay), tg2(nrlay), tg3(nrlay)   ! optical depths
 
-      goto ( 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18 ) ib
-      stop 'SR gase'
+! Common blocks:
+  common /band1/ hk1(10), fk1o3(10)
+  real (kind=dp) :: hk1, fk1o3
+  common /band2/ hk2(8), c2h2o(3,11,8)
+  real (kind=dp) :: hk2, c2h2o
+  common /band3/ hk3(12), c3h2o(3,11,12)
+  real (kind=dp) :: hk3, c3h2o
+  common /band4/ hk4(7), c4h2o(3,11,7)
+  real (kind=dp) :: hk4, c4h2o
+  common /band5/ hk5(12), c5h2o(3,11,12)
+  real (kind=dp) :: hk5, c5h2o
+  common /band6/ hk6(5), c6h2o(3,11,5)
+  real (kind=dp) :: hk6, c6h2o
+  common /band7/ hk7(2), c7h2o(3,19,2)
+  real (kind=dp) :: hk7, c7h2o
+  common /band8/ hk8(3), c8h2o(3,19,3)
+  real (kind=dp) :: hk8, c8h2o
+  common /band9/ hk9(4), c9h2o(3,19,4)
+  real (kind=dp) :: hk9, c9h2o
+  common /band10/ hk10(4),c10h2o(3,19,4),c10ch4(3,19),c10n2o(3,19)
+  real (kind=dp) :: hk10, c10h2o, c10ch4, c10n2o
+  common /band11/ hk11(3),c11h2o(3,19,3),c11ch4(3,19),c11n2o(3,19)
+  real (kind=dp) :: hk11, c11h2o, c11ch4, c11n2o
+  common /band12/ hk12(5), c12o3(3,19,5), c12h2o(3,19)
+  real (kind=dp) :: hk12, c12o3, c12h2o
+  common /band13/ hk13(2), c13h2o(3,19,2)
+  real (kind=dp) :: hk13, c13h2o
+  common /band14/ hk14(10), c14hca(3,19,10), c14hcb(3,19,10)
+  real (kind=dp) :: hk14, c14hca, c14hcb
+  common /band15/ hk15(12), c15hca(3,19,12), c15hcb(3,19,12)
+  real (kind=dp) :: hk15, c15hca, c15hcb
+  common /band16/ hk16(7), c16h2o(3,19,7)
+  real (kind=dp) :: hk16, c16h2o
+  common /band17/ hk17(7), c17h2o(3,19,7)
+  real (kind=dp) :: hk17, c17h2o
+  common /band18/ hk18(8), c18h2o(3,19,8)
+  real (kind=dp) :: hk18, c18h2o
 
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
+
+  common /gas/ tg(nrlay)
+  real (kind=dp) :: tg
+
+  common /umcon/ umco2,umch4,umn2o
+  real (kind=dp) :: umco2,umch4,umn2o
+
+! == End of declarations =======================================================
+
+  select case (ib)
+
+  case (1)
 ! Band 1:
-! In this band ( 50000 - 14500 cm**-1 ), we consider the nongray
-! gaseous absorption of O3.    619.618 is the solar energy contained in
-! the band in units of Wm**-2.
- 1    fk = fk1o3(ig)
-      call qopo3s ( fk, tg )
-      hk=619.618 * hk1(ig)
-      goto 20
+! In this band ( 50000 - 14500 cm**-1 ), we consider the nongray gaseous absorption of O3.
+! 619.618 is the solar energy contained in the band in units of Wm**-2.
+     fk = fk1o3(ig)
+     call qopo3s ( fk, tg )
+     hk = 619.618_dp * hk1(ig)
 
+  case (2)
 ! Band 2:
-! In this band ( 14500 - 7700 cm**-1 ), we consider the nongray
-! gaseous absorption of H2O.  484.295 is the solar energy contained in
-! the band in units of Wm**-2.
- 2    call qks ( c2h2o(1:3,1:11,ig), fkg )
-      call qoph2o ( fkg, tg )
-      hk=484.295 * hk2(ig)
-      goto 20
+! In this band ( 14500 - 7700 cm**-1 ), we consider the nongray gaseous absorption of H2O.
+! 484.295 is the solar energy contained in the band in units of Wm**-2.
+     call qks ( c2h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg )
+     hk = 484.295_dp * hk2(ig)
 
+  case (3)
 ! Band 3:
-! In this band ( 7700 - 5250 cm**-1 ), we consider the nongray
-! gaseous absorption of H2O. 149.845 is the solar energy contained in
-! the band in units of Wm**-2.
- 3    call qks ( c3h2o(1:3,1:11,ig), fkg )
-      call qoph2o ( fkg, tg )
-      hk=149.845 * hk3(ig)
-      goto 20
+! In this band ( 7700 - 5250 cm**-1 ), we consider the nongray gaseous absorption of H2O.
+! 149.845 is the solar energy contained in the band in units of Wm**-2.
+     call qks ( c3h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg )
+     hk = 149.845_dp * hk3(ig)
 
+  case (4)
 ! Band 4:
-! In this band ( 5250 - 4000 cm**-1 ), we consider the nongray
-! gaseous absorption of H2O. 48.7302 is the solar energy contained in
-! the band in units of Wm**-2.
- 4    call qks ( c4h2o(1:3,1:11,ig), fkg )
-      call qoph2o ( fkg, tg )
-      hk=48.7302 * hk4(ig)
-      goto 20
+! In this band ( 5250 - 4000 cm**-1 ), we consider the nongray gaseous absorption of H2O.
+! 48.7302 is the solar energy contained in the band in units of Wm**-2.
+     call qks ( c4h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg )
+     hk = 48.7302_dp * hk4(ig)
 
+  case (5)
 ! Band 5:
-! In this band ( 4000 - 2850 cm**-1 ), we consider the nongray
-! gaseous absorption of H2O. 31.6576 is the solar energy contained in
-! the band in units of Wm**-2.
- 5    call qks ( c5h2o(1:3,1:11,ig), fkg )
-      call qoph2o ( fkg, tg )
-      hk=31.6576 * hk5(ig)
-      goto 20
+! In this band ( 4000 - 2850 cm**-1 ), we consider the nongray gaseous absorption of H2O.
+! 31.6576 is the solar energy contained in the band in units of Wm**-2.
+     call qks ( c5h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg )
+     hk = 31.6576_dp * hk5(ig)
 
+  case (6)
 ! Band 6:
-! In this band ( 2850 - 2500 cm**-1 ), we consider the nongray
-! gaseous absorption of H2O. 5.79927 is the solar energy contained in
-! the band in units of Wm**-2.
- 6    call qks ( c6h2o(1:3,1:11,ig), fkg )
-      call qoph2o ( fkg, tg )
-      hk=5.79927 * hk6(ig)
-      goto 20
+! In this band ( 2850 - 2500 cm**-1 ), we consider the nongray gaseous absorption of H2O.
+! 5.79927 is the solar energy contained in the band in units of Wm**-2.
+     call qks ( c6h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg )
+     hk = 5.79927_dp * hk6(ig)
 
+  case (7)
 ! Band 7:
-! In this band ( 2200 - 1900 cm**-1 ), we consider the nongray
-! gaseous absorption of H2O.
- 7    call qki ( c7h2o(1:3,1:19,ig), fkg )
-      call qoph2o ( fkg, tg )
-      hk=hk7(ig)
-      goto 20
+! In this band ( 2200 - 1900 cm**-1 ), we consider the nongray gaseous absorption of H2O.
+     call qki ( c7h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg )
+     hk = hk7(ig)
 
+  case (8)
 ! Band 8:
-! In this band ( 1900 - 1700 cm**-1 ), we consider the nongray
-! gaseous absorption of H2O.
- 8    call qki ( c8h2o(1:3,1:19,ig), fkg )
-      call qoph2o ( fkg, tg )
-      hk=hk8(ig)
-      goto 20
+! In this band ( 1900 - 1700 cm**-1 ), we consider the nongray gaseous absorption of H2O.
+     call qki ( c8h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg )
+     hk = hk8(ig)
 
+  case (9)
 ! Band 9:
-! In this band ( 1700 - 1400 cm**-1 ), we consider the nongray
-! gaseous absorption of H2O.
- 9    call qki ( c9h2o(1:3,1:19,ig), fkg )
-      call qoph2o ( fkg, tg )
-      hk=hk9(ig)
-      goto 20
+! In this band ( 1700 - 1400 cm**-1 ), we consider the nongray gaseous absorption of H2O.
+     call qki ( c9h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg )
+     hk = hk9(ig)
 
+  case (10)
 ! Band 10:
 ! In this band ( 1400 - 1250 cm**-1 ), we consider the overlapping
 ! absorption of H2O, CH4, and N2O by approach one of Fu(1991).
- 10   call qki ( c10h2o(1:3,1:19,ig), fkg )
-      call qoph2o ( fkg, tg1 )
-      call qki ( c10ch4, fkg )
-      call qopch4 ( fkg, tg2 )
-      call qki ( c10n2o, fkg )
-      call qopn2o ( fkg, tg3 )
-      do i=1,nrlay
-         tg(i)=tg1(i) + tg2(i)/1.6*umch4 + tg3(i)/0.28*umn2o
-      end do
-      hk=hk10(ig)
-      goto 20
+     call qki ( c10h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg1 )
+     call qki ( c10ch4, fkg )
+     call qopch4 ( fkg, tg2 )
+     call qki ( c10n2o, fkg )
+     call qopn2o ( fkg, tg3 )
+     tg(:) = tg1(:) + tg2(:)/1.6_dp*umch4 + tg3(:)/0.28_dp*umn2o
+     hk = hk10(ig)
 
+  case (11)
 ! Band 11:
 ! In this band ( 1250 - 1100 cm**-1 ), we consider the overlapping
 ! absorption of H2O, CH4, and N2O by approach one of Fu(1991).
- 11   call qki ( c11h2o(1:3,1:19,ig), fkg )
-      call qoph2o ( fkg, tg1 )
-      call qki ( c11ch4, fkg )
-      call qopch4 ( fkg, tg2 )
-      call qki ( c11n2o, fkg )
-      call qopn2o ( fkg, tg3 )
-      do i=1,nrlay
-         tg(i)=tg1(i) + tg2(i)/1.6*umch4 + tg3(i)/0.28*umn2o
-      end do
-      hk=hk11(ig)
-      goto 20
+     call qki ( c11h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg1 )
+     call qki ( c11ch4, fkg )
+     call qopch4 ( fkg, tg2 )
+     call qki ( c11n2o, fkg )
+     call qopn2o ( fkg, tg3 )
+     tg(:) = tg1(:) + tg2(:)/1.6_dp*umch4 + tg3(:)/0.28_dp*umn2o
+     hk = hk11(ig)
 
+  case (12)
 ! Band 12:
 ! In this band ( 1100 - 980 cm**-1 ), we consider the overlapping
 ! absorption of H2O and O3 by approach one of Fu(1991).
- 12   call qkio3 ( c12o3(1:3,1:19,ig), fkg )
-      call qopo3i ( fkg, tg1 )
-      call qki ( c12h2o, fkg )
-      call qoph2o ( fkg, tg2 )
-      do i=1,nrlay
-         tg(i)=tg1(i) + tg2(i)
-      end do
-      hk=hk12(ig)
-      goto 20
+     call qkio3 ( c12o3(:,:,ig), fkg )
+     call qopo3i ( fkg, tg1 )
+     call qki ( c12h2o, fkg )
+     call qoph2o ( fkg, tg2 )
+     tg(:) = tg1(:) + tg2(:)
+     hk = hk12(ig)
 
+  case (13)
 ! Band 13:
-! In this band ( 980 - 800 cm**-1 ), we consider the nongray
-! gaseous absorption of H2O.
- 13   call qki ( c13h2o(1:3,1:19,ig), fkg )
-      call qoph2o ( fkg, tg )
-      hk=hk13(ig)
-      goto 20
+! In this band ( 980 - 800 cm**-1 ), we consider the nongray gaseous absorption of H2O.
+     call qki ( c13h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg )
+     hk = hk13(ig)
 
+  case (14)
 ! Band 14
 ! In this band ( 800 - 670 cm**-1), we consider the overlapping
 ! absorption of H2O and CO2 by approach two of Fu(1991).
- 14   do i=1, nrlev
-         if ( p(i) >= 6310. ) then
-            pq(i)=xm1(i)
-         else
-            pq(i)=0.0
-         endif
-      end do
-      call qki ( c14hca(1:3,1:19,ig), fkga )
-      call qki ( c14hcb(1:3,1:19,ig), fkgb )
-      do i=1, nrlev
-         fkg(i)=fkga(i)/330.0*umco2 + pq(i) * fkgb(i)
-      end do
-      call qophc ( fkg, tg)
-      hk=hk14(ig)
-      goto 20
+     do jz=1, nrlev
+        if ( p(jz) >= 6310._dp ) then
+           pq(jz)=xm1(jz)
+        else
+           pq(jz)=0.0_dp
+        endif
+     end do
+     call qki ( c14hca(:,:,ig), fkga )
+     call qki ( c14hcb(:,:,ig), fkgb )
+     fkg(:) = fkga(:)/330.0_dp*umco2 + pq(:) * fkgb(:)
+     call qophc ( fkg, tg)
+     hk = hk14(ig)
 
+  case (15)
 ! Band 15:
 ! In this band ( 670 - 540 cm**-1), we consider the overlapping
 ! absorption of H2O and CO2 by approach two of Fu(1991).
- 15   do i=1, nrlev
-         if ( p(i) >= 6310. ) then
-            pq(i)=xm1(i)
-         else
-            pq(i)=0.0
-         endif
-      end do
-      call qki ( c15hca(1:3,1:19,ig), fkga )
-      call qki ( c15hcb(1:3,1:19,ig), fkgb )
-      do i=1, nrlev
-         fkg(i)=fkga(i)/330.0*umco2 + pq(i) * fkgb(i)
-      end do
-      call qophc ( fkg, tg)
-      hk=hk15(ig)
-      goto 20
+     do jz=1, nrlev
+        if ( p(jz) >= 6310._dp ) then
+           pq(jz)=xm1(jz)
+        else
+           pq(jz)=0.0
+        endif
+     end do
+     call qki ( c15hca(:,:,ig), fkga )
+     call qki ( c15hcb(:,:,ig), fkgb )
+     fkg(:) = fkga(:)/330.0_dp*umco2 + pq(:) * fkgb(:)
+     call qophc ( fkg, tg)
+     hk = hk15(ig)
 
+  case (16)
 ! Band 16:
 ! In this band ( 540 - 400 cm**-1 ), we consider the nongray
 ! gaseous absorption of H2O.
- 16   call qki ( c16h2o(1:3,1:19,ig), fkg )
-      call qoph2o ( fkg, tg )
-      hk=hk16(ig)
-      goto 20
+     call qki ( c16h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg )
+     hk = hk16(ig)
 
+  case (17)
 ! Band 17:
-! In this band ( 400 - 280 cm**-1 ), we consider the nongray
-! gaseous absorption of H2O.
- 17   call qki ( c17h2o(1:3,1:19,ig), fkg )
-      call qoph2o ( fkg, tg )
-      hk=hk17(ig)
-      goto 20
+! In this band ( 400 - 280 cm**-1 ), we consider the nongray gaseous absorption of H2O.
+     call qki ( c17h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg )
+     hk = hk17(ig)
 
+  case (18)
 ! Band 18:
-! In this band ( 280 - 000 cm**-1 ), we consider the nongray
-! gaseous absorption of H2O.
- 18   call qki ( c18h2o(1:3,1:19,ig), fkg )
-      call qoph2o ( fkg, tg )
-      hk=hk18(ig)
+! In this band ( 280 - 000 cm**-1 ), we consider the nongray gaseous absorption of H2O.
+     call qki ( c18h2o(:,:,ig), fkg )
+     call qoph2o ( fkg, tg )
+     hk = hk18(ig)
 
- 20   continue
+  case default
+     write(0,*)'Error in SR gase: wrong spectral band index'
+     stop 'Stopped by SR gase'
 
-      end subroutine gase
+  end select
+
+end subroutine gase
 
 !
 ! ---------------------------------------------------------------------
