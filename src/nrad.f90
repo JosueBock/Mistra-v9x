@@ -1155,61 +1155,68 @@ end function plkavg
 !
 ! jjb 24/07/2016 unused, thus commented
 !
-!!$      subroutine plancktab(ib)
+!!$subroutine plancktab ( ib )
 !!$!
-!!$! Description:
-!!$! ***************************************************************
-!!$!   Berechnung der ueber den Bereich {ib} integrierten Planck-
-!!$!   Funktion auf allen Rechenflaechen und der Erdoberflaechen-
-!!$!   temperatur (kann ungleich der Temperatur der Luft am Boden
-!!$!   sein)
-!!$! ***************************************************************
-!!$!
+!!$! Description :
+!!$! -----------
+!!$!   Calculation of Planck-function integrated over {ib},
+!!$!   from tabled values, for every model layer.
 !!$
-!!$!
-!!$! History:
-!!$! Version   Date     Comment
-!!$! -------   ----     -------
-!!$! 1.1      07/2016   Header including "USE ... ONLY"  <Josue Bock>
-!!$!
-!!$! 1.0       ?        Original code.                   <unknown>
-!!$!
-!!$! Code Description:
-!!$!   Language:          Fortran 77 (with Fortran 90 features)
-!!$!
-!!$! Declarations:
+!!$
+!!$! Modifications :
+!!$! -------------
+!!$  !    Jul-2016  Josue Bock  Header including "USE ... ONLY"
+!!$  ! 28-Oct-2017  Josue Bock  Fortran90, cleaned and formatted the same as planck
+!!$
+!!$! == End of header =============================================================
+!!$
+!!$! Declarations :
+!!$! ------------
 !!$! Modules used:
 !!$
-!!$      USE global_params, ONLY : &
+!!$  USE global_params, ONLY : &
 !!$! Imported Parameters:
-!!$     &     nrlay, &
-!!$     &     nrlev, &
-!!$     &     mbs
+!!$       nrlay,               &
+!!$       nrlev,               &
+!!$       mbs
 !!$
-!!$      implicit double precision(a-h,o-z)
+!!$  USE precision, ONLY :     &
+!!$! Imported Parameters:
+!!$       dp
+!!$
+!!$  implicit none
+!!$
+!!$! Subroutine arguments
+!!$! Scalar arguments with intent(in):
+!!$  integer, intent(in) :: ib
+!!$
+!!$! Local scalars:
+!!$  integer :: ibir ! reduced index for IR only (1 - 12)
+!!$  integer :: jz   ! loop index, top to bottom
 !!$
 !!$! Common blocks:
-!!$      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-!!$     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-!!$      double precision t,p,rho,xm1,rho2,frac,ts
-!!$      integer ntypa,ntypd
+!!$  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+!!$                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+!!$  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+!!$  integer :: ntypa,ntypd
 !!$
-!!$      common /planci/ pib(nrlev),pibs
-!!$      double precision pib, pibs
-!!$!- End of header ---------------------------------------------------------------
+!!$  common /planci/ pib(nrlev),pibs
+!!$  real (kind=dp) :: pib, pibs
 !!$
-!!$      do 1 i=1,nrlev
-!!$      pib(i)=0.
-!!$ 1         continue
-!!$      pibs=0.
-!!$      if(ib <= mbs) return
-!!$      ibir=ib-mbs
-!!$      do 2 i=1,nrlev
-!!$      pib(i)=fst4(ibir,t(i)) ! function fst4 has to be uncommented if used
-!!$ 2         continue
-!!$      pibs=fst4(ibir,ts)
+!!$! External function:
+!!$  real (kind=dp), external :: fst4
 !!$
-!!$      end subroutine plancktab
+!!$! == End of declarations =======================================================
+!!$
+!!$  if(ib > mbs) then
+!!$     ibir=ib-mbs
+!!$     do jz=1,nrlev
+!!$        pib(jz) = fst4(ibir,t(jz))
+!!$     end do
+!!$     pibs = fst4(ibir,ts)
+!!$  end if
+!!$
+!!$end subroutine plancktab
 
 !
 ! ---------------------------------------------------------------------
