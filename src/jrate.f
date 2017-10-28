@@ -750,8 +750,10 @@ C     DIFFERENTIAL O2 AND O3 COLUMNS AND SLANT COLUMNS
 !
 ! 17/08/2016 jjb
 !     further cleaning of unused, commented parts
+!
+! 05/11/2017 jjb: replaced directories by config
 
-      USE directories, ONLY : inpdir_phot
+      USE config, ONLY : cinpdir_phot ! input directory for photolysis data files
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -851,14 +853,14 @@ C---------------------------------------------------------------------
         CS_RAY(L)=4.02D-28/WL**(4.+X)
       ENDDO
 
-      OPEN(UNIT=1, FILE=trim(inpdir_phot)//'flux.dat',STATUS='OLD')
+      OPEN(UNIT=1, FILE=trim(cinpdir_phot)//'flux.dat',STATUS='OLD')
       READ(1,10) FLUX
 
       CLOSE(1)
 
  10   FORMAT(1P,7E10.2)
 
-      OPEN(UNIT=2, FILE=trim(inpdir_phot)//'sig0900.dat', STATUS='OLD')
+      OPEN(UNIT=2, FILE=trim(cinpdir_phot)//'sig0900.dat', STATUS='OLD')
 
       READ(2,*)
       READ(2,101)CS_H2O
@@ -1041,7 +1043,7 @@ c      READ(2,*)
 C     CEBESHEV COEFFICIENT A AND B FOR KOPPER MURTG. PARAMETERIZATION
 
 
-      OPEN(3,file=trim(inpdir_phot)//'cheb_coeff.dat',status='old')
+      OPEN(3,file=trim(cinpdir_phot)//'cheb_coeff.dat',status='old')
 
       READ(3,*)
       READ(3,*)
@@ -2864,8 +2866,9 @@ c-------------------------------------------------------------------
 !                 removal of unused data
 !                 initialisation on named COMMON moved in block data
 !                 cleaning
+! 05/11/2017 jjb: replaced directories by config
 
-      USE directories, ONLY : inpdir_phot ! input directory for photolysis data files
+      USE config, ONLY : cinpdir_phot ! input directory for photolysis data files
 
       IMPLICIT DOUBLE PRECISION(A-H,O-Z)
 
@@ -3074,7 +3077,7 @@ c-------------------------------------------------------------------
 c-------------------------------------------------------------------
 
 
-      OPEN(NLT, FILE=trim(inpdir_phot)//'lookt0900.dat', STATUS='OLD')
+      OPEN(NLT, FILE=trim(cinpdir_phot)//'lookt0900.dat', STATUS='OLD')
 
       READ(NLT,*)
       DO J=1,3

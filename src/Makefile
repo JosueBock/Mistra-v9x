@@ -50,12 +50,13 @@ CFLAGS= -fdefault-real-8 -fdefault-double-8 -fbacktrace -Wall -ffpe-trap=invalid
 # To avoid mistakes in this situation, the Makefile has been added in the dependency list of all modules,
 # and in the dependency list of all objects which don't already include a module
 
-mistra: precision.o constants.o global_params.o common_modules.o directories.o \
+mistra: precision.o constants.o global_params.o common_modules.o file_unit.o\
 	str.o radinit.o  nrad.o outp.o nuc.o jrate.o activity.o \
 	tot.o bud_t.o bud_s_t.o \
 	aer.o bud_a.o bud_s_a.o \
 	gas.o bud_g.o bud_s_g.o \
 	kpp.o utils.o \
+	config.o \
 	mod_out_netCDF.o out_netCDF.o
 	$(FC) -o  $@ $(CFLAGS) $^ -lnetcdf -lnetcdff
 
@@ -72,8 +73,8 @@ constants.o constants.mod: constants.f90 Makefile
 	rm -f constants.mod
 	$(FC) $(CFLAGS) -c $<
 
-directories.o directories.mod: directories.f Makefile
-	rm -f directories.mod
+file_unit.o file_unit.mod: file_unit.f90 Makefile
+	rm -f file_unit.mod
 	$(FC) $(CFLAGS) -c $<
 
 mod_out_netCDF.o cdf_var_gas.mod: mod_out_netCDF.f90 Makefile
@@ -95,6 +96,10 @@ aer.o kpp_aer_parameters.mod kpp_aer_global.mod: aer.f aer_Parameters.h aer_Glob
 	rm -f kpp_aer_parameters.mod kpp_aer_global.mod
 	$(FC) $(CFLAGS) -c $<
 
+config.o config.mod: config.f90 file_unit.mod precision.mod Makefile
+	rm -f config.mod
+	$(FC) $(CFLAGS) -c $<
+
 gas.o kpp_gas_parameters.mod kpp_gas_global.mod: gas.f gas_Parameters.h gas_Global.h gas_Sparse.h \
 	constants.mod gas_common.mod global_params.mod Makefile
 	rm -f kpp_gas_parameters.mod kpp_gas_global.mod
@@ -108,10 +113,10 @@ utils.o: utils.f gas_common.mod global_params.mod \
 	Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
-str.o: str.f constants.mod directories.mod gas_common.mod global_params.mod Makefile
+str.o: str.f config.mod constants.mod gas_common.mod global_params.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
-radinit.o: radinit.f constants.mod directories.mod global_params.mod Makefile
+radinit.o: radinit.f config.mod constants.mod global_params.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
 nrad.o: nrad.f90 constants.mod global_params.mod Makefile
@@ -123,7 +128,7 @@ outp.o: outp.f constants.mod global_params.mod gas_common.mod Makefile
 out_netCDF.o: out_netCDF.f global_params.mod gas_common.mod cdf_var_gas.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $< -I/usr/include
 
-jrate.o: jrate.f directories.mod global_params.mod Makefile
+jrate.o: jrate.f config.mod global_params.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
 nuc.o: nuc.f constants.mod global_params.mod gas_common.mod Makefile

@@ -1,0 +1,38 @@
+! =================================
+! mistra_cfg: general configuration
+!            (previous istart file)
+! =================================
+
+&mistra_cfg
+ ! Restart mode and duration
+ rst=F,          !<-- rst: restart (true) or new initialization (false) of model run
+ lstmax=24,      !<-- lstmax: integration time [hours]
+ 
+ ! Output choice
+ netcdf=T,       !<-- netCDF: netCDF output
+ binout=F,       !<-- binout: binary output
+ 
+ ! Microphysics
+ mic=T,          !<-- mic: microphysics included (true)
+ iaertyp=3,      !<-- iaertyp: aerosoltype 1=urban; 2=rural; 3=maritime
+
+ ! Chemistry
+ chem=T,         !<-- chem: chemistry included (true)
+ halo=T,         !<-- halo: halogen chemistry included (true)
+ iod=F,          !<-- iod: iodine chemistry included (true) (automatically off, when 'halo = false')
+ nkc_l=4,        !<-- nkc_l: number of output classes for liquid chem (set to <nkc if no cloud expected)
+ neula=1,        !<-- neula: eulerian (=0, includes advection of chem species) or lagrangian (=1, no advection)
+
+ ! Box model
+ box=F,          !<-- box: run model as box version (true)
+ bl_box=F,       !<-- BL_box: box only, average init cond over BL and/or mean of J-values over BL
+ nlevbox=2,      !<-- nlevbox: box only, level to be used for init cond of box if  BL_box=false
+ z_box=700.,     !<-- z_box: height of box [m]
+
+ ! Nucleation
+ nuc=F,          !<-- nuc: nucleation included (true)
+
+ ! Miscelaneous
+ scaleo3_m=300., !<-- scaleo3_m: O3 [Dobson units] (only for scaling in photolysis calculations)
+ /
+ 

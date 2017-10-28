@@ -21,7 +21,7 @@
 
 ! Author
 ! ------
-!     Josué Bock
+!     Josue Bock
 
 
       USE gas_common, ONLY :
@@ -152,7 +152,7 @@
 
 ! Author
 ! ------
-!     Josué Bock
+!     Josue Bock
 
 
 !      USE kpp_gas_Global, ONLY :
@@ -194,7 +194,11 @@
 
 ! Author
 ! ------
-!     Josué Bock
+!     Josue Bock
+
+      USE config, ONLY :
+     &     halo,
+     &     iod
 
       use global_params, ONLY :
      &     n
@@ -274,10 +278,6 @@
 
 ! External function:
       integer, external :: get_atom_nb
-
-! Common blocks:
-      common /hall/ halo,iod
-      logical halo, iod
 
 !- End of header ---------------------------------------------------------------
 
@@ -615,7 +615,11 @@
 
 ! Author
 ! ------
-!     Josué Bock
+!     Josue Bock
+
+      USE config, ONLY :
+     &     halo,
+     &     iod
 
       use global_params, ONLY :
      &     n
@@ -681,10 +685,6 @@
 
 ! External function:
       integer, external :: get_atom_nb
-
-! Common blocks:
-      common /hall/ halo,iod
-      logical halo, iod
 
 !- End of header ---------------------------------------------------------------
 
@@ -973,7 +973,7 @@
 
 ! Author
 ! ------
-!     Josué Bock
+!     Josue Bock
 
 
       implicit none
@@ -1022,7 +1022,7 @@
 
 ! Author
 ! ------
-!     Josué Bock
+!     Josue Bock
 
 
       implicit none
@@ -1064,7 +1064,7 @@
 
 ! Author
 ! ------
-!     Josué Bock
+!     Josue Bock
 
 
       implicit none

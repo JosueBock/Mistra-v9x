@@ -1,0 +1,61 @@
+#!/bin/bash
+# MISTRA v9.0_beta
+
+TITLE="First simul with param file"
+
+#      MODEL BINARY USED
+MISTRAEXE=~/mistra/src/mistra
+
+#      NAMELIST USED
+NAMELIST=/local/hmb15gqu/mistra/namelists/namelist.base1
+
+#      INPUT DIRECTORY
+INPDIR=/local/hmb15gqu/mistra/input/
+
+#      PARENT OUTPUT DIR
+POUTDIR=/local/hmb15gqu/mistra/out/
+
+
+
+#################################################################
+# Below are automated instructions to launch the run
+#################################################################
+
+# EXPID = second part of param_... name
+[[ $0 != *param_* ]] && echo -e "$0\nWarn : The installer should be sourced from a 'param_' file">&2 && exit 1
+[ -z $EXPID ] && EXPID=$(basename $0 | sed -e 's/param_//g')
+[ -z $EXPID ] && echo "You must set EXPID ">&2 && exit 1
+
+# Create one output subdirectory for each run
+# -- first define OUTDIR
+OUTDIR=$POUTDIR$EXPID/
+# -- then check if it already exists
+if [ -e $OUTDIR ]
+then
+    answer=''
+    until [[ $answer == 'y' ]] || [[ $answer == 'n' ]] ; do
+	read -p "The simulations already exists, overwrite? (y/n)" answer
+    done
+    [[ $answer == 'y' ]] && rm -f $OUTDIR/* && echo "Output sub-directory cleaned, continue installation"
+    [[ $answer == 'n' ]] && echo "Installation aborted, change the param name" && exit 1
+else
+    mkdir -p $OUTDIR
+    echo "Output sub-directory created, continue installation"
+fi
+
+# Define file names to redirect standard output and error messages
+STDOUT=${OUTDIR}/last_run.out
+STDERR=${OUTDIR}/last_run.err
+
+# Launch the executable
+# -- The "env VAR=$VAR" instruction allows to pass an environment variable to the model,
+#    without having to define a global (= system wide) environment variable
+if [ -e $MISTRAEXE ]
+then
+    echo "Installation ended, the run will start"
+    env INPDIR=$INPDIR NAMELIST=$NAMELIST OUTDIR=$OUTDIR $MISTRAEXE >> $STDOUT 2>>$STDERR
+else
+    echo "The executable does not exist, installation aborted" && exit 1
+fi
+
+echo " -- End of param script -- "

@@ -54,6 +54,24 @@
 !
 !       
 
+      USE config, ONLY :
+! External subroutine
+     &     read_config,
+! Config switches
+     &     binout,
+     &     BL_box,
+     &     box,
+     &     chem,
+     &     halo,
+     &     iod,
+     &     mic,
+     &     netCDF,
+     &     neula,
+     &     nuc,
+     &     rst,
+     &     iaertyp,
+     &     lstmax,
+     &     nkc_l
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -68,7 +86,6 @@
 
       implicit double precision (a-h,o-z)
 
-      logical chem,mic,rst,halo,iod,box,netCDF,BL_box,nuc,binout
       logical Napari, Lovejoy, both
 
       common /cb16/ u0,albedo(mbs),thk(nrlay)
@@ -86,62 +103,19 @@
       double precision theta, thetl, t, talt, p, rho
       common /cb54/ xm1(n),xm2(n),feu(n),dfddt(n),xm1a(n),xm2a(n)
       common /cb52/ ff(nkt,nka,n),fsum(n),nar(n)
-      common /hall/ halo,iod
       common /band_rat/ photol_j(nphrxn,n)
       common /band_o3/ scaleo3_m
-      common /liq_pl/ nkc_l
-      common /kpp_eul/ xadv(10),nspec(10),neula
+      common /kpp_eul/ xadv(10),nspec(10)
       common /nucfeed/ ifeed
 
 
       dimension aer(n,nka)
       character *1 fogtype
       character *10 fname
-! options for program evaluation
-! chem     : chemistry included
-! mic      : microphysics included
-! rst      : restart or initialization of program run
-! netCDF   : output in netCDF format
-! binout   : output in binary format
-! box      : box model run
-! halo     : halogen chemistry on/off
-! iod      : iodine chemistry on/off
-! nuc      : nucleation on/off
-! fogtype  : suffix for output filenames
-! iaertyp  : type of aerosol; 1=urban, 2=rural, 3=ocean, 4=background
-! lstmax   : integration time in hours
-! scaleo3_m: total O3 in DU (for photolysis only)
-! nkc_l    : number of output classes for aq. chem.
-! neula    : eulerian (0) or lagrangian (1) view
-! z_box    : height of MBL (if box run)
-! BL_box   : box only, average init cond over BL and/or mean of J-values over BL
-! nlevbox  : box only, level to be used for init cond of box if  BL_box=false
-      open (11,file='istart', status='old')
-      read (11,5000) chem
-      read (11,5000) mic
-      read (11,5000) rst
-      read (11,5000) netCDF
-      read (11,5000) binout
-      read (11,5000) box
-      read (11,5000) halo
-      read (11,5000) iod
-      read (11,5000) nuc
+
+      call read_config
+
       fogtype='a'
-      read (11,5020) iaertyp
-      read (11,5030) lstmax
-      read (11,5040) scaleo3_m
-      read (11,5020) nkc_l
-      read (11,5020) neula
-      read (11,5050) z_box
-      read (11,5000) BL_box
-      read (11,5030) nlevbox
-      close (11)
-      print *,chem,mic,rst
-      print *,netCDF,binout,box
-      print *,halo,iod,nuc
-      print *,fogtype,iaertyp,lstmax
-      print *,scaleo3_m,nkc_l,neula
-      print *,z_box,BL_box,nlevbox
       ifeed = 1
       if (neula.eq.0) then
          open (12,file='euler_in.dat',status='old')
@@ -150,12 +124,6 @@
          enddo
          close (12)
       endif
- 5000 format(l1)
-! 5010 format(a1)
- 5020 format (i1)
- 5030 format (i3)
- 5040 format (f3.0)
- 5050 format (f4.0)
  5100 format (i3,d8.2)
 
       call mk_interface
@@ -552,7 +520,7 @@
       subroutine openm (fogtype)
 ! input/output files
 
-      USE directories, ONLY : inpdir
+      USE config, ONLY : cinpdir
 
       implicit none
 
@@ -571,7 +539,7 @@
 
 
 ! input Clarke-tables
-      open (50, file=trim(inpdir)//'clark.dat', status='old')
+      open (50, file=trim(cinpdir)//'clark.dat', status='old')
       read (50,5000) ((fu(i,k),i=1,9),(fu(i,k),i=10,18),k=1,7)
       read (50,5000) ((ft(i,k),i=1,9),(ft(i,k),i=10,18),k=1,7)
       read (50,5010) (xzpdl(i),i=1,9),(xzpdl(i),i=10,18)
@@ -1802,6 +1770,9 @@ c update total liquid water [kg/m^3]
 ! new aqueous phase concentrations due to 
 ! gravitational settling of droplets
 
+      USE config, ONLY :
+     &     nkc_l
+
       USE global_params, ONLY :
 ! Imported Parameters:
      &     j2,
@@ -1824,7 +1795,6 @@ c update total liquid water [kg/m^3]
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
       double precision theta, thetl, t, talt, p, rho
       common /kpp_vt/ vt(nkc,nf),vd(nkt,nka),vdm(nkc)
-      common /liq_pl/ nkc_l
       dimension cc(nf)
       c(nf)=0.
 ! changes have to be made BOTH here and below for ions
@@ -2263,6 +2233,9 @@ c update total liquid water [kg/m^3]
 ! jjb work done: removal of unused arguments
 !     missing declarations and implicit none
 
+      USE config, ONLY :
+     &     nkc_l
+
       USE gas_common, ONLY :
 ! Imported Parameters:
      &     j1,
@@ -2309,8 +2282,6 @@ c update total liquid water [kg/m^3]
       common /cb57/ xa(n),xb(n),xc(n),xd(n),xe(n),xf(n),oldf(n)
       double precision xa, xb, xc, xd, xe, xf, oldf
 
-      common /liq_pl/ nkc_l
-      integer nkc_l
 !- End of header ---------------------------------------------------------------
 
 ! calculation of exchange coefficients
@@ -3152,6 +3123,9 @@ c update total liquid water [kg/m^3]
 !      removed k0=k, used only in equil argument. For the sake of clarity
       
 
+!      USE config, ONLY :
+!     &     nkc_l
+
       USE constants, ONLY :
 ! Imported Parameters:
      & pi
@@ -3195,7 +3169,6 @@ c update total liquid water [kg/m^3]
       common /blck08/ vol1_a(nka,n),vol1_d(nka,n),vol2(nkc,n)
 !      common /kpp_kg/ vol2(nkc,n),vol1(n,nkc,nka),part_o
 !     &     (n,nkc,nka),part_n(n,nkc,nka),pntot(nkc,n),kw(nka),ka
-      !ommon /liq_pl/ nkc_l
       dimension potot(nkc,n)
       do 1000 k=2,nf+1
 ! initialize
@@ -4213,6 +4186,9 @@ c update total liquid water [kg/m^3]
 !     subroutine stem_kpp (dd,xra,z_box,n_bl,box)     ! jjb
       subroutine stem_kpp (dd,xra,z_box,n_bl,box,nuc) ! jjb nuc is needed in 2 IF tests
 
+      USE config, ONLY :
+     &     nkc_l
+
       USE constants, ONLY :
 ! Imported Parameters:
      & pi
@@ -4248,7 +4224,6 @@ c update total liquid water [kg/m^3]
       common /blck06/ kw(nka),ka
       common /blck12/ cw(nkc,n),cm(nkc,n)
       common /blck17/ sl1(j2,nkc,n),sion1(j6,nkc,n)
-      common /liq_pl/ nkc_l
       ! Thus commented here, and the lines "feeding" it commented as well to save cpu time
       ! If used again, the indexes should be re-ordered to save cpu-time (n=last, lsp first for dss)
 
