@@ -2382,9 +2382,10 @@ end subroutine tau
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine kurzw(ib,u0)
+subroutine kurzw(ib,u0)
 !
-! Description:
+! Description :
+! -----------
 !   Solution of the radiative transfer equation for current spectral band
 !   (solar -> ib = 1 ... 6) and cumulative probability {ig}.
 !
@@ -2400,282 +2401,285 @@ end subroutine tau
 !   Zdunkowski et al. 1982, Contrib. Atmos. Phys. Vol. 55 (3), pp. 215-238
 
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header including "USE ... ONLY"                  <Josue Bock>
-!          11/2016   ua ... wd changed from 1D aray (nrlay)  to scalars
-!          11/2016   missing declarations, implicit none
-!          11/2016   added u0red to avoid changing a global variable
-!          11/2016   further bugfix related to u0red: previously, u0
-!                     was changed within this SR, but not properly
-!                     reset for all other cases. It has to be used
-!                     ONLY in the resonance case!
-!
-! 1.0       ?        Original code.                                   <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  ! Nov-2016  Josue Bock  ua ... wd changed from 1D aray (nrlay) to scalars
+  !                       missing declarations, implicit none
+  !                       added u0red to avoid changing a global variable
+  !                       further bugfix related to u0red: previously, u0
+  !                          was changed within this SR, but not properly
+  !                          reset for all other cases. It has to be used
+  !                          ONLY in the resonance case!
+  !
+  ! Oct-2017  Josue Bock  Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     mbs, &
-     &     mbir, &
-     &     nrlay, &
-     &     nrlev
+       mbs,                 &
+       mbir,                &
+       nrlay,               &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Array arguments with intent(in):
-      integer, intent(in) :: ib                         ! current spectral band
-      double precision, intent(in) :: u0                ! cosine (solar zenith angle)
+  integer, intent(in) :: ib                         ! current spectral band
+  real(kind=dp), intent(in) :: u0                ! cosine (solar zenith angle)
 
 ! Local parameters:
-      double precision, parameter :: u=2.d0             ! diffusivity factor = reciprocal of the mean effective cos(SZA)
-      double precision, parameter :: delu0=0.001d0      ! resonance case correction
-      double precision, parameter :: reson=0.1d-6       ! boundary value for resonance case
-      double precision, parameter :: absfr=0.001d0      ! boundary value for no absorption case
-      double precision, parameter :: strfr=0.03d0       ! boundary value for no scattering case
-      double precision, parameter :: p1ray=0.1d0        ! boundary value for ray. scattering
+  real(kind=dp), parameter :: u=2.d0             ! diffusivity factor = reciprocal of the mean effective cos(SZA)
+  real(kind=dp), parameter :: delu0=0.001d0      ! resonance case correction
+  real(kind=dp), parameter :: reson=0.1d-6       ! boundary value for resonance case
+  real(kind=dp), parameter :: absfr=0.001d0      ! boundary value for no absorption case
+  real(kind=dp), parameter :: strfr=0.03d0       ! boundary value for no scattering case
+  real(kind=dp), parameter :: p1ray=0.1d0        ! boundary value for ray. scattering
 
 ! Local scalars:
-      double precision ua, ub, uc, ud                   ! flux modification for clouds
-      double precision va, vb, vc, vd
-      double precision wa, wb, wc, wd
-      double precision ak                               ! ratio of absorption and extinction
-      double precision alph1, alph2, alph3, alph4       ! coefficients 'alpha'
-      double precision u0kw                             !
-      double precision u0red                            ! check of resonance case
-      double precision f, emf, emfkw                    ! asymmetry factor of phase function
-      double precision b0, bu0                          ! backscattering coefficient
-      double precision dtu0, dtu, eps2, eps, omf, emomf ! equation factors
-      double precision u02, ueps2, emu, e, e2, m, m2
-      double precision e2m2, ouf, te, u0a1, u0a2
-      double precision gam1, gam2, g1a1, da
+  real(kind=dp) :: ua, ub, uc, ud                   ! flux modification for clouds
+  real(kind=dp) :: va, vb, vc, vd
+  real(kind=dp) :: wa, wb, wc, wd
+  real(kind=dp) :: ak                               ! ratio of absorption and extinction
+  real(kind=dp) :: alph1, alph2, alph3, alph4       ! coefficients 'alpha'
+  real(kind=dp) :: u0kw                             !
+  real(kind=dp) :: u0red                            ! check of resonance case
+  real(kind=dp) :: f, emf, emfkw                    ! asymmetry factor of phase function
+  real(kind=dp) :: b0, bu0                          ! backscattering coefficient
+  real(kind=dp) :: dtu0, dtu, eps2, eps, omf, emomf ! equation factors
+  real(kind=dp) :: u02, ueps2, emu, e, e2, m, m2
+  real(kind=dp) :: e2m2, ouf, te, u0a1, u0a2
+  real(kind=dp) :: gam1, gam2, g1a1, da
 
-      integer i, ip, l                                  ! loop indexes
+  integer :: jc       ! loop index, cloud free (1) or cloudy (2)
+  integer :: jz, jzp  ! loop indexes, vertical (top-down)
 
 ! Local arrays:
-      double precision a1(2,nrlay),a2(2,nrlay),a3(2,nrlay),a6(2,nrlay)     ! matrix coefficients (local)
+  real(kind=dp) :: a1(2,nrlay),a2(2,nrlay),a3(2,nrlay),a6(2,nrlay)   ! matrix coefficients (local)
 
 ! Common blocks:
-      common /leck1/ a4(2,nrlay),a5(2,nrlay)                          ! matrix coefficients
-      double precision a4, a5
+  common /leck1/ a4(2,nrlay),a5(2,nrlay)                             ! matrix coefficients
+  real(kind=dp) :: a4, a5
 
-      common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
-     &     f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
-      double precision sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
+  common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &        ! radiation fluxes
+                 f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
+  real(kind=dp) :: sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
 
-      common /opohne/ dtau(2,nrlay),om(2,nrlay),pl(2,2,nrlay)            ! optical variables
-      double precision dtau, om, pl
+  common /opohne/ dtau(2,nrlay),om(2,nrlay),pl(2,2,nrlay)            ! optical variables
+  real(kind=dp) :: dtau, om, pl
 
-      common /part/ cc(4,nrlay),bb(4,nrlay)                           ! cloudiness (continuity factors)
-      double precision cc, bb
+  common /part/ cc(4,nrlay),bb(4,nrlay)                              ! cloudiness (continuity factors)
+  real(kind=dp) :: cc, bb
 
-      common /tmp2/ as(mbs),ee(mbir)                            ! albedo and emissivity (unused here)
-      double precision as, ee
+  common /tmp2/ as(mbs),ee(mbir)                                     ! albedo and emissivity (unused here)
+  real(kind=dp) :: as, ee
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
 
 ! Definition of multiply used variables
-      u0kw  = 1./u0
+  u0kw  = 1._dp / u0
+
+  do jz = 1,nrlay
+
+     ! Loop for cloud free (index 1) and cloudy (index 2) parts
+     !---------------------------------------------------------
+     do jc = 1,2
 
 ! Coefficients a for matrix solution of the radiative transfer equation.
 !-----------------------------------------------------------------------
 !    the coefficients a1 without Delta-Eddington are set to a6( *, *).
 
-      do i=1,nrlay               ! Index i goes from top to bottom
-
-         ! Loop for cloud free (index 1) and cloudy (index 2) parts
-         !---------------------------------------------------------
-         do l=1,2
 
 ! Case 1: no extinction
-            if(dtau(l,i) <= 1.d-7) then
-               a1(l,i) = 1.
-               a2(l,i) = 0.
-               a3(l,i) = 0.
-               a4(l,i) = 1.
-               a5(l,i) = 0.
-               a6(l,i) = 1.
+        if(dtau(jc,jz) <= 1.e-7_dp) then
+           a1(jc,jz) = 1._dp
+           a2(jc,jz) = 0._dp
+           a3(jc,jz) = 0._dp
+           a4(jc,jz) = 1._dp
+           a5(jc,jz) = 0._dp
+           a6(jc,jz) = 1._dp
 
-            else
-               ! General definitions for all other cases
-               dtu0    = dtau(l,i)*u0kw
-               a6(l,i) = exp(-min(dtu0,7.5d1))
-               dtu     = dtau(l,i)*u
+        else
+           ! General definitions for all other cases
+           dtu0      = dtau(jc,jz) * u0kw
+           a6(jc,jz) = exp(-min(dtu0,7.5e1_dp))
+           dtu       = dtau(jc,jz) * u
 
 ! Case 2: no scattering (om < strfr)
-               if(om(l,i) < strfr) then
-                  a1(l,i)=a6(l,i)
-                  a2(l,i)=0.
-                  a3(l,i)=0.
-                  a4(l,i)=exp(-min(dtu,7.5d1))
-                  a5(l,i)=0.
+           if(om(jc,jz) < strfr) then
+              a1(jc,jz) = a6(jc,jz)
+              a2(jc,jz) = 0._dp
+              a3(jc,jz) = 0._dp
+              a4(jc,jz) = exp(-min(dtu,7.5e1_dp))
+              a5(jc,jz) = 0._dp
 
-               else
-                  ! General definitions for all other cases
-                  !
-                  ! backscattering coefficients: beta-0 (here b0), beta(u0) (here bu0)
-                  ! In the case of pure rayleigh scattering (p1 < p1ray) they
-                  ! are set to 0.5.
-                  ! p1 is the first Legendre-coefficient of the scattering function.
-                  ! f is the asymmetry factor of Delta-Eddington
-                  !
-                  !   Anmerkung: Der Sprung von b0 und bu0 auf 0.5 im Fall p1 <
-                  !   p1ray ist sicher nicht zufriedenstellend. Ist ein Provisorium. ! jjb NOK
-                  ak    = 1.-om(l,i)
-                  b0    = 0.5
-                  bu0   = 0.5
-                  f     = pl(2,l,i)/5.
-                  emf   = 1.-f
-                  emfkw = 1./emf
-                  if(pl(1,l,i) >= p1ray) then
-                     b0=(3.0-pl(1,l,i))/8.
-                     bu0=0.5-u0/4.*(pl(1,l,i)-3.*f)*emfkw
-                  end if
+           else
+              ! General definitions for all other cases
+              !
+              ! backscattering coefficients: beta-0 (here b0), beta(u0) (here bu0)
+              ! In the case of pure rayleigh scattering (p1 < p1ray) they
+              ! are set to 0.5.
+              ! p1 is the first Legendre-coefficient of the scattering function.
+              ! f is the asymmetry factor of Delta-Eddington
+              !
+              ! Caution: The jump from b0 and bu0 to 0.5 in the case of p1 < p1ray
+              ! is not satisfying. It is an interim solution.                        ! jjb NOK
+              ak    = 1._dp - om(jc,jz)
+              b0    = 0.5_dp
+              bu0   = 0.5_dp
+              f     = pl(2,jc,jz) / 5._dp
+              emf   = 1._dp - f
+              emfkw = 1._dp / emf
+              if(pl(1,jc,jz) >= p1ray) then
+                 b0  = (3.0_dp - pl(1,jc,jz)) / 8._dp
+                 bu0 = 0.5_dp - u0/4._dp * (pl(1,jc,jz) - 3._dp*f) * emfkw
+              end if
 
 ! Case 3: no absorption = pure scattering (ak < absfr, om = 1 )
-                  if(ak < absfr) then
-                     alph1=u*b0
-                     alph3=bu0 ! jjb NOK 1-f missing
-                     alph4=1.-alph3
-                     gam1=alph3-alph1*u0*emfkw ! jjb NOK
-                     a1(l,i)=exp(-min(dtu0*emf,7.5d1))
-                     a4(l,i)=1./(1.+alph1*dtau(l,i))
-                     a2(l,i)=a4(l,i)*(1.-gam1*(1.-a1(l,i)))-a1(l,i) ! jjb NOK
-                     a3(l,i)=1.-a1(l,i)-a2(l,i) ! jjb NOK
-                     a5(l,i)=1.-a4(l,i)
+              if(ak < absfr) then
+                 alph1 = u*b0
+                 alph3 = bu0 ! jjb NOK 1-f missing
+                 alph4 = 1._dp - alph3
+                 gam1  = alph3-alph1*u0*emfkw ! jjb NOK
+                 a1(jc,jz) = exp(-min(dtu0*emf,7.5e1_dp))
+                 a4(jc,jz) = 1._dp / (1._dp + alph1*dtau(jc,jz))
+                 a2(jc,jz) = a4(jc,jz) * (1._dp - gam1 * (1._dp - a1(jc,jz))) - a1(jc,jz) ! jjb NOK
+                 a3(jc,jz) = 1._dp - a1(jc,jz) - a2(jc,jz) ! jjb NOK
+                 a5(jc,jz) = 1._dp - a4(jc,jz)
 
 ! Case 4: absorption and scattering (normal case)
-                  else
-                     alph2=u*b0*om(l,i)
-                     alph1=u*ak+alph2
-                     alph3=bu0*om(l,i) ! jjb NOK 1-f missing
-                     alph4=om(l,i)-alph3 ! jjb NOK 1-f missing
-                     eps2=alph1**2-alph2**2
-                     eps=sqrt(eps2)
-                     omf=om(l,i)*f
-                     emomf=1.-omf
+              else
+                 alph2 = u * b0 * om(jc,jz)
+                 alph1 = u * ak + alph2
+                 alph3 = bu0 * om(jc,jz) ! jjb NOK 1-f missing
+                 alph4 = om(jc,jz) - alph3 ! jjb NOK 1-f missing
+                 eps2  = alph1**2 - alph2**2
+                 eps   = sqrt(eps2)
+                 omf   = om(jc,jz) * f
+                 emomf = 1._dp - omf
 
-                     u02=u0**2
-                     ueps2=u02*eps2
-                     emu=emomf**2-ueps2
+                 u02   = u0**2
+                 ueps2 = u02*eps2
+                 emu   = emomf**2 - ueps2
 
-                     ! First initialisation of u0red, used in resonance case
-                     u0red = u0
+                 ! First initialisation of u0red, used in resonance case
+                 u0red = u0
 
 ! Resonance case if the sun angle u0 is in resonance
 ! with the reference angle u:
 ! -> u0 is reduced by delu0
-                     do while(abs(emu) <= reson)
-                        u0red=u0red-delu0
-                        if(u0red <= 0.) then
-                           write(89,5)          ! jjb improve this by using globaly defined file unit
- 5                         format(/1x,'Error in resonance-case' &
-     & //' correction: The sun is moved back below the horizon.' &
-     & //' Thus it is nighttime and shortwave fluxes are zero')
-                           stop 'Error in subroutine kurzw.'
-                        end if
+                 do while(abs(emu) <= reson)
+                    u0red = u0red - delu0
+                    if(u0red <= 0.) then
+                       write(0,*)'SR kurzw: Error in resonance-case correction:' &
+                               //' The sun is moved back below the horizon.' &
+                               //' Thus it is nighttime and shortwave fluxes are zero'
+                       stop 'Error in subroutine kurzw.'
+                    end if
 
-                        u02=u0red**2
-                        ueps2=u02*eps2
-                        emu=emomf**2-ueps2
-                     end do
+                    u02   = u0red**2
+                    ueps2 = u02*eps2
+                    emu   = emomf**2 - ueps2
+                 end do
 
-                     a1(l,i) = exp(-min(dtu0*emomf,7.5d1))
-                     e       = exp(-min(dtau(l,i)*eps,7.5d1))
-                     m       = alph2/(alph1+eps)
-                     e2      = e**2
-                     m2      = m**2
-                     e2m2    = e2*m2
-                     ouf     = 1./(1.-e2m2)
-                     a4(l,i) = e*(1.-m2)*ouf
-                     a5(l,i) = m*(1.-e2)*ouf
-                     te      = emf/emu
-                     u0a1    = u0red*alph1
-                     u0a2    = u0red*alph2
-                     gam1    =  (alph3*(emomf-u0a1)-u0a2*alph4)*te
-                     gam2    = -(alph4*(emomf+u0a1)+u0a2*alph3)*te
-                     g1a1    = gam1*a1(l,i)
-                     da      = a1(l,i)-a4(l,i)
-                     a2(l,i) =  gam2*da-a5(l,i)*g1a1
-                     a3(l,i) = -gam2*a5(l,i)-a4(l,i)*g1a1+gam1
-                  end if
-               end if
-            end if
-         end do
-      end do
+                 a1(jc,jz) = exp(-min(dtu0*emomf, 7.5d1))
+                 e         = exp(-min(dtau(jc,jz)*eps, 7.5d1))
+                 m         = alph2 / (alph1+eps)
+                 e2        = e**2
+                 m2        = m**2
+                 e2m2      = e2 * m2
+                 ouf       = 1._dp / (1._dp - e2m2)
+                 a4(jc,jz) = e * (1._dp - m2) * ouf
+                 a5(jc,jz) = m * (1._dp - e2) * ouf
+                 te        = emf / emu
+                 u0a1      = u0red * alph1
+                 u0a2      = u0red * alph2
+                 gam1      =  (alph3*(emomf-u0a1) - u0a2*alph4)*te
+                 gam2      = -(alph4*(emomf+u0a1) + u0a2*alph3)*te
+                 g1a1      = gam1*a1(jc,jz)
+                 da        = a1(jc,jz) - a4(jc,jz)
+                 a2(jc,jz) =  gam2*da - a5(jc,jz)*g1a1
+                 a3(jc,jz) = -gam2*a5(jc,jz) - a4(jc,jz)*g1a1+gam1
+              end if
+           end if
+        end if
+     end do
+  end do
 
 !------------------------------------------------------------------------------
 
 ! Calculation of the parallel fluxes and the right hand side of the
 ! diffuse system A * F  =  R0.
-!
-      sf(1)  = u0
-      sw(1)  = 0.d0
-      ssf(1) = sf(1)
-      ssw(1) = 0.d0
-      ua     = bb(1,1) * ssf(1)
-      ub     = ssf(1) - ua
-      f2f(1) = 0.d0
-      f2w(1) = 0.d0
-      ! cloud free part
-      ssf(2) = a1(1,1)*ua
-      f2f(2) = a2(1,1)*ua
-      f1f(1) = a3(1,1)*ua
-      sf(2)  = a6(1,1)*ua
-      ! cloudy part
-      ssw(2) = a1(2,1)*ub
-      f2w(2) = a2(2,1)*ub
-      f1w(1) = a3(2,1)*ub
-      sw(2)  = a6(2,1)*ub
-      do i=2,nrlay
-         ip=i+1
 
-         ua = bb(1,i) * ssf(i)
-         ub = ssf(i) - ua
-         uc = bb(1,i) * sf(i)
-         ud = sf(i) - uc
-         va = cc(3,i) * ssw(i)
-         vb = ssw(i) - va
-         vc = cc(3,i) * sw(i)
-         vd = sw(i) - vc
-         wa = ua + va
-         wb = ub + vb
-         wc = uc + vc
-         wd = ud + vd
-         ! cloud free part
-         ssf(ip) = a1(1,i) * wa
-         f2f(ip) = a2(1,i) * wa
-         f1f(i)  = a3(1,i) * wa
-         sf(ip)  = a6(1,i) * wc
-         ! cloudy part
-         ssw(ip) = a1(2,i) * wb
-         f2w(ip) = a2(2,i) * wb
-         f1w(i)  = a3(2,i) * wb
-         sw(ip)  = a6(2,i) * wd
-      end do
+  sf(1)  = u0
+  sw(1)  = 0._dp
+  ssf(1) = sf(1)
+  ssw(1) = 0.d0
+  ua     = bb(1,1) * ssf(1)
+  ub     = ssf(1) - ua
+  f2f(1) = 0._dp
+  f2w(1) = 0._dp
+  ! cloud free part
+  ssf(2) = a1(1,1)*ua
+  f2f(2) = a2(1,1)*ua
+  f1f(1) = a3(1,1)*ua
+  sf(2)  = a6(1,1)*ua
+  ! cloudy part
+  ssw(2) = a1(2,1)*ub
+  f2w(2) = a2(2,1)*ub
+  f1w(1) = a3(2,1)*ub
+  sw(2)  = a6(2,1)*ub
+  do jz = 2,nrlay
+     jzp = jz+1
+
+     ua = bb(1,jz) * ssf(jz)
+     ub = ssf(jz) - ua
+     uc = bb(1,jz) * sf(jz)
+     ud = sf(jz) - uc
+     va = cc(3,jz) * ssw(jz)
+     vb = ssw(jz) - va
+     vc = cc(3,jz) * sw(jz)
+     vd = sw(jz) - vc
+     wa = ua + va
+     wb = ub + vb
+     wc = uc + vc
+     wd = ud + vd
+     ! cloud free part
+     ssf(jzp) = a1(1,jz) * wa
+     f2f(jzp) = a2(1,jz) * wa
+     f1f(jz)  = a3(1,jz) * wa
+     sf(jzp)  = a6(1,jz) * wc
+     ! cloudy part
+     ssw(jzp) = a1(2,jz) * wb
+     f2w(jzp) = a2(2,jz) * wb
+     f1w(jz)  = a3(2,jz) * wb
+     sw(jzp)  = a6(2,jz) * wd
+  end do
 
 ! Last two elements of the vector R0
 !
-      f1f(nrlev) = as(ib) * ssf(nrlev)
-      f1w(nrlev) = as(ib) * ssw(nrlev)
+  f1f(nrlev) = as(ib) * ssf(nrlev)
+  f1w(nrlev) = as(ib) * ssw(nrlev)
 
-      end subroutine kurzw
+end subroutine kurzw
 
 !
 ! ---------------------------------------------------------------------
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine langw(ib)
+subroutine langw(ib)
 !
 ! Description:
 !   Solution of the radiative transfer equation for current spectral band
@@ -2701,123 +2705,123 @@ end subroutine tau
 ! Declarations:
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     mbs, &
-     &     mbir, &
-     &     nrlay, &
-     &     nrlev
+       mbs,                 &
+       mbir,                &
+       nrlay,               &
+       nrlev
 
-      implicit none
+  implicit none
 
 ! Subroutine arguments
 ! Array arguments with intent(in):
-      integer, intent(in) :: ib                         ! current spectral band
+  integer, intent(in) :: ib                         ! current spectral band
 
 ! Local parameters:
-      double precision, parameter :: u=1.66d0           ! diffusivity factor = reciprocal of the mean effective cos(SZA)
+  double precision, parameter :: u=1.66d0           ! diffusivity factor = reciprocal of the mean effective cos(SZA)
 
 ! Local scalars:
-      double precision agdb, ak, alph1, alph2, at
-      double precision b0, db, dtu
-      double precision e, eps, epstau, eq
-      double precision ha, hb
-      double precision rm, rmq, rn
-      integer i, ip, ii0, l                             ! loop indexes
+  double precision agdb, ak, alph1, alph2, at
+  double precision b0, db, dtu
+  double precision e, eps, epstau, eq
+  double precision ha, hb
+  double precision rm, rmq, rn
+  integer i, ip, ii0, l                             ! loop indexes
 
 ! Local arrays
-      double precision a6(2,nrlay)                         ! matrix coefficients (local)
+  double precision a6(2,nrlay)                         ! matrix coefficients (local)
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  double precision t,p,rho,xm1,rho2,frac,ts
+  integer ntypa,ntypd
 
-      common /leck1/ a4(2,nrlay),a5(2,nrlay)                          ! matrix coefficients
-      double precision a4, a5
+  common /leck1/ a4(2,nrlay),a5(2,nrlay)                          ! matrix coefficients
+  double precision a4, a5
 
-      common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
-     &     f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
-      double precision sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
+  common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
+                 f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
+  double precision sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
 
-      common /opohne/ dtau(2,nrlay),om(2,nrlay),pl(2,2,nrlay)            ! optical variables
-      double precision dtau, om, pl
+  common /opohne/ dtau(2,nrlay),om(2,nrlay),pl(2,2,nrlay)            ! optical variables
+  double precision dtau, om, pl
 
-      common /part/ cc(4,nrlay),bb(4,nrlay)                           ! cloudiness (continuity factors)
-      double precision cc, bb
+  common /part/ cc(4,nrlay),bb(4,nrlay)                           ! cloudiness (continuity factors)
+  double precision cc, bb
 
-      common /planci/ pib(nrlev),pibs                              ! black body radiation
-      double precision pib, pibs
+  common /planci/ pib(nrlev),pibs                              ! black body radiation
+  double precision pib, pibs
 
-      common /tmp2/ as(mbs),ee(mbir)                            ! albedo (unused here) and emissivity
-      double precision as, ee
+  common /tmp2/ as(mbs),ee(mbir)                            ! albedo (unused here) and emissivity
+  double precision as, ee
 
 !- End of header ---------------------------------------------------------------
 
 
-      do i=1,nrlay               ! Index i goes from top to bottom
+  do i=1,nrlay               ! Index i goes from top to bottom
 
-         ! Loop for cloud free (index 1) and cloudy parts (index 2)
-         !---------------------------------------------------------
-         do l=1,2
+     ! Loop for cloud free (index 1) and cloudy parts (index 2)
+     !---------------------------------------------------------
+     do l=1,2
 
 !
 ! Case 1: no extinction
 !
-            if(dtau(l,i) <= 1.d-7) then
-               a4(l,i)=1.
-               a5(l,i)=0.
-               a6(l,i)=1.
+        if(dtau(l,i) <= 1.e-7_dp) then
+           a4(l,i) = 1._dp
+           a5(l,i) = 0._dp
+           a6(l,i) = 1._dp
 
 !
 ! Case 2: no scattering (om < 1.0d-7)
 !
-            else if(om(l,i) <= 1.d-7) then
-               dtu=dtau(l,i)*u
-               a4(l,i)=exp(-dtu)
-               a5(l,i)=0.
-               a6(l,i)=(1.-a4(l,i))/dtu
+        else if(om(l,i) <= 1.e-7_dp) then
+           dtu = dtau(l,i) * u
+           a4(l,i) = exp(-dtu)
+           a5(l,i) = 0._dp
+           a6(l,i) = (1._dp - a4(l,i)) / dtu
 
 !
 ! Case 3: no absorption (ak < 1.0d-7)
 !
-            else
-               ak=1.-om(l,i)
-               b0=(3.-pl(1,l,i))/8.
-               alph1=u*(1.-(1.-b0)*om(l,i))
-               alph2=u*b0*om(l,i)
+        else
+           ak = 1._dp - om(l,i)
+           b0 = (3._dp - pl(1,l,i)) / 8._dp
+           alph1 = u * (1._dp - (1._dp - b0) * om(l,i))
+           alph2 = u * b0 * om(l,i)
 
-               if(ak <= 1.d-7) then
-                  at=alph1*dtau(l,i)
-                  a4(l,i)=1./(1.+at)
-                  a5(l,i)=a4(l,i)*at
-                  a6(l,i)=0.
+           if(ak <= 1.e-7_dp) then
+              at = alph1 * dtau(l,i)
+              a4(l,i) = 1._dp / (1._dp + at)
+              a5(l,i) = a4(l,i) * at
+              a6(l,i) = 0._dp
 
 !
 ! Case 4: absorption and scattering (normal case)
 !
-               else
-                  eps=sqrt(alph1**2-alph2**2)
-                  epstau=eps*dtau(l,i)
-                  e=0.
-                  if(epstau < 87.) e=exp(-epstau)
-                  rm=alph2/(alph1+eps)
-                  eq=e**2
-                  rmq=rm**2
-                  rn=1.-eq*rmq
-                  a4(l,i)=e*(1.-rmq)/rn
-                  a5(l,i)=rm*(1.-eq)/rn
-                  if(alph1+alph2 /= 0.d0) then ! jjb see [Z82] p. 219: indetermination case
-                     a6(l,i)=(1.-a4(l,i)-a5(l,i)) / &
-     &                        ((alph1+alph2)*dtau(l,i))
-                  else
-                     a6(l,i)=1.d0
-                  end if
-               end if
-            end if
-         end do
-      end do
+           else
+              eps = sqrt(alph1**2 - alph2**2)
+              epstau = eps * dtau(l,i)
+              e = 0._dp
+              if(epstau < 87._dp) e=exp(-epstau)
+              rm  = alph2 / (alph1+eps)
+              eq  = e**2
+              rmq = rm**2
+              rn  = 1._dp - eq*rmq
+              a4(l,i) = e * (1._dp - rmq) / rn
+              a5(l,i) = rm * (1._dp - eq) / rn
+              if (alph1+alph2 /= 0.d0) then ! jjb see [Z82] p. 219: indetermination case
+                 a6(l,i) = (1._dp - a4(l,i) - a5(l,i)) / &
+                      ((alph1+alph2) * dtau(l,i))
+              else
+                 a6(l,i) = 1.d0_dp
+              end if
+           end if
+        end if
+     end do
+  end do
 
 !------------------------------------------------------------------------------
 
@@ -2827,37 +2831,37 @@ end subroutine tau
 
 !
 ! uppermost layer
-      f2f(1)=pib(1)
-      f2w(1)=0.
+  f2f(1) = pib(1)
+  f2w(1) = 0._dp
 !
 ! surface
-      ii0=ib-mbs
-      agdb=ee(ii0)*(pib(nrlev)-pibs)+(1.-ee(ii0))* &
-     & (1.-ee(ii0))*(pib(nrlev)-pib(nrlay))*a6(1,nrlay)* &
-     & (1.-frac(nrlay))
-      f1w(nrlev)=agdb*frac(nrlay)
-      f1f(nrlev)=agdb-f1w(nrlev)
+  ii0 = ib-mbs
+  agdb = ee(ii0) * (pib(nrlev)-pibs) + (1._dp - ee(ii0)) * &
+      (1._dp - ee(ii0)) * (pib(nrlev) - pib(nrlay)) * a6(1,nrlay) * &
+      (1._dp - frac(nrlay))
+  f1w(nrlev) = agdb * frac(nrlay)
+  f1f(nrlev) = agdb - f1w(nrlev)
 !
 ! remaining layers
-      do i=1,nrlay
-         ip=i+1
-         db=pib(i)-pib(ip)
-         f1f(i)=(1.-frac(i))*a6(1,i)*db
-         f1w(i)=frac(i)*a6(2,i)*db
-         f2f(ip)=-f1f(i)
-         f2w(ip)=-f1w(i)
-      end do
+  do i = 1,nrlay
+     ip = i+1
+     db = pib(i)-pib(ip)
+     f1f(i)  = (1.-frac(i))*a6(1,i)*db
+     f1w(i)  = frac(i)*a6(2,i)*db
+     f2f(ip) = -f1f(i)
+     f2w(ip) = -f1w(i)
+  end do
 !
 ! upper boundary condition for the right hand side of the third to sixth
 ! equation
-      ha=bb(1,1)*f2f(1)
-      hb=f2f(1)-ha
-      f2f(2)=f2f(2)+a4(1,1)*ha
-      f1f(1)=f1f(1)+a5(1,1)*ha
-      f2w(2)=f2w(2)+a4(2,1)*hb
-      f1w(1)=f1w(1)+a5(2,1)*hb
+  ha = bb(1,1)*f2f(1)
+  hb = f2f(1)-ha
+  f2f(2) = f2f(2)+a4(1,1)*ha
+  f1f(1) = f1f(1)+a5(1,1)*ha
+  f2w(2) = f2w(2)+a4(2,1)*hb
+  f1w(1) = f1w(1)+a5(2,1)*hb
 
-      end subroutine langw
+end subroutine langw
 
 !
 ! ---------------------------------------------------------------------
