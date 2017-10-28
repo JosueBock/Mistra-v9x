@@ -1901,70 +1901,74 @@ end subroutine qkio3
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine qopo3s ( fk, tg )
+subroutine qopo3s ( fk, tg )
 !
 ! Description:
+! -----------
 !     Calculation of ozone absorption in band 1 ( 50000 - 14500 cm**-1 )
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header including "USE ... ONLY"  <Josue Bock>
-!                    Declarations and implicit none
-!
-! 1.0       ?        Original code.                   <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  !                       Declarations and implicit none
+  !
+  ! Oct-2017  Josue Bock  Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev
+       nrlay,               &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Scalar arguments with intent(in):
-      double precision, intent(in) :: fk
+  real(kind=dp), intent(in) :: fk
 ! Array arguments with intent(out):
-      double precision, intent(out) :: tg(nrlay)
+  real(kind=dp), intent(out) :: tg(nrlay)
 
 ! Local scalars:
-      double precision fq
-      integer i
+  real(kind=dp) :: fq
+  integer :: jz
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
 
-      common /ozon/ qmo3(nrlev)
-      double precision qmo3
+  common /ozon/ qmo3(nrlev)
+  real(kind=dp) :: qmo3
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
-      fq=2.3808 * fk
-      do i=1,nrlay
-         tg(i)=( qmo3(i) + qmo3(i+1) ) * ( p(i+1) - p(i) ) * fq
-      end do
+  fq = 2.3808_dp * fk
+  do jz = 1,nrlay
+     tg(jz) = ( qmo3(jz) + qmo3(jz+1) ) * ( p(jz+1) - p(jz) ) * fq
+  end do
 
-      end subroutine qopo3s
+end subroutine qopo3s
 
 !
 ! ---------------------------------------------------------------------
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine qoph2o ( fkg, tg )
+subroutine qoph2o ( fkg, tg )
 !
 ! Description:
+! -----------
 !    Calculation of optical depth of water vapour absorption in bands
 !    2 ( 14500 - 7700 cm**-1 ), 3  ( 7700 - 5250 cm**-1 ),
 !    4  ( 5250 - 4000 cm**-1 ), 5  ( 4000 - 2850 cm**-1 ),
@@ -1974,287 +1978,300 @@ end subroutine qkio3
 !    12 ( 1100 -  980 cm**-1 ), 13 (  980 -  800 cm**-1 ),
 !    16 (  540 -  400 cm**-1 ), 17 (  400 -  280 cm**-1 ),
 !    and 18 ( 280 - 0 cm**-1 ).
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header including "USE ... ONLY"   <Josue Bock>
-!          10/2016   Declarations and implicit none
-!
-! 1.0       ?        Original code.                    <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  ! Oct-2016  Josue Bock  Declarations and implicit none
+  !
+  ! Oct-2017  Josue Bock  Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev
+       nrlay,               &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Scalar arguments with intent(in):
-      double precision, intent(in) :: fkg(nrlev)
+  real(kind=dp), intent(in) :: fkg(nrlev)
 ! Array arguments with intent(out):
-      double precision, intent(out) :: tg(nrlay)
+  real(kind=dp), intent(out) :: tg(nrlay)
 
 ! Local scalars:
-      integer i
+  integer :: jz
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
-      do i=1,nrlay
-         tg(i)=( fkg(i) * xm1(i) + fkg(i+1) * xm1(i+1) ) &
-     &        * ( p(i+1) - p(i) ) * 6.349205
-      end do
+  do jz = 1,nrlay
+     tg(jz) = ( fkg(jz) * xm1(jz) + fkg(jz+1) * xm1(jz+1) ) &
+            * ( p(jz+1) - p(jz) ) * 6.349205_dp
+  end do
 
-      end subroutine qoph2o
+end subroutine qoph2o
 
 !
 ! ---------------------------------------------------------------------
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine qopch4 ( fkg, tg )
+subroutine qopch4 ( fkg, tg )
 !
 ! Description:
+! -----------
 !   Calculation of optical depth of methane (CH4) absorption in bands
 !   10 ( 1400 - 1250 cm**-1 ) and 11 ( 1250 - 1100 cm**-1 )
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      10/2016   Declarations and implicit none   <Josue Bock>
-!          07/2016   Header including "USE ... ONLY"
-!
-! 1.0       ?        Original code.                    <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  ! Oct-2016  Josue Bock  Declarations and implicit none
+  !
+  ! Oct-2017  Josue Bock  Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev
+       nrlay,               &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Scalar arguments with intent(in):
-      double precision, intent(in) :: fkg(nrlev)
+  real(kind=dp), intent(in) :: fkg(nrlev)
 ! Array arguments with intent(out):
-      double precision, intent(out) :: tg(nrlay)
+  real(kind=dp), intent(out) :: tg(nrlay)
 
 ! Local scalars:
-      integer i
+  integer :: jz
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
-      do i=1,nrlay
-         tg(i)=( fkg(i)+fkg(i+1) ) * ( p(i+1)-p(i) ) * 6.3119e-6
-      end do
+  do jz = 1,nrlay
+     tg(jz) = ( fkg(jz)+fkg(jz+1) ) * ( p(jz+1)-p(jz) ) * 6.3119e-6_dp
+  end do
 
-      end subroutine qopch4
+end subroutine qopch4
 
 !
 ! ---------------------------------------------------------------------
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine qopn2o ( fkg, tg )
+subroutine qopn2o ( fkg, tg )
 !
 ! Description:
+! -----------
 !    Calculation of optical depth of nitrogene oxide (N2O) absorption in bands
 !    10 ( 1400 - 1250 cm**-1 ) and 11 ( 1250 - 1100 cm**-1 )
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      10/2016   Declarations and implicit none   <Josue Bock>
-!          07/2016   Header including "USE ... ONLY"
-!
-! 1.0       ?        Original code.                    <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  !                       Declarations and implicit none
+  !
+  ! Oct-2017  Josue Bock  Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev
+       nrlay,               &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Scalar arguments with intent(in):
-      double precision, intent(in) :: fkg(nrlev)
+  real(kind=dp), intent(in) :: fkg(nrlev)
 ! Array arguments with intent(out):
-      double precision, intent(out) :: tg(nrlay)
+  real(kind=dp), intent(out) :: tg(nrlay)
 
 ! Local scalars:
-      integer i
+  integer :: jz
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
-      do i=1,nrlay
-         tg(i)=( fkg(i)+fkg(i+1) ) * ( p(i+1)-p(i) ) * 1.10459e-6
-      end do
+  do jz = 1,nrlay
+     tg(jz) = ( fkg(jz)+fkg(jz+1) ) * ( p(jz+1)-p(jz) ) * 1.10459e-6_dp
+  end do
 
-      end subroutine qopn2o
+end subroutine qopn2o
 !
 ! ---------------------------------------------------------------------
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine qopo3i ( fkg, tg )
+subroutine qopo3i ( fkg, tg )
 !
 ! Description:
+! -----------
 !    Calculation of optical depth of ozone absorption in band
 !    12 ( 1100 - 980 cm**-1 ).
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header including "USE ... ONLY"  <Josue Bock>
-!                    Declarations and implicit none
-!
-! 1.0       ?        Original code.                   <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  !                       Declarations and implicit none
+  !
+  ! Oct-2017  Josue Bock  Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev
+       nrlay,               &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Array arguments with intent(in):
-      double precision, intent(in) :: fkg(nrlev)
+  real(kind=dp), intent(in) :: fkg(nrlev)
 ! Array arguments with intent(out):
-      double precision, intent(out) :: tg(nrlay)
+  real(kind=dp), intent(out) :: tg(nrlay)
 
 ! Local scalars:
-      integer i
+  integer :: jz
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
 
-      common /ozon/ qmo3(nrlev)
-      double precision qmo3
+  common /ozon/ qmo3(nrlev)
+  real(kind=dp) :: qmo3
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
-      do i=1,nrlay
-         tg(i)=( fkg(i) * qmo3(i) + fkg(i+1) * qmo3(i+1) ) &
-     &        * ( p(i+1) - p(i) ) * 2.3808
-      end do
+  do jz = 1,nrlay
+     tg(jz) = ( fkg(jz) * qmo3(jz) + fkg(jz+1) * qmo3(jz+1) ) &
+            * ( p(jz+1) - p(jz) ) * 2.3808_dp
+  end do
 
-      end subroutine qopo3i
+end subroutine qopo3i
 
 !
 ! ---------------------------------------------------------------------
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine qophc ( fkg, tg )
+subroutine qophc ( fkg, tg )
 !
 ! Description:
+! -----------
 !    Calculation of optical depth for overlapping absorption of water vapour and
 !    carbon dioxide (CO2) in bands
 !    14 ( 800 - 670 cm**-1) and 15 ( 670 - 540 cm**-1).
 !    See page 86 of Fu (1991).
 !
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header including "USE ... ONLY"  <Josue Bock>
-!                    Declarations and implicit none
-!
-! 1.0       ?        Original code.                   <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  !                       Declarations and implicit none
+  !
+  ! Oct-2017  Josue Bock  Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev
+       nrlay,               &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Array arguments with intent(in):
-      double precision, intent(in) :: fkg(nrlev)
+  real(kind=dp), intent(in) :: fkg(nrlev)
 ! Array arguments with intent(out):
-      double precision , intent(out) :: tg(nrlay)
+  real(kind=dp) , intent(out) :: tg(nrlay)
 
 ! Local scalars:
-      integer i
+  integer :: jz
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
-      do i=1,nrlay
-         tg(i)=( fkg(i) + fkg(i+1) ) * ( p(i+1) - p(i) ) * 0.005
-      end do
-! See page 86 of Fu (1991).
+  do jz = 1,nrlay
+     tg(jz) = ( fkg(jz) + fkg(jz+1) ) * ( p(jz+1) - p(jz) ) * 0.005_dp
+  end do
 
-      end subroutine qophc
+end subroutine qophc
 
 !
 ! ---------------------------------------------------------------------
