@@ -2681,28 +2681,27 @@ end subroutine kurzw
 !
 subroutine langw(ib)
 !
-! Description:
+! Description :
+! -----------
 !   Solution of the radiative transfer equation for current spectral band
 !   (ir -> ib = 7 ... 18) and cumulative probability {ig}.
 !
 !   The arrays f2f, f2w, f1f, f1w are the diffuse downward (2) and upward (1)
 !   ir fluxes. ('f' and 'w' stand for cloud free and cloudy parts)
-!
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header including "USE ... ONLY"          <Josue Bock>
-!          11/2016   missing declarations and implicit none
-!
-! 1.0       ?        Original code.                           <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  ! Nov-2016  Josue Bock  missing declarations, implicit none
+  !
+  ! Oct-2017  Josue Bock  Fortran90,
+  !                       replaced a test /= 0. by abs(...) >= tiny_dp
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
   USE global_params, ONLY : &
@@ -2712,6 +2711,11 @@ subroutine langw(ib)
        nrlay,               &
        nrlev
 
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp,                  &
+       tiny_dp
+
   implicit none
 
 ! Subroutine arguments
@@ -2719,45 +2723,45 @@ subroutine langw(ib)
   integer, intent(in) :: ib                         ! current spectral band
 
 ! Local parameters:
-  double precision, parameter :: u=1.66d0           ! diffusivity factor = reciprocal of the mean effective cos(SZA)
+  real(kind=dp), parameter :: u=1.66d0           ! diffusivity factor = reciprocal of the mean effective cos(SZA)
 
 ! Local scalars:
-  double precision agdb, ak, alph1, alph2, at
-  double precision b0, db, dtu
-  double precision e, eps, epstau, eq
-  double precision ha, hb
-  double precision rm, rmq, rn
-  integer i, ip, ii0, l                             ! loop indexes
+  real(kind=dp) :: agdb, ak, alph1, alph2, at
+  real(kind=dp) :: b0, db, dtu
+  real(kind=dp) :: e, eps, epstau, eq
+  real(kind=dp) :: ha, hb
+  real(kind=dp) :: rm, rmq, rn
+  integer :: i, ip, ii0, l                             ! loop indexes
 
 ! Local arrays
-  double precision a6(2,nrlay)                         ! matrix coefficients (local)
+  real(kind=dp) :: a6(2,nrlay)                         ! matrix coefficients (local)
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
                 frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-  double precision t,p,rho,xm1,rho2,frac,ts
-  integer ntypa,ntypd
+  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
 
   common /leck1/ a4(2,nrlay),a5(2,nrlay)                          ! matrix coefficients
-  double precision a4, a5
+  real(kind=dp) :: a4, a5
 
   common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
                  f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
-  double precision sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
+  real(kind=dp) :: sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
 
   common /opohne/ dtau(2,nrlay),om(2,nrlay),pl(2,2,nrlay)            ! optical variables
-  double precision dtau, om, pl
+  real(kind=dp) :: dtau, om, pl
 
   common /part/ cc(4,nrlay),bb(4,nrlay)                           ! cloudiness (continuity factors)
-  double precision cc, bb
+  real(kind=dp) :: cc, bb
 
   common /planci/ pib(nrlev),pibs                              ! black body radiation
-  double precision pib, pibs
+  real(kind=dp) :: pib, pibs
 
   common /tmp2/ as(mbs),ee(mbir)                            ! albedo (unused here) and emissivity
-  double precision as, ee
+  real(kind=dp) :: as, ee
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
 
   do i=1,nrlay               ! Index i goes from top to bottom
@@ -2812,11 +2816,11 @@ subroutine langw(ib)
               rn  = 1._dp - eq*rmq
               a4(l,i) = e * (1._dp - rmq) / rn
               a5(l,i) = rm * (1._dp - eq) / rn
-              if (alph1+alph2 /= 0.d0) then ! jjb see [Z82] p. 219: indetermination case
+              if (abs(alph1+alph2) >= tiny_dp) then ! jjb see [Z82] p. 219: indetermination case
                  a6(l,i) = (1._dp - a4(l,i) - a5(l,i)) / &
                       ((alph1+alph2) * dtau(l,i))
               else
-                 a6(l,i) = 1.d0_dp
+                 a6(l,i) = 1.0_dp
               end if
            end if
         end if
@@ -2846,7 +2850,7 @@ subroutine langw(ib)
   do i = 1,nrlay
      ip = i+1
      db = pib(i)-pib(ip)
-     f1f(i)  = (1.-frac(i))*a6(1,i)*db
+     f1f(i)  = (1._dp-frac(i))*a6(1,i)*db
      f1w(i)  = frac(i)*a6(2,i)*db
      f2f(ip) = -f1f(i)
      f2w(ip) = -f1w(i)
