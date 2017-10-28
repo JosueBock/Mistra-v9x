@@ -950,6 +950,7 @@ subroutine planck ( ib )
 ! Imported Parameters:
        nrlay,               &
        nrlev,               &
+       mbir,                &
        mbs
 
   USE precision, ONLY :     &
@@ -966,7 +967,7 @@ subroutine planck ( ib )
   integer :: jz
 
 ! Local arrays:
-  real (kind=dp) :: wvl(13)
+  real (kind=dp) :: wvl(mbir+1)
   data wvl / 2200._dp, 1900._dp, 1700._dp, 1400._dp, 1250._dp, 1100._dp, &
               980._dp,  800._dp,  670._dp,  540._dp,  400._dp,  280._dp, 0._dp /
 
@@ -1226,46 +1227,69 @@ end function plkavg
 ! jjb 25/07/2016: used only by SR plancktab, whose call is commented
 !                  -> not used anymore, thus commented out
 !
-!!$      double precision function fst4(ib,t)
+!!$function fst4 (ibir,t)
 !!$!
-!!$! Description:
-!!$! ***************************************************************
-!!$!   Interpolation of black body radiation from tabled values {pibtab}
+!!$! Description :
+!!$! -----------
+!!$!   Interpolation of black body radiation from tabulated values {pibtab}
 !!$!   for 35 temperatures {ttab}.
-!!$!   Daten in Block Data PLANC1.
-!!$! ***************************************************************
-!!$!
+!!$!   Data in common block plancd.
 !!$
-!!$!
-!!$! History:
-!!$! Version   Date     Comment
-!!$! -------   ----     -------
-!!$! 1.1      07/2016   Header including "USE ... ONLY"   <Josue Bock>
-!!$!
-!!$! 1.0       ?        Original code.                     <unknown>
-!!$!
-!!$! Code Description:
-!!$!   Language:          Fortran 77 (with Fortran 90 features)
-!!$!
-!!$! Declarations:
 !!$
-!!$      implicit double precision(a-h,o-z)
+!!$! Modifications :
+!!$! -------------
+!!$  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+!!$  ! Oct-2017  Josue Bock  Fortran90
+!!$  !                       added test to detect temperature out of range
+!!$  !                       interpolation rewritten, removed arithmetic if
+!!$  !                       reindexed pibtab(mbir,35) => pibtab(35,mbir)
+!!$
+!!$! == End of header =============================================================
+!!$
+!!$! Declarations :
+!!$! ------------
+!!$! Modules used:
+!!$
+!!$  USE global_params, ONLY : &
+!!$! Imported Parameters:
+!!$       mbir
+!!$
+!!$  USE precision, ONLY :     &
+!!$! Imported Parameters:
+!!$       dp
+!!$
+!!$  implicit none
+!!$
+!!$! Function declaration:
+!!$  real (kind=dp) :: fst4
+!!$
+!!$! Subroutine arguments
+!!$! Scalar arguments with intent(in):
+!!$  integer, intent(in) :: ibir
+!!$  real(kind=dp), intent(in) :: t
+!!$
+!!$! Local scalars:
+!!$  integer :: itl, ith ! indexes in table, low, high, such that ttab(itl) <= t <= ttab(ith)
 !!$
 !!$! Common blocks:
-!!$      common /plancd/ ttab(35),pibtab(12,35)
-!!$!- End of header ---------------------------------------------------------------
-!!$      do 1 k=1,35
-!!$         kk=k
-!!$         if(t-ttab(k)) 3,2,1
-!!$ 1    continue
-!!$ 2    fst4=pibtab(ib,kk)
-!!$      return
-!!$ 3    continue
-!!$      kkm=kk-1
-!!$      fst4=pibtab(ib,kkm)+(pibtab(ib,kk)-pibtab(ib,kkm)) &
-!!$     &     *(t-ttab(kkm))*0.2
+!!$  common /plancd/ ttab(35),pibtab(35,mbir)
+!!$  real(kind=dp) :: ttab, pibtab
 !!$
-!!$      end function fst4
+!!$! == End of declarations =======================================================
+!!$
+!!$  if ( t<ttab(1) .or. t>ttab(35) ) then
+!!$     write(0,*) 'Error in FN fst4: temperature out of range',t
+!!$     stop 'Stopped by FN fst4 (radiative code)'
+!!$  else
+!!$     ith = 2
+!!$     do while ( t > ttab(ith) )
+!!$        ith = ith + 1
+!!$     end do
+!!$     itl = ith - 1
+!!$     fst4 = pibtab(itl,ibir) + (pibtab(ith,ibir)-pibtab(itl,ibir)) * (t-ttab(itl)) * 0.2_dp
+!!$  end if
+!!$
+!!$end function fst4
 
 !
 ! ---------------------------------------------------------------------

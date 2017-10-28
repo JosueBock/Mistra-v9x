@@ -379,6 +379,9 @@
 ! History:
 ! Version   Date     Comment
 ! -------   ----     -------
+!       28-Oct-2017  Reindexed pibtab (thus changed input file) so that it is read in natural
+!                      Fortran order (leftmost is innermost in loops)
+!                    Replaced dimension 12 by mbir
 ! 1.1       10/2016  More cleaning, after checking the variables actually used   <Josue Bock>
 !                      (several old variables from PIFM1, apparently)
 !
@@ -400,6 +403,7 @@
       USE global_params, ONLY :
 ! Imported Parameters:
      &     mb,
+     &     mbir,
      &     ncw
 
       implicit none
@@ -444,9 +448,9 @@
       common /band18/ hk18(8),c18h2o(3,19,8)
       double precision hk18, c18h2o
 
-!      common /plancd/ ttab(35),pibtab(12,35) ! jjb was used in FN fst4 (called by SR plancktab), both unused now
-!      double precision ttab, pibtab          !     left for backward compatibility
-      double precision ttab(35),pibtab(12,35)
+!      common /plancd/ ttab(35),pibtab(35,mbir) ! jjb was used in FN fst4 (called by SR plancktab), both unused now
+!      double precision ttab, pibtab            !     left for backward compatibility
+      double precision ttab(35),pibtab(35,mbir)
 
       common /was1/ ret(ncw),r2wt(ncw),b2wt(ncw,mb),w2wt(ncw,mb),
      &              g2wt(ncw,mb)
@@ -457,7 +461,7 @@
 
 !- End of header ---------------------------------------------------------------
 
-      fname=TRIM(inpdir)//'pifm2_161019.dat'
+      fname=TRIM(inpdir)//'pifm2_171028.dat'
       open(unit=57, file=fname, status='old')
 
 ! input format to read this file
