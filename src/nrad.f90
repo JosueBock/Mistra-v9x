@@ -351,7 +351,7 @@ subroutine nstrahl
         call gase(ib,ig,hk)
 
         ! total optical depth:
-        call tau(ib)
+        call tau
 
         if ( ib <= mbs ) then ! solar bands
 
@@ -1586,7 +1586,7 @@ end subroutine gase
 !
 subroutine qks ( coefks, fkg )
 !
-! Description:
+! Description :
 ! -----------
 !    Calculation of the absorption coefficients for solar spectral bands.
 !
@@ -1691,7 +1691,7 @@ end subroutine qks
 !
 subroutine qki ( coefki, fkg )
 !
-! Description:
+! Description :
 ! -----------
 !    Calculation of the absorption coefficients for ir spectral bands.
 !
@@ -1797,7 +1797,7 @@ end subroutine qki
 !
 subroutine qkio3 ( coefki, fkg )
 !
-! Description:
+! Description :
 ! -----------
 !    Calculation of the absorption coefficients for ozone in spectral band 12
 !
@@ -1903,7 +1903,7 @@ end subroutine qkio3
 !
 subroutine qopo3s ( fk, tg )
 !
-! Description:
+! Description :
 ! -----------
 !     Calculation of ozone absorption in band 1 ( 50000 - 14500 cm**-1 )
 
@@ -1967,7 +1967,7 @@ end subroutine qopo3s
 !
 subroutine qoph2o ( fkg, tg )
 !
-! Description:
+! Description :
 ! -----------
 !    Calculation of optical depth of water vapour absorption in bands
 !    2 ( 14500 - 7700 cm**-1 ), 3  ( 7700 - 5250 cm**-1 ),
@@ -2035,7 +2035,7 @@ end subroutine qoph2o
 !
 subroutine qopch4 ( fkg, tg )
 !
-! Description:
+! Description :
 ! -----------
 !   Calculation of optical depth of methane (CH4) absorption in bands
 !   10 ( 1400 - 1250 cm**-1 ) and 11 ( 1250 - 1100 cm**-1 )
@@ -2095,7 +2095,7 @@ end subroutine qopch4
 !
 subroutine qopn2o ( fkg, tg )
 !
-! Description:
+! Description :
 ! -----------
 !    Calculation of optical depth of nitrogene oxide (N2O) absorption in bands
 !    10 ( 1400 - 1250 cm**-1 ) and 11 ( 1250 - 1100 cm**-1 )
@@ -2154,7 +2154,7 @@ end subroutine qopn2o
 !
 subroutine qopo3i ( fkg, tg )
 !
-! Description:
+! Description :
 ! -----------
 !    Calculation of optical depth of ozone absorption in band
 !    12 ( 1100 - 980 cm**-1 ).
@@ -2218,7 +2218,7 @@ end subroutine qopo3i
 !
 subroutine qophc ( fkg, tg )
 !
-! Description:
+! Description :
 ! -----------
 !    Calculation of optical depth for overlapping absorption of water vapour and
 !    carbon dioxide (CO2) in bands
@@ -2278,103 +2278,104 @@ end subroutine qophc
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine tau(ib)
+subroutine tau
 !
-! Description:
+! Description :
+! -----------
 !   Calculation of total optical depth {dtau}, single scattering albedo {om}
 !   and Legendre coefficients {pl} for current spectral band {ib}
 !   and cumulative probability {ig}.
 !   The first index (second for {pl}) stands for cloud free (1) and
 !   cloudy (2) parts.
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1       10/2016  Removed unused argument (ig)
-!                    Removed NO2 in the first wavelength band
-!                       ('tauno2' was set to 0 anyway)
-!                       (see Loughlin et al., QJRMS 1997: the absorption of NO2 is not in PIFM2)
 
-!           07/2016  Header including "USE ... ONLY"   <Josue Bock>
-!
-! 1.0       ?        Original code.                    <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  !
+  ! Oct-2016  Josue Bock  Removed unused argument (ig)
+  !                       Removed NO2 in the first wavelength band
+  !                          ('tauno2' was set to 0 anyway)
+  !                          (see Loughlin et al., QJRMS 1997: the absorption of NO2 is not in PIFM2)
+  !
+  ! Oct-2017  Josue Bock  Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay
+       nrlay
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
 
-! Subroutine arguments
-! Array arguments with intent(in):
-      integer, intent(in) :: ib
+  implicit none
 
 ! Local scalars:
-      integer iz, l
-      double precision zsum1, zsum2
-      double precision zx1_na
-      double precision zf
+  integer :: jl                  ! Loop index for Legendre coefficients
+  integer :: jz                  ! Loop index in the vertical dimension (top-down)
+  real(kind=dp) :: zsum1, zsum2
+  real(kind=dp) :: zx1_na
+  real(kind=dp) :: zf
 
 ! Common blocks:
-      common /con/ tgcon(nrlay)
-      double precision tgcon
+  common /con/ tgcon(nrlay)
+  real(kind=dp) :: tgcon
 
-      common /extra/ waer(nrlay),taer(nrlay),plaer(2,nrlay)
-      double precision waer, taer, plaer
+  common /extra/ waer(nrlay),taer(nrlay),plaer(2,nrlay)
+  real(kind=dp) :: waer, taer, plaer
 
-      common /gas/ tg(nrlay)
-      double precision tg
+  common /gas/ tg(nrlay)
+  real(kind=dp) :: tg
 
-      common /h2o/ t2w(nrlay), w2w(nrlay), pl2w(2,nrlay)
-      double precision t2w, w2w, pl2w
+  common /h2o/ t2w(nrlay), w2w(nrlay), pl2w(2,nrlay)
+  real(kind=dp) :: t2w, w2w, pl2w
 
-      common /opohne/ dtau(2,nrlay),om(2,nrlay),pl(2,2,nrlay)
-      double precision dtau, om, pl
+  common /opohne/ dtau(2,nrlay),om(2,nrlay),pl(2,2,nrlay)
+  real(kind=dp) :: dtau, om, pl
 
-      common /ray/ dtaur(nrlay), plr(2,nrlay)
-      double precision dtaur, plr
-!- End of header ---------------------------------------------------------------
+  common /ray/ dtaur(nrlay), plr(2,nrlay)
+  real(kind=dp) :: dtaur, plr
+
+! == End of declarations =======================================================
 
 ! total optical depth {dtau}
-      do iz=1,nrlay ! Index iz goes from top to bottom
-         dtau(1,iz)=dtaur(iz)+taer(iz)+tgcon(iz)+tg(iz)
-         dtau(2,iz)=dtau(1,iz)+t2w(iz)
-      enddo
+  do jz=1,nrlay
+     dtau(1,jz)=dtaur(jz)+taer(jz)+tgcon(jz)+tg(jz)
+     dtau(2,jz)=dtau(1,jz)+t2w(jz)
+  enddo
 
+  do jz=1,nrlay
+     zx1_na= taer(jz)*waer(jz)
+     zsum1=dtaur(jz) + zx1_na
+     zsum2=zsum1 + t2w(jz)*w2w(jz)
 ! total single scattering albedo {om}
-      do iz=1,nrlay              ! Index iz goes from top to bottom
-         zx1_na= taer(iz)*waer(iz)
-         zsum1=dtaur(iz) + zx1_na
-         zsum2=zsum1 + t2w(iz)*w2w(iz)
-         if(dtau(1,iz) > 1.0e-20) then
-            om(1,iz)=zsum1/dtau(1,iz)
-            om(2,iz)=zsum2/dtau(2,iz)
-         else
-            om(1,iz)=0.0
-            om(2,iz)=0.0
-         endif
+     if(dtau(1,jz) > 1.0e-20_dp) then
+        om(1,jz)=zsum1/dtau(1,jz)
+        om(2,jz)=zsum2/dtau(2,jz)
+     else
+        om(1,jz)=0.0_dp
+        om(2,jz)=0.0_dp
+     endif
 ! Legendre-coefficients for total scattering {pl}
-         do l=1,2
-            zf=dtaur(iz)*plr(l,iz) + zx1_na*plaer(l,iz)
-            if(zsum1 >= 1.d-20) then
-               pl(l,1,iz)=zf/zsum1
-               pl(l,2,iz)=(zf+t2w(iz)*w2w(iz)*pl2w(l,iz))/zsum2
-            else
-               pl(l,1,iz)=0.0
-               pl(l,2,iz)=0.0
-            endif
-         enddo
-      enddo
+     do jl=1,2
+        zf=dtaur(jz)*plr(jl,jz) + zx1_na*plaer(jl,jz)
+        if(zsum1 >= 1.e-20_dp) then
+           pl(jl,1,jz)=zf/zsum1
+           pl(jl,2,jz)=(zf+t2w(jz)*w2w(jz)*pl2w(jl,jz))/zsum2
+        else
+           pl(jl,1,jz)=0.0_dp
+           pl(jl,2,jz)=0.0_dp
+        endif
+     enddo
+  enddo
 
-      end subroutine tau
+end subroutine tau
 
 !
 ! ---------------------------------------------------------------------
