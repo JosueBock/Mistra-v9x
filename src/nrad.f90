@@ -2439,12 +2439,12 @@ subroutine kurzw(ib,u0)
   real(kind=dp), intent(in) :: u0                ! cosine (solar zenith angle)
 
 ! Local parameters:
-  real(kind=dp), parameter :: u=2.d0             ! diffusivity factor = reciprocal of the mean effective cos(SZA)
-  real(kind=dp), parameter :: delu0=0.001d0      ! resonance case correction
-  real(kind=dp), parameter :: reson=0.1d-6       ! boundary value for resonance case
-  real(kind=dp), parameter :: absfr=0.001d0      ! boundary value for no absorption case
-  real(kind=dp), parameter :: strfr=0.03d0       ! boundary value for no scattering case
-  real(kind=dp), parameter :: p1ray=0.1d0        ! boundary value for ray. scattering
+  real(kind=dp), parameter :: u=2._dp            ! diffusivity factor = reciprocal of the mean effective cos(SZA)
+  real(kind=dp), parameter :: delu0=0.001_dp     ! resonance case correction
+  real(kind=dp), parameter :: reson=0.1e-6_dp    ! boundary value for resonance case
+  real(kind=dp), parameter :: absfr=0.001_dp     ! boundary value for no absorption case
+  real(kind=dp), parameter :: strfr=0.03_dp      ! boundary value for no scattering case
+  real(kind=dp), parameter :: p1ray=0.1_dp       ! boundary value for ray. scattering
 
 ! Local scalars:
   real(kind=dp) :: ua, ub, uc, ud                   ! flux modification for clouds
@@ -2593,8 +2593,8 @@ subroutine kurzw(ib,u0)
                     emu   = emomf**2 - ueps2
                  end do
 
-                 a1(jc,jz) = exp(-min(dtu0*emomf, 7.5d1))
-                 e         = exp(-min(dtau(jc,jz)*eps, 7.5d1))
+                 a1(jc,jz) = exp(-min(dtu0*emomf, 7.5e1_dp))
+                 e         = exp(-min(dtau(jc,jz)*eps, 7.5e1_dp))
                  m         = alph2 / (alph1+eps)
                  e2        = e**2
                  m2        = m**2
@@ -2625,7 +2625,7 @@ subroutine kurzw(ib,u0)
   sf(1)  = u0
   sw(1)  = 0._dp
   ssf(1) = sf(1)
-  ssw(1) = 0.d0
+  ssw(1) = 0._dp
   ua     = bb(1,1) * ssf(1)
   ub     = ssf(1) - ua
   f2f(1) = 0._dp
@@ -2694,7 +2694,8 @@ subroutine langw(ib)
 ! -------------
   ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
   ! Nov-2016  Josue Bock  missing declarations, implicit none
-  !
+  !                       added an undetermination case for a6 calculation
+  !                       reorganised a(4:6,...) ==> a4(...) - a6(...)
   ! Oct-2017  Josue Bock  Fortran90,
   !                       replaced a test /= 0. by abs(...) >= tiny_dp
 
@@ -2723,7 +2724,7 @@ subroutine langw(ib)
   integer, intent(in) :: ib                         ! current spectral band
 
 ! Local parameters:
-  real(kind=dp), parameter :: u=1.66d0           ! diffusivity factor = reciprocal of the mean effective cos(SZA)
+  real(kind=dp), parameter :: u=1.66_dp             ! diffusivity factor = reciprocal of the mean effective cos(SZA)
 
 ! Local scalars:
   real(kind=dp) :: agdb, ak, alph1, alph2, at
@@ -2742,23 +2743,23 @@ subroutine langw(ib)
   real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
   integer :: ntypa,ntypd
 
-  common /leck1/ a4(2,nrlay),a5(2,nrlay)                          ! matrix coefficients
+  common /leck1/ a4(2,nrlay),a5(2,nrlay)                       ! matrix coefficients
   real(kind=dp) :: a4, a5
 
-  common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
+  common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &  ! radiation fluxes
                  f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
   real(kind=dp) :: sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
 
-  common /opohne/ dtau(2,nrlay),om(2,nrlay),pl(2,2,nrlay)            ! optical variables
+  common /opohne/ dtau(2,nrlay),om(2,nrlay),pl(2,2,nrlay)      ! optical variables
   real(kind=dp) :: dtau, om, pl
 
-  common /part/ cc(4,nrlay),bb(4,nrlay)                           ! cloudiness (continuity factors)
+  common /part/ cc(4,nrlay),bb(4,nrlay)                        ! cloudiness (continuity factors)
   real(kind=dp) :: cc, bb
 
   common /planci/ pib(nrlev),pibs                              ! black body radiation
   real(kind=dp) :: pib, pibs
 
-  common /tmp2/ as(mbs),ee(mbir)                            ! albedo (unused here) and emissivity
+  common /tmp2/ as(mbs),ee(mbir)                               ! albedo (unused here) and emissivity
   real(kind=dp) :: as, ee
 
 ! == End of declarations =======================================================
@@ -2779,7 +2780,7 @@ subroutine langw(ib)
            a6(l,i) = 1._dp
 
 !
-! Case 2: no scattering (om < 1.0d-7)
+! Case 2: no scattering (om < 1.0e-7)
 !
         else if(om(l,i) <= 1.e-7_dp) then
            dtu = dtau(l,i) * u
@@ -2788,7 +2789,7 @@ subroutine langw(ib)
            a6(l,i) = (1._dp - a4(l,i)) / dtu
 
 !
-! Case 3: no absorption (ak < 1.0d-7)
+! Case 3: no absorption (ak < 1.0e-7)
 !
         else
            ak = 1._dp - om(l,i)
@@ -2872,160 +2873,160 @@ end subroutine langw
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine jeanfr(ib)
+subroutine jeanfr (ib)
 !
-! Description:
+! Description :
+! -----------
 !   Solution of the linear equation system A(diffus) * F  =  R0.
 !   The right hand side is calculated in KURZW or LANGW.
-!
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header including "USE ... ONLY"  <Josue Bock>
-!                    Removal of labeled do-loops
-!
-! 1.0       ?        Original code.                   <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  !                       Removal of labeled do-loops
+  ! Nov-2016  Josue Bock  Changed td from 2-D to 1-D
+  ! Oct-2017  Josue Bock  Fortran90
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     mbs, &
-     &     mbir, &
-     &     nrlay, &
-     &     nrlev
+       mbs,                 &
+       mbir,                &
+       nrlay,               &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Array arguments with intent(in):
-      integer, intent(in) :: ib
+  integer, intent(in) :: ib
 
 ! Local scalars:
-      double precision ae
-      double precision fa
-      double precision ga,gb,gc,gd,ge,gf
-      double precision ha,hb,hc,hd
-      double precision tds1,tds2,tds3,tus1
-      integer i,im,ip                       ! Loop indexes
+  real(kind=dp) :: ae
+  real(kind=dp) :: fa
+  real(kind=dp) :: ga,gb,gc,gd,ge,gf
+  real(kind=dp) :: ha,hb,hc,hd
+  real(kind=dp) :: tds1,tds2,tds3,tus1
+  integer :: jz,jzm,jzp                       ! Loop indexes
 
 ! Local arrays:
-      double precision tu(9,nrlay),td(7)
+  real(kind=dp) :: tu(9,nrlay),td(7)
 
 ! Common blocks:
-      common /leck1/ a4(2,nrlay),a5(2,nrlay)                          ! matrix coefficients
-      double precision a4, a5
+  common /leck1/ a4(2,nrlay),a5(2,nrlay)                          ! matrix coefficients
+  real(kind=dp) :: a4, a5
 
-      common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
-     &     f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
-      double precision sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
+  common /leck2/ sf(nrlev),sw(nrlev),ssf(nrlev),ssw(nrlev), &             ! radiation fluxes
+                 f2f(nrlev),f2w(nrlev),f1f(nrlev),f1w(nrlev)
+  real(kind=dp) :: sf, sw, ssf, ssw, f2f, f2w, f1f, f1w
 
-      common /part/ cc(4,nrlay),bb(4,nrlay)
-      double precision cc, bb
+  common /part/ cc(4,nrlay),bb(4,nrlay)
+  real(kind=dp) :: cc, bb
 
-      common /tmp2/ as(mbs),ee(mbir)
-      double precision as, ee
-!- End of header ---------------------------------------------------------------
+  common /tmp2/ as(mbs),ee(mbir)
+  real(kind=dp) :: as, ee
+
+! == End of declarations =======================================================
 
 !   Diffusive System A * F = R0
 !
 ! The right side is provided by subroutines KURZW or LANGW
 !
-! equation 3. to 6.: save of matix elements above the main diagonal
-! in arrays -tu(k,i)
-!
-      tu(1,1)=0.d0
-      tu(2,1)=a4(1,1)*bb(2,1)
-      tu(3,1)=a4(1,1)*cc(4,1)
-      tu(4,1)=a4(2,1)*cc(2,1)
-      tu(5,1)=a4(2,1)*bb(4,1)
-      tu(6,1)=a5(1,1)*bb(2,1)
-      tu(7,1)=a5(1,1)*cc(4,1)
-      tu(8,1)=a5(2,1)*cc(2,1)
-      tu(9,1)=a5(2,1)*bb(4,1)
+! equation 3. to 6.: save of matrix elements above the main diagonal
+! in arrays -tu(k,jz)
+
+  tu(1,1)=0._dp
+  tu(2,1)=a4(1,1)*bb(2,1)
+  tu(3,1)=a4(1,1)*cc(4,1)
+  tu(4,1)=a4(2,1)*cc(2,1)
+  tu(5,1)=a4(2,1)*bb(4,1)
+  tu(6,1)=a5(1,1)*bb(2,1)
+  tu(7,1)=a5(1,1)*cc(4,1)
+  tu(8,1)=a5(2,1)*cc(2,1)
+  tu(9,1)=a5(2,1)*bb(4,1)
 
 ! Blocks of four equations:
 ! Elimination of matrix elements below the main diagonal, matrix elements
-! above the main diagonal are saved in -tu(k, i).
+! above the main diagonal are saved in -tu(k, jz).
 ! Right hand side saved in f2f, f2w, f1f, f1w.
-!
-      do i=2,nrlay
-         im=i-1
-         ip=i+1
+  do jz=2,nrlay
+     jzm=jz-1
+     jzp=jz+1
 
-         ga=bb(1,i)*tu(6,im)
-         gb=tu(6,im)-ga
-         gc=cc(3,i)*tu(8,im)
-         gd=tu(8,im)-gc
-         ha=ga+gc
-         hc=gb+gd
-         ga=bb(1,i)*tu(7,im)
-         gb=tu(7,im)-ga
-         gc=cc(3,i)*tu(9,im)
-         gd=tu(9,im)-gc
-         hb=ga+gc
-         hd=gb+gd
-         ga=bb(1,i)*f2f(i)
-         ge=f2f(i)-ga
-         gc=cc(3,i)*f2w(i)
-         gf=f2w(i)-gc
-         gb=ga+gc
-         gd=ge+gf
-         td(1)=1.d0/(1.d0-a5(1,i)*ha)
-         f1f(i)=td(1)*(f1f(i)+a5(1,i)*gb)
-         tu(1,i)=td(1)*a5(1,i)*hb
-         fa=td(1)*a4(1,i)
-         tu(2,i)=fa*bb(2,i)
-         tu(3,i)=fa*cc(4,i)
-         td(2)=a5(2,i)*hc
-         td(3)=1.d0/(1.d0-a5(2,i)*hd-td(2)*tu(1,i))
-         f1w(i)=td(3)*(f1w(i)+a5(2,i)*gd+td(2)*f1f(i))
-         td(4)=a4(1,i)*ha
-         td(5)=a4(1,i)*hb+td(4)*tu(1,i)
-         f2f(ip)=f2f(ip)+a4(1,i)*gb+td(4)*f1f(i)+td(5)*f1w(i)
-         tu(4,i)=td(3)*(a4(2,i)*cc(2,i)+td(2)*tu(2,i))
-         tu(5,i)=td(3)*(a4(2,i)*bb(4,i)+td(2)*tu(3,i))
-         tu(6,i)=a5(1,i)*bb(2,i)+td(4)*tu(2,i)+td(5)*tu(4,i)
-         tu(7,i)=a5(1,i)*cc(4,i)+td(4)*tu(3,i)+td(5)*tu(5,i)
-         td(6)=a4(2,i)*hc
-         td(7)=a4(2,i)*hd+td(6)*tu(1,i)
-         f2w(ip)=f2w(ip)+a4(2,i)*gd+td(6)*f1f(i)+td(7)*f1w(i)
-         tu(8,i)=a5(2,i)*cc(2,i)+td(6)*tu(2,i)+td(7)*tu(4,i)
-         tu(9,i)=a5(2,i)*bb(4,i)+td(6)*tu(3,i)+td(7)*tu(5,i)
-      end do
+     ga=bb(1,jz)*tu(6,jzm)
+     gb=tu(6,jzm)-ga
+     gc=cc(3,jz)*tu(8,jzm)
+     gd=tu(8,jzm)-gc
+     ha=ga+gc
+     hc=gb+gd
+     ga=bb(1,jz)*tu(7,jzm)
+     gb=tu(7,jzm)-ga
+     gc=cc(3,jz)*tu(9,jzm)
+     gd=tu(9,jzm)-gc
+     hb=ga+gc
+     hd=gb+gd
+     ga=bb(1,jz)*f2f(jz)
+     ge=f2f(jz)-ga
+     gc=cc(3,jz)*f2w(jz)
+     gf=f2w(jz)-gc
+     gb=ga+gc
+     gd=ge+gf
+     td(1)=1._dp / (1._dp - a5(1,jz)*ha)
+     f1f(jz)=td(1)*(f1f(jz)+a5(1,jz)*gb)
+     tu(1,jz)=td(1)*a5(1,jz)*hb
+     fa=td(1)*a4(1,jz)
+     tu(2,jz)=fa*bb(2,jz)
+     tu(3,jz)=fa*cc(4,jz)
+     td(2)=a5(2,jz)*hc
+     td(3)=1._dp / (1._dp - a5(2,jz)*hd-td(2)*tu(1,jz))
+     f1w(jz)=td(3)*(f1w(jz)+a5(2,jz)*gd+td(2)*f1f(jz))
+     td(4)=a4(1,jz)*ha
+     td(5)=a4(1,jz)*hb+td(4)*tu(1,jz)
+     f2f(jzp)=f2f(jzp)+a4(1,jz)*gb+td(4)*f1f(jz)+td(5)*f1w(jz)
+     tu(4,jz)=td(3)*(a4(2,jz)*cc(2,jz)+td(2)*tu(2,jz))
+     tu(5,jz)=td(3)*(a4(2,jz)*bb(4,jz)+td(2)*tu(3,jz))
+     tu(6,jz)=a5(1,jz)*bb(2,jz)+td(4)*tu(2,jz)+td(5)*tu(4,jz)
+     tu(7,jz)=a5(1,jz)*cc(4,jz)+td(4)*tu(3,jz)+td(5)*tu(5,jz)
+     td(6)=a4(2,jz)*hc
+     td(7)=a4(2,jz)*hd+td(6)*tu(1,jz)
+     f2w(jzp)=f2w(jzp)+a4(2,jz)*gd+td(6)*f1f(jz)+td(7)*f1w(jz)
+     tu(8,jz)=a5(2,jz)*cc(2,jz)+td(6)*tu(2,jz)+td(7)*tu(4,jz)
+     tu(9,jz)=a5(2,jz)*bb(4,jz)+td(6)*tu(3,jz)+td(7)*tu(5,jz)
+  end do
 
 ! Elimination and backsubstitution of the last two equations.
 ! Calculation with albedo (solar) and 1-emissivity (ir)
-!
-      if(ib <= mbs) then
-         ae=as(ib)
-      else
-         ae=1.-ee(ib-mbs)
-      endif
-      tds1=1./(1.-ae*tu(6,nrlay))
-      f1f(nrlev)=tds1*(f1f(nrlev)+ae*f2f(nrlev))
-      tus1=tds1*ae*tu(7,nrlay)
-      tds2=ae*tu(8,nrlay)
-      tds3=1./(1.-ae*tu(9,nrlay)-tds2*tus1)
-      f1w(nrlev)=tds3*(f1w(nrlev)+ae*f2w(nrlev)+tds2*f1f(nrlev))
-      f1f(nrlev)=f1f(nrlev)+tus1*f1w(nrlev)
+  if(ib <= mbs) then
+     ae = as(ib)
+  else
+     ae = 1._dp - ee(ib-mbs)
+  endif
+  tds1 = 1._dp / (1._dp - ae*tu(6,nrlay))
+  f1f(nrlev) = tds1*(f1f(nrlev)+ae*f2f(nrlev))
+  tus1 = tds1*ae*tu(7,nrlay)
+  tds2 = ae*tu(8,nrlay)
+  tds3 = 1._dp / (1._dp - ae*tu(9,nrlay)-tds2*tus1)
+  f1w(nrlev) = tds3*(f1w(nrlev)+ae*f2w(nrlev)+tds2*f1f(nrlev))
+  f1f(nrlev) = f1f(nrlev)+tus1*f1w(nrlev)
 
 ! Now we have a upper-triangle-matrix with elements -tu(k, i) or 0 or 1.
 ! Resubstitution with results on the arrays f2f, f2w, f1f, f1w
-!
-      do i=nrlay,1,-1
-         ip=i+1
-         f2w(ip)=f2w(ip)+tu(8,i)*f1f(ip)+tu(9,i)*f1w(ip)
-         f2f(ip)=f2f(ip)+tu(6,i)*f1f(ip)+tu(7,i)*f1w(ip)
-         f1w(i)=f1w(i)+tu(4,i)*f1f(ip)+tu(5,i)*f1w(ip)
-         f1f(i)=f1f(i)+tu(2,i)*f1f(ip)+tu(3,i)*f1w(ip)+tu(1,i)*f1w(i)
-      end do
+  do jz=nrlay,1,-1
+     jzp=jz+1
+     f2w(jzp) = f2w(jzp) + tu(8,jz)*f1f(jzp)+tu(9,jz)*f1w(jzp)
+     f2f(jzp) = f2f(jzp) + tu(6,jz)*f1f(jzp)+tu(7,jz)*f1w(jzp)
+     f1w(jz)  = f1w(jz)  + tu(4,jz)*f1f(jzp)+tu(5,jz)*f1w(jzp)
+     f1f(jz)  = f1f(jz)  + tu(2,jz)*f1f(jzp)+tu(3,jz)*f1w(jzp)+tu(1,jz)*f1w(jz)
+  end do
 
-      end subroutine jeanfr
+end subroutine jeanfr
