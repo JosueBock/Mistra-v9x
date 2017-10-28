@@ -797,7 +797,6 @@ subroutine gascon ( ib )
 
   USE global_params, ONLY : &
 ! Imported Parameters:
-       mb, &
        nrlay
 
   USE precision, ONLY :     &
@@ -811,9 +810,9 @@ subroutine gascon ( ib )
   integer, intent(in) :: ib
 
 ! Local arrays:
-  real (kind=dp) :: vv(mb)     ! central wavenumbers of the spectral bands in in cm**-1
-  data vv / 10*0.0_dp, 1175.0_dp, 1040.0_dp, 890.0_dp, 735.0_dp, &
-             605.0_dp,  470.0_dp,  340.0_dp,   0.0_dp /
+  real (kind=dp), parameter :: vv(7) = &    ! central wavenumbers of the spectral bands in in cm**-1
+       (/ 1175.0_dp, 1040.0_dp, 890.0_dp, 735.0_dp, &
+           605.0_dp,  470.0_dp, 340.0_dp /)
 
 ! Common blocks:
   common /con/ tgcon(nrlay)
@@ -822,7 +821,7 @@ subroutine gascon ( ib )
 ! == End of declarations =======================================================
 
   if ( ib >= 11 .and. ib <= 17 ) then
-     call qopcon ( vv(ib) )
+     call qopcon ( vv(ib-10) )
   else
      tgcon(:)=0.0_dp
   endif
@@ -967,9 +966,9 @@ subroutine planck ( ib )
   integer :: jz
 
 ! Local arrays:
-  real (kind=dp) :: wvl(mbir+1)
-  data wvl / 2200._dp, 1900._dp, 1700._dp, 1400._dp, 1250._dp, 1100._dp, &
-              980._dp,  800._dp,  670._dp,  540._dp,  400._dp,  280._dp, 0._dp /
+  real (kind=dp), parameter :: wvl(mbir+1) = &
+       (/ 2200._dp, 1900._dp, 1700._dp, 1400._dp, 1250._dp, 1100._dp, &
+           980._dp,  800._dp,  670._dp,  540._dp,  400._dp,  280._dp, 0._dp /)
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
@@ -1585,314 +1584,317 @@ end subroutine gase
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine qks ( coefks, fkg )
+subroutine qks ( coefks, fkg )
 !
 ! Description:
-!     Calculation of the absorption coefficients for solar spectral bands.
+! -----------
+!    Calculation of the absorption coefficients for solar spectral bands.
 !
 ! fkg(nrlev) are the gaseous absorption coefficients in units of (cm-atm)**-1
-! for a given cumulative probability in nrlev layers. coefks(3,11)
-! are the coefficients to calculate the absorption coefficient at the
-! temperature t for the 11 pressures by
+! for a given cumulative probability in nrlev layers.
+! coefks(3,11) are the coefficients to calculate the absorption coefficient
+! at the temperature t for the 11 pressures by
 !         ln k = a + b * ( t - 245 ) + c * ( t - 245 ) ** 2
 ! and the absorption coefficient at conditions other than those eleven
 ! pressures is interpolated linearly with pressure (Fu, 1991).
-!   Obwohl der Druck dem U.P in MKS gegeben wird, haben die fkg die
-!   originaere Fu-Einheit. stanp ist ebenfalls in Pascal
-! *********************************************************************
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header including "USE ... ONLY"   <Josue Bock>
-!                    Declarations and implicit none
-!
-! 1.0       ?        Original code.                    <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  !                       Declarations and implicit none
+  !
+  ! Oct-2017  Josue Bock  Fortran90
+  !                       minor improvements of code
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev
+       nrlay,               &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Array arguments with intent(in):
-      double precision, intent(in) :: coefks(3,11)
+  real (kind=dp), intent(in) :: coefks(3,11) ! tabulated coefficients
 ! Array arguments with intent(out):
-      double precision, intent(out) :: fkg(nrlev)
+  real (kind=dp), intent(out) :: fkg(nrlev)  ! gaseous absorption coefficients
 
 ! Local scalars:
-      integer i, i1
-      double precision x1, x2, y1
+  integer :: ipl, iph                ! index low, high such that stanp(ipl) < p <stanp(iph)
+  integer :: jz                      ! vertical loop index (top-down)
+  real (kind=dp) :: x1, x2           ! b and c of the above formula
+  real (kind=dp) :: ztfact, ztfact2  ! temperature factor, squared
+
 ! Local arrays:
-      double precision stanp(11)
-      data stanp / 1000., 1580., 2510., 3980., 6310., 10000., &
-     &     15800.,25100.,39800.,63100.,100000. /
+  real (kind=dp), parameter :: stanp(11) = &
+       (/ 1000._dp,  1580._dp,  2510._dp,  3980._dp,  6310._dp, &
+         10000._dp, 15800._dp, 25100._dp, 39800._dp, 63100._dp, &
+        100000._dp /)
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
-      do 5 i=1, nrlev
-        i1=1
+  do jz=1, nrlev
+     ztfact  = t(jz) - 245.0_dp
+     ztfact2 = ztfact * ztfact
 
-! absorption coefficient for boundary values: pressure lower than
-! 10 hPa or higher than 1000 hPa
-        if ( p(i) < stanp(1) ) then
-           x1=exp( coefks(1,1) + coefks(2,1) * ( t(i) - 245.0 ) &
-     &          + coefks(3,1) * ( t(i) - 245.0 ) ** 2 )
-           fkg(i)=x1 * p(i) / stanp(1)
+     if ( p(jz) <= stanp(1) ) then
+        ! pressure lower than 10 hPa: interpolate between 0. and 10 hPa
+        x1 = exp( coefks(1,1) + coefks(2,1)*ztfact + coefks(3,1)*ztfact2 )
+        fkg(jz) = x1 * p(jz) / stanp(1)
 
-        elseif ( p(i) >= stanp(11) ) then
-           y1=( t(i) - 245.0 ) * ( t(i) - 245.0 )
-           x1=exp( coefks(1,10) + coefks(2,10) * ( t(i) - 245.0 ) &
-     &          + coefks(3,10) * y1 )
-           x2=exp( coefks(1,11) + coefks(2,11) * ( t(i) - 245.0 ) &
-     &          + coefks(3,11) * y1 )
-           fkg(i)=x1 + ( x2 - x1 ) / ( stanp(11) - stanp(10) ) &
-     &          * ( p(i) - stanp(10) )
+     else if ( p(jz) >= stanp(11) ) then
+        ! pressure higher than 1000 hPa: extrapolate the slope of the latest two
+        ! tabulated values
+        x1 = exp( coefks(1,10) + coefks(2,10)*ztfact + coefks(3,10)*ztfact2 )
+        x2 = exp( coefks(1,11) + coefks(2,11)*ztfact + coefks(3,11)*ztfact2 )
+        fkg(jz) = x1 + ( x2 - x1 ) / ( stanp(11) - stanp(10) ) &
+                 * ( p(jz) - stanp(10) )
 
-! linear interpolation of absorption coefficients coefks between reference
-! values of pressure in array stanp.
-        else
- 30        continue
-           if ( p(i) >= stanp(i1) ) goto 20
-           y1=( t(i) - 245.0 ) * ( t(i) - 245.0 )
-           x1=exp( coefks(1,i1-1) + coefks(2,i1-1) * (t(i)-245.0) &
-     &          + coefks(3,i1-1) * y1 )
-           x2=exp( coefks(1,i1) + coefks(2,i1) * ( t(i) - 245.0 ) &
-     &          + coefks(3,i1) * y1 )
-           fkg(i)=x1 + ( x2 - x1 ) / ( stanp(i1) - stanp(i1-1) ) &
-     &          * ( p(i) - stanp(i1-1) )
-           goto 5
- 20        i1=i1 + 1
-           goto 30
-        endif
- 5    continue
+     else
+        ! other cases: linear interpolation between stanp(ipl) and stanp(iph)
+        iph = 2
+        do while ( p(jz) > stanp(iph) )
+           iph = iph + 1
+        end do
+        ipl = iph - 1
 
-      end subroutine qks
+        x1 = exp( coefks(1,ipl) + coefks(2,ipl)*ztfact + coefks(3,ipl)*ztfact2 )
+        x2 = exp( coefks(1,iph) + coefks(2,iph)*ztfact + coefks(3,iph)*ztfact2 )
+        fkg(jz) = x1 + ( x2 - x1 ) / ( stanp(iph) - stanp(ipl) ) &
+                 * ( p(jz) - stanp(ipl) )
+     endif
+  end do
+
+end subroutine qks
 
 !
 ! ---------------------------------------------------------------------
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine qki ( coefki, fkg )
+subroutine qki ( coefki, fkg )
 !
 ! Description:
+! -----------
 !    Calculation of the absorption coefficients for ir spectral bands.
 !
 ! fkg(nrlev) are the gaseous absorption coefficients in units of (cm-atm)**-1
-! for a given cumulative probability in nrlev layers. coefki(3,19)
-! are the coefficients to calculate the absorption coefficient at the
-! temperature t for the 19 pressures by
+! for a given cumulative probability in nrlev layers.
+! coefki(3,19) are the coefficients to calculate the absorption coefficient
+! at the temperature t for the 19 pressures by
 !         ln k = a + b * ( t - 245 ) + c * ( t - 245 ) ** 2
 ! and the absorption coefficient at  conditions  other  than  those 19
 ! pressures is interpolated linearly with pressure (Fu, 1991).
-!   Fuer die Einheiten gilt dasselbe wie in U.P. qks
-! *********************************************************************
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header including "USE ... ONLY"    <Josue Bock>
-!                    Declarations and implicit none
-!
-! 1.0       ?        Original code.                     <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  !                       Declarations and implicit none
+  !
+  ! Oct-2017  Josue Bock  Fortran90
+  !                       minor improvements of code
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev
+       nrlay,               &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Array arguments with intent(in):
-      double precision, intent(in) :: coefki(3,19)
+  real(kind=dp), intent(in) :: coefki(3,19) ! tabulated coefficients
 ! Array arguments with intent(out):
-      double precision, intent(out) :: fkg(nrlev)
+  real(kind=dp), intent(out) :: fkg(nrlev)  ! gaseous absorption coefficients
 
 ! Local scalars:
-      integer i, i1
-      double precision x1, x2, y1
+  integer :: ipl, iph                ! index low, high such that stanp(ipl) < p <stanp(iph)
+  integer :: jz                      ! vertical loop index (top-down)
+  real (kind=dp) :: x1, x2           ! b and c of the above formula
+  real (kind=dp) :: ztfact, ztfact2  ! temperature factor, squared
+
 ! Local arrays:
-      double precision stanp(19)
-      data stanp / 25.1,  39.8,  63.1,  100.,  158.,  251., &
-     &     398.,  631., 1000., 1580., 2510., 3980., &
-     &     6310.,10000.,15800.,25100.,39800.,63100., &
-     &     100000. /
+  real(kind=dp), parameter :: stanp(19) = &
+       (/ 25.1_dp,   39.8_dp,   63.1_dp,   100._dp,   158._dp, &
+          251._dp,   398._dp,   631._dp,  1000._dp,  1580._dp, &
+         2510._dp,  3980._dp,  6310._dp, 10000._dp, 15800._dp, &
+        25100._dp, 39800._dp, 63100._dp,100000._dp /)
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                   frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
-      do 5 i=1, nrlev
-         i1=1
+  do jz=1, nrlev
+     ztfact  = t(jz) - 245.0_dp
+     ztfact2 = ztfact * ztfact
 
-! absorption coefficient for boundary values: pressure lower than
-! 0.25 hPa or higher than 1000 hPa
-         if ( p(i) < stanp(1) ) then
-            x1=exp( coefki(1,1) + coefki(2,1) * ( t(i) - 245.0 ) &
-     &           + coefki(3,1) * ( t(i) - 245.0 ) ** 2 )
-            fkg(i)=x1 * p(i) / stanp(1)
-         elseif ( p(i) >= stanp(19) ) then
-            y1=( t(i) - 245.0 ) * ( t(i) - 245.0 )
-            x1=exp( coefki(1,18) + coefki(2,18) * ( t(i) - 245.0 ) &
-     &           + coefki(3,18) * y1 )
-            x2=exp( coefki(1,19) + coefki(2,19) * ( t(i) - 245.0 ) &
-     &           + coefki(3,19) * y1 )
-            fkg(i)=x1 + ( x2 - x1 ) / ( stanp(19) - stanp(18) ) &
-     &           * ( p(i) - stanp(18) )
+     if ( p(jz) <= stanp(1) ) then
+        ! pressure lower than 25.1 Pa: linear interpolation between 0. and the first value
+        x1 = exp( coefki(1,1) + coefki(2,1)*ztfact + coefki(3,1)*ztfact2 )
+        fkg(jz) = x1 * p(jz) / stanp(1)
 
-! linear interpolation of absorption coefficients coefks between reference
-! values of pressure in array stanp.
-         else
- 30         continue
-            if ( p(i) >= stanp(i1) ) goto 20
-            y1=( t(i) - 245.0 ) * ( t(i) - 245.0 )
-            x1=exp( coefki(1,i1-1) + coefki(2,i1-1) * (t(i)-245.0) &
-     &           + coefki(3,i1-1) * y1 )
-            x2=exp( coefki(1,i1) + coefki(2,i1) * ( t(i) - 245.0 ) &
-     &           + coefki(3,i1) * y1 )
-            fkg(i)=x1 + ( x2 - x1 ) / ( stanp(i1) - stanp(i1-1) ) &
-     &           * ( p(i) - stanp(i1-1) )
-            goto 5
- 20         i1=i1 + 1
-            goto 30
-         endif
- 5    continue
+     elseif ( p(jz) >= stanp(19) ) then
+        ! pressure higher than 1000 hPa: extrapolate the slope of the latest two
+        ! tabulated values
+        x1 = exp( coefki(1,18) + coefki(2,18)*ztfact + coefki(3,18)*ztfact2 )
+        x2 = exp( coefki(1,19) + coefki(2,19)*ztfact + coefki(3,19)*ztfact2 )
+        fkg(jz) = x1 + ( x2 - x1 ) / ( stanp(19) - stanp(18) ) &
+                 * ( p(jz) - stanp(18) )
 
-      end subroutine qki
+     else
+        ! other cases: linear interpolation between stanp(ipl) and stanp(iph)
+        iph = 2
+        do while ( p(jz) > stanp(iph) )
+           iph = iph + 1
+        end do
+        ipl = iph - 1
+
+        x1 = exp( coefki(1,ipl) + coefki(2,ipl)*ztfact + coefki(3,ipl)*ztfact2 )
+        x2 = exp( coefki(1,iph) + coefki(2,iph)*ztfact + coefki(3,iph)*ztfact2 )
+        fkg(jz) = x1 + ( x2 - x1 ) / ( stanp(iph) - stanp(ipl) ) &
+                 * ( p(jz) - stanp(ipl) )
+     endif
+  end do
+
+end subroutine qki
 
 !
 ! ---------------------------------------------------------------------
 ! *********************************************************************
 ! ---------------------------------------------------------------------
 !
-      subroutine qkio3 ( coefki, fkg )
+subroutine qkio3 ( coefki, fkg )
 !
 ! Description:
+! -----------
 !    Calculation of the absorption coefficients for ozone in spectral band 12
 !
 ! fkg(nrlev) are the gaseous absorption coefficients in units of (cm-atm)**-1
-! for a given cumulative probability in nrlev layers. coefki(3,19)
-! are the coefficients to calculate the absorption coefficient at the
-! temperature t for the 19 pressures by
+! for a given cumulative probability in nrlev layers.
+! coefki(3,19) are the coefficients to calculate the absorption coefficient
+! at the temperature t for the 19 pressures by
 !         ln k = a + b * ( t - 250 ) + c * ( t - 250 ) ** 2
 ! and the absorption coefficient at  conditions  other  than  those 19
 ! pressures is interpolated linearly with pressure (Fu, 1991).
-!   Fuer die Einheiten gilt dasselbe wie in U.P. qks
-! *********************************************************************
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1      07/2016   Header including "USE ... ONLY"   <Josue Bock>
-!                    Declarations and implicit none
-!
-! 1.0       ?        Original code.                    <unknown>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  ! Jul-2016  Josue Bock  Header including "USE ... ONLY"
+  !                       Declarations and implicit none
+  !
+  ! Oct-2017  Josue Bock  Fortran90
+  !                       minor improvements of code
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
-      USE global_params, ONLY : &
+  USE global_params, ONLY : &
 ! Imported Parameters:
-     &     nrlay, &
-     &     nrlev
+       nrlay,               &
+       nrlev
 
-      implicit none
+  USE precision, ONLY :     &
+! Imported Parameters:
+       dp
+
+  implicit none
 
 ! Subroutine arguments
 ! Array arguments with intent(in):
-      double precision, intent(in) :: coefki(3,19)
+  real (kind=dp), intent(in) :: coefki(3,19)
 ! Array arguments with intent(out):
-      double precision, intent(out) :: fkg(nrlev)
+  real (kind=dp), intent(out) :: fkg(nrlev)
+
+! Local scalars:
+  integer :: ipl, iph                ! index low, high such that stanp(ipl) < p <stanp(iph)
+  integer :: jz                      ! vertical loop index (top-down)
+  real (kind=dp) :: x1, x2           ! b and c of the above formula
+  real (kind=dp) :: ztfact, ztfact2  ! temperature factor, squared
 
 ! Local arrays:
-      integer i, i1
-      double precision x1, x2, y1
-      double precision stanp(19)
-      data stanp / 25.1,  39.8,  63.1,  100.,  158.,  251., &
-     &     398.,  631., 1000., 1580., 2510., 3980., &
-     &     6310.,10000.,15800.,25100.,39800.,63100., &
-     &     100000. /
+  real(kind=dp), parameter :: stanp(19) = &
+       (/ 25.1_dp,   39.8_dp,   63.1_dp,   100._dp,   158._dp, &
+          251._dp,   398._dp,   631._dp,  1000._dp,  1580._dp, &
+         2510._dp,  3980._dp,  6310._dp, 10000._dp, 15800._dp, &
+        25100._dp, 39800._dp, 63100._dp,100000._dp /)
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
-      double precision t,p,rho,xm1,rho2,frac,ts
-      integer ntypa,ntypd
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
+                   frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  integer :: ntypa,ntypd
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
-      do 5 i=1, nrlev
-      i1=1
+  do jz=1, nrlev
+     ztfact  = t(jz) - 250.0_dp
+     ztfact2 = ztfact * ztfact
 
-! absorption coefficient for boundary values: pressure lower than
-! 0.25 hPa or higher than 1000 hPa
-      if ( p(i) < stanp(1) ) then
-         x1=exp( coefki(1,1) + coefki(2,1) * ( t(i) - 250.0 ) &
-     &        + coefki(3,1) * ( t(i) - 250.0 ) ** 2 )
-         fkg(i)=x1 * p(i) / stanp(1)
-      elseif ( p(i) >= stanp(19) ) then
-         y1=( t(i) - 250.0 ) * ( t(i) - 250.0 )
-         x1=exp( coefki(1,18) + coefki(2,18) * ( t(i) - 250.0 ) &
-     &        + coefki(3,18) * y1 )
-         x2=exp( coefki(1,19) + coefki(2,19) * ( t(i) - 250.0 ) &
-     &        + coefki(3,19) * y1 )
-         fkg(i)=x1 + ( x2 - x1 ) / ( stanp(19) - stanp(18) ) &
-     &        * ( p(i) - stanp(18) )
+     if ( p(jz) <= stanp(1) ) then
+        ! pressure lower than 25.1 Pa: linear interpolation between 0. and the first value
+        x1 = exp( coefki(1,1) + coefki(2,1)*ztfact + coefki(3,1)*ztfact2 )
+        fkg(jz) = x1 * p(jz) / stanp(1)
 
-! linear interpolation of absorption coefficients coefks between reference
-! values of pressure in array stanp.
-      else
- 30      continue
-         if ( p(i) >= stanp(i1) ) goto 20
-         y1=( t(i) - 250.0 ) * ( t(i) - 250.0 )
-         x1=exp( coefki(1,i1-1) + coefki(2,i1-1) * (t(i)-250.0) &
-     &        + coefki(3,i1-1) * y1 )
-         x2=exp( coefki(1,i1) + coefki(2,i1) * ( t(i) - 250.0 ) &
-     &        + coefki(3,i1) * y1 )
-         fkg(i)=x1 + ( x2 - x1 ) / ( stanp(i1) - stanp(i1-1) ) &
-     &        * ( p(i) - stanp(i1-1) )
-         goto 5
- 20      i1=i1 + 1
-         goto 30
-      endif
- 5    continue
+     elseif ( p(jz) >= stanp(19) ) then
+        ! pressure higher than 1000 hPa: extrapolate the slope of the latest two
+        ! tabulated values
+        x1 = exp( coefki(1,18) + coefki(2,18)*ztfact + coefki(3,18)*ztfact2 )
+        x2 = exp( coefki(1,19) + coefki(2,19)*ztfact + coefki(3,19)*ztfact2 )
+        fkg(jz) = x1 + ( x2 - x1 ) / ( stanp(19) - stanp(18) ) &
+                 * ( p(jz) - stanp(18) )
 
-      end subroutine qkio3
+     else
+        ! other cases: linear interpolation between stanp(ipl) and stanp(iph)
+        iph = 2
+        do while ( p(jz) > stanp(iph) )
+           iph = iph + 1
+        end do
+        ipl = iph - 1
+
+        x1 = exp( coefki(1,ipl) + coefki(2,ipl)*ztfact + coefki(3,ipl)*ztfact2 )
+        x2 = exp( coefki(1,iph) + coefki(2,iph)*ztfact + coefki(3,iph)*ztfact2 )
+        fkg(jz) = x1 + ( x2 - x1 ) / ( stanp(iph) - stanp(ipl) ) &
+                 * ( p(jz) - stanp(ipl) )
+     endif
+  end do
+
+end subroutine qkio3
 
 !
 ! ---------------------------------------------------------------------
