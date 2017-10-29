@@ -25,10 +25,16 @@ module precision
 ! -------
 !     Josue Bock
 
+
+! Modifications :
+! -------------
+  ! 28-Oct-2017  Josue Bock  introduce tiny_dp to replace == 0. tests by < tiny_dp
+
 implicit none
 
 save
 
 integer, parameter :: dp = kind(1.d0)
+real(kind=dp), parameter :: tiny_dp = tiny(0._dp)
 
 end module precision

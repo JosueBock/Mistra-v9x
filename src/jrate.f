@@ -493,10 +493,10 @@ C change the grid refer to altitudes
 c----------------------------------------------------------------------
 
       DO K=1,MAXLAY
-         Z(K)      = z_mi(MAXLAY-K+1)
-         TEMP(K)   = t_m(MAXLAY-K+1)
-         RELO3(K)  = qmo3_m(MAXLAY-K+1)
-         PRESS(K)  = p_m(MAXLAY-K+1)/100. !Pa --> hPa
+         Z(K)      = z_mi(K+1)
+         TEMP(K)   = t_m(K+1)
+         RELO3(K)  = qmo3_m(K+1)
+         PRESS(K)  = p_m(K+1)/100. !Pa --> hPa
       ENDDO
 
 c     PRESSURE, TEMPERATURE AND MIXING RATIOS AT VIRTUAL LEVEL 0
