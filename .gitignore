@@ -46,4 +46,5 @@ mistra
 # output files
 *.out
 *.nc
+rst*.dat
 fort.*
