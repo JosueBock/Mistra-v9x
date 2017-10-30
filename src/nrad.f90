@@ -262,7 +262,7 @@ subroutine nstrahl
   do ib = ibanf,mb
 
 ! rayleigh scattering
-     zdopr = 2._dp * rho(1)
+     zdopr = 2._dp * rho(nrlev)
      if (ib <= mbs) then
         do jz=1,nrlay
            dtaur(jz) = berayl(ib) * thk(jz) * (rho(jz)+rho(jz+1))/zdopr
