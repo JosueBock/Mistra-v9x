@@ -1,4 +1,4 @@
-##/bin/csh
+#!/bin/csh
 # called by make_kpp.sc
 # change *.f *.h for each input
 #
@@ -23,6 +23,19 @@
 # and limitations under the Licence.
 
 
+# Modifications :
+# -------------
+  # 31-Oct-2017  Josue Bock  - replaced \? and \+ by \{0,1\} and \{1,\} respectively
+  #                          The former are GNU extensions, and are not recognised by all systems
+  #                          - corrected the first line #!/bin/csh instead of ##/bin/csh
+  #                          - replaced rm, mv by \rm, \mv to use native functions without potential
+  #                          user defined aliases (for instance, rm='rm -i')
+  #                          - reorganised the tmp files so that they are all saved until the end
+  #                          in order to facilitate debug, if needed.
+
+# == End of modifications =======================================================================
+
+
 # define variables
 # ----------------
 set file_f=$1.f
@@ -42,35 +55,29 @@ set fold=$file_f
 set inn=0
 foreach i ($del_SR)
   @ inn=$inn + 1
-  set fnew=tmp$inn
+  set fnew=tmp_f_$inn
 # [CEN] accomodates either a comment, the end of word "SUBROUTINE" or the end of word "FUNCTION"
 # the special quoting ('"$i"') allows use of shell variables in sed
   sed '/[CEN] '"$i"'/,/End of '"$i"'/d' $fold > ! $fnew
   set fold=$fnew
 end
-mv -f $fold $file_f
 
 # delete calls to Update_SUN and Update_PHOTO
 # -------------------------------------------
 set del_CALL=("Update_SUN" "Update_PHOTO")
-set fold=$file_f
-set inn=0
 foreach i ($del_CALL)
   @ inn=$inn + 1
-  set fnew=tmp$inn
+  set fnew=tmp_f_$inn
   sed '/CALL '"$i"'/,/)/d' $fold > ! $fnew
   set fold=$fnew
 end
-mv -f $fold $file_f
 
 # rename remaining subroutines
 # ----------------------------
 set ch_SR=("Update_RCONST" "INTEGRATE" "RosenbrockIntegrator" "ros_ErrorNorm" "ros_FunTimeDerivative" "ros_PrepareMatrix" "ros_ErrorMsg" "Ros2" "Ros3" "Ros4" "Rodas3" "Rodas4" "DecompTemplate" "SolveTemplate" "FunTemplate" "JacTemplate" "KppDecomp" "WAXPY" "KppSolve" "WLAMCH_ADD" "Jac_SP")
-set fold=$file_f
-set inn=0
 foreach i ($ch_SR)
   @ inn=$inn + 1
-  set fnew=tmp$inn
+  set fnew=tmp_f_$inn
   sed 's/'"$i"'/&_'"$appendix"'/g' $fold > ! $fnew
   set fold=$fnew
 end
@@ -80,46 +87,45 @@ end
 #   needs to avoid replace every occurrence of Fun*, which is a substring of "FunTemplate" and is obviously also a substring of "Function"
 #   the search pattern accomodates "Fun(", "Fun (", "Fun -" and "Fun f"
 @ inn=$inn + 1
-set fnew=tmp$inn
+set fnew=tmp_f_$inn
 # " \?" matches zero or one space (backslash is needed in pattern context)
+# it is a GNU extension, for portability reasons it has been replaced by \{0,1\}
+#
 # [f(-] matches one of the 3 character inside the brackets
 # \( ... \) saves the pattern in between, which is recalled with \1
-sed 's/Fun\( \?[f(-]\)/Fun_'"$appendix"'\1/g' $fold > ! $fnew
+sed 's/Fun\( \{0,1\}[f(-]\)/Fun_'"$appendix"'\1/g' $fold > ! $fnew
 set fold=$fnew
 
 # 2) for SR Rosenbrock : add ( to the searched pattern
 @ inn=$inn + 1
-set fnew=tmp$inn
+set fnew=tmp_f_$inn
 sed 's/Rosenbrock(/Rosenbrock_'"$appendix"'(/g' $fold > ! $fnew
-mv -f $fnew $file_f
+set fold=$fnew
 
 # delete unnecessary LU_IROW data
 # -------------------------------
 # explanations, if future change is needed:
-#   \+ means one or more
-#   \ {1\} means exactly one
+#   \+ means one or more. It is a GNU extension, for portability reasons it is now replaced by \{1,\}
+#   \{1\} means exactly one
 # searched ending string:
 #   - starts by "*"
 #   - optional pattern: optional space(s) followed by at least 1 number followed by comma
 #   - mandatory pattern: optional space(s) followed by at least 1 number followed by 1 space and /
-set fold=$file_f
 @ inn=$inn + 1
-set fnew=tmp$inn
-sed '/DATA( LU_IROW(i)/,/\*\( *[0-9]\+,\)*\( *[0-9]\+ \/\)\{1\}/d' $fold > ! $fnew
-mv -f $fnew $file_f
+set fnew=tmp_f_$inn
+sed '/DATA( LU_IROW(i)/,/\*\( *[0-9]\{1,\},\)*\( *[0-9]\{1,\} \/\)\{1\}/d' $fold > ! $fnew
+set fold=$fnew
 
 # rename LU_ variables, BLOCK DATA JACOBIAN_SPARSE_DATA and MONITOR_DATA
 # ----------------------------------------------------------------------
 set ch_VAR=("LU_ICOL" "LU_CROW" "LU_DIAG" "JACOBIAN_SPARSE_DATA" "MONITOR_DATA")
-set fold=$file_f
-set inn=0
 foreach i ($ch_VAR)
   @ inn=$inn + 1
-  set fnew=tmp$inn
+  set fnew=tmp_f_$inn
   sed 's/'"$i"'/&_'"$appendix"'/g' $fold > ! $fnew
   set fold=$fnew
 end
-mv -f $fnew $file_f
+\mv -f $fnew $file_f
 
 
 
@@ -127,43 +133,40 @@ mv -f $fnew $file_f
 # work on file_h
 # ==============
 
-# delete unnecessary variables
+# delete unnecessary variables in _Global.h
 #  (these ones are only declared)
 set del_VAR=("SUN" "TEMP" "RTOLS" "TSTART" "TEND" "CFACTOR" "LOOKAT" "MONITOR" "SMASS" "EQN_TAGS")
 set fold=$file_h[1]
 set inn=0
 foreach i ($del_VAR)
   @ inn=$inn + 1
-  set fnew=tmp$inn
+  set fnew=tmp_h1_$inn
   sed '/C '"$i"' -/,/\/ '"$i"'/d' $fold > ! $fnew
   set fold=$fnew
 end
-mv -f $fnew $file_h[1]
 
-# delete unnecessary variables
+# change names of common blocks *GDATA in _Global.h
+set ch_VAR=("\/GDATA" "\/CHARGDATA" "\/INTGDATA")
+foreach i ($ch_VAR)
+  @ inn=$inn + 1
+  set fnew=tmp_h1_$inn
+  sed 's/'"$i"'/&_'"$appendix"'/g' $fold > ! $fnew
+  set fold=$fnew
+end
+\mv -f $fnew $file_h[1]
+
+# delete unnecessary variables in _Parameters.h
 #  (these one are defined as parameters, the searched pattern is different)
 set del_VAR2=("NONZERO" "CNVAR" "NLOOKAT" "NMONITOR" "NMASS")
 set fold=$file_h[2]
 set inn=0
 foreach i ($del_VAR2)
   @ inn=$inn + 1
-  set fnew=tmp$inn
+  set fnew=tmp_h2_$inn
   sed '/C '"$i"' -/,/PARAMETER ( '"$i"' =/d' $fold > ! $fnew
   set fold=$fnew
 end
-mv -f $fnew $file_h[2]
-
-# change names of common blocks *GDATA
-set ch_VAR=("\/GDATA" "\/CHARGDATA" "\/INTGDATA")
-set fold=$file_h[1]
-set inn=0
-foreach i ($ch_VAR)
-  @ inn=$inn + 1
-  set fnew=tmp$inn
-  sed 's/'"$i"'/&_'"$appendix"'/g' $fold > ! $fnew
-  set fold=$fnew
-end
-mv -f $fnew $file_h[1]
+\mv -f $fnew $file_h[2]
 
 
 
@@ -176,37 +179,33 @@ set fold=$file_s
 set inn=0
 foreach i ($del_VAR3)
   @ inn=$inn + 1
-  set fnew=tmp$inn
+  set fnew=tmp_s_$inn
   sed '/C '"$i"' -/,/\/ '"$i"'/d' $fold > ! $fnew
   set fold=$fnew
 end
-mv -f $fnew $file_s
 
 # change names of common block SDATA
-set fold=$file_s
-set fnew=tmp$inn
+@ inn=$inn + 1
+set fnew=tmp_s_$inn
 sed 's/SDATA/&_'"$appendix"'/g' $fold > ! $fnew
 set fold=$fnew
-mv -f $fnew $file_s
 
 # change names of LU_ variables
 set ch_VAR2=("LU_ICOL" "LU_CROW" "LU_DIAG")
-set fold=$file_s
-set inn=0
 foreach i ($ch_VAR2)
   @ inn=$inn + 1
-  set fnew=tmp$inn
+  set fnew=tmp_s_$inn
   sed 's/'"$i"'/&_'"$appendix"'/g' $fold > ! $fnew
   set fold=$fnew
 end
-mv -f $fnew $file_s
+\mv -f $fnew $file_s
 
 
 
 # ========
 # clean up
 # ========
-rm -f tmp*
+\rm -f tmp_[fhs]*
 unset file_f file_h file_s appendix
 unset fold fnew inn
 unset del_SR ch_SR ch_VAR del_VAR del_VAR2 del_VAR3 ch_VAR2
