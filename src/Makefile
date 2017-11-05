@@ -126,7 +126,7 @@ out_netCDF.o: out_netCDF.f global_params.mod gas_common.mod cdf_var_gas.mod Make
 jrate.o: jrate.f directories.mod global_params.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
-nuc.o: nuc.f constants.mod global_params.mod gas_common.mod Makefile
+nuc.o: nuc.f90 constants.mod global_params.mod gas_common.mod Makefile
 	rm -f mod_nuc.mod
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
