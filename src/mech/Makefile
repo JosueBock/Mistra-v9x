@@ -2,7 +2,7 @@
 # List dependencies
 
 #
-# Copyright 2015-2017 Josué Bock
+# Copyright 2015-2017 Josue Bock
 #
 # Licensed under the EUPL, Version 1.1 only (the "Licence");
 #
