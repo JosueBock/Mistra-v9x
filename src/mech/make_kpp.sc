@@ -22,6 +22,18 @@
 # See the Licence for the specific language governing permissions
 # and limitations under the Licence.
 
+# ============================================================================================
+# Modifications :
+# -------------
+  # 31-Oct-2017  Josue Bock  - replaced \+ by \{1,\}
+  #                          The former is GNU extension, and is not recognised by all systems
+  #                          - changed rm, mv, cp into \rm, \mv, \cp to use native functions
+  #                          without aliases. If aliases were defined (for instance, cp='cp -i'),
+  #                          they were not overwritten by the local flag, and the user was asked
+  #                          to confirm all steps.
+
+# == End of modifications =====================================================================
+
 
 # define filenames
 # ================
@@ -81,9 +93,9 @@ echo "tuning KPP files for mechanism $prefix"
 # =======================
 echo "make budget subroutine for mechanism $prefix"
 # step 1: copy rates expression from file_r
-sed -n '/ \{6\}A([0-9]\+) = RCT([0-9]\+/p' $file_r > ! tmp0
+sed -n '/ \{6\}A([0-9]\{1,\}) = RCT([0-9]\{1,\}/p' $file_r > ! tmp0
 # step 2: substitute A(...) (KPP variable) by bg(1,kl,...) (MISTRA variable)
-sed 's/A(\([0-9]\+\))/bg(1,\1,kl)/g' tmp0 > ! tmp1
+sed 's/A(\([0-9]\{1,\}\))/bg(1,\1,kl)/g' tmp0 > ! tmp1
 # step 3: substitute RCT, V and F (local KPP variable) by RCONST, VAR and FIX (global KPP variable)
 sed 's/RCT(/RCONST(/g' tmp1 > ! tmp2
 sed 's/V(/VAR(/g' tmp2 > ! tmp3
@@ -97,8 +109,8 @@ sed 's/appendix/'"$appendix"'/' tmp6 > ! tmp7
 set nreact=`sed -n '/NREACT =/p' $file_p | awk -F= '{printf "%d",$2}'`
 #        and use it in the integrated budget calculation (see tail.bud)
 sed 's/do i=1,xxxx/do i=1,'"$nreact"'/' tmp7 > ! tmp8
-cp -f tmp8 bud_$appendix.f
-rm -f tmp*
+\mv -f tmp8 bud_$appendix.f
+\rm -f tmp[0-7]
 
 
 # ==========================================
@@ -109,16 +121,16 @@ set flag_yes=$<
 set flag='-i'
 if ($flag_yes == 'y') set flag='-f'
 
-cp $flag  $1.f $1*.h $1_*.dat bud_$2.f ..
+\cp $flag  $1.f $1*.h $1_*.dat bud_$2.f ..
 
 
 # ========
 # clean up
 # ========
 # aer and tot eqn files can now be deleted (remember: they are created by make_aq_mech.sc)
-rm -f aer.eqn tot.eqn
+\rm -f aer.eqn tot.eqn
 # output files from KPP are also deleted
-rm -f $1_*.f Makefile_*
+\rm -f $1_*.f Makefile_*
 
 
 unset nm
