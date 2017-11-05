@@ -21,6 +21,9 @@ c additional subroutines for KPP version
       subroutine initc (box,n_bl)
 c initialization of chemistry module
 
+!      USE config, ONLY :
+!     &     iod
+
       USE constants, ONLY :
 ! Imported Parameters:
      &     Avogadro,
@@ -119,9 +122,6 @@ c initialization of chemistry module
 
       common /cb63/ fcs(nka),xmol3(nka)
       double precision fcs, xmol3
-
-      common /hall/ halo,iod
-      logical halo,iod
 
       common /kinv_i/ kinv
       integer kinv
@@ -3040,6 +3040,11 @@ c
       subroutine kpp_driver (box,dd_ch,n_bl)
 c interface between MISTRA and the KPP gas phase chemistry
 
+      USE config, ONLY :
+     &     halo,
+     &     iod,
+     &     neula
+
       USE constants, ONLY :
 ! Imported Parameters:
      & pi
@@ -3060,7 +3065,7 @@ c interface between MISTRA and the KPP gas phase chemistry
 
       implicit double precision (a-h,o-z) 
 !     logical halo,iod,box,new_a,new_c,cloud,short,ros3 ! jjb ros3 removed, thus new_a, new_c & short as well
-      logical halo,iod,box,cloud
+      logical box,cloud
 
       common /blck01/ am3(n),cm3(n)
 
@@ -3077,7 +3082,6 @@ c interface between MISTRA and the KPP gas phase chemistry
       common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
       double precision theta, thetl, t, talt, p, rho
       common /cb54/ xm1(n),xm2(n),feu(n),dfddt(n),xm1a(n),xm2a(n)
-      common /hall/ halo,iod
       common /band_rat/ photol_j(nphrxn,n)
       common /kinv_i/ kinv
       common /cb_1/ air_cc,te,h2oppm,pk
@@ -3086,7 +3090,7 @@ c interface between MISTRA and the KPP gas phase chemistry
 !     common /kpp_mol/ cm(nf,nkc),xgamma(nf,j6,nkc) ! jjb updated
 !     common /ph_r/ ph_rat(47) ! jjb ! jjb test include in _a_g_t common blocks
       dimension ph_rat(nphrxn)
-      common /kpp_eul/ xadv(10),nspec(10),neula
+      common /kpp_eul/ xadv(10),nspec(10)
 
       airmolec=6.022d+20/18.0
 c calculate u0 for prelim photolysis
@@ -4399,6 +4403,9 @@ c calculates total number of Br and Cl atoms in all phases [mol/m2]
 c including deposited atoms
 c emitted atoms (see SR aer_source) are subtracted
 
+      USE config, ONLY:
+     &     nkc_l
+
       USE gas_common, ONLY:
      &     s1,
      &     j1_br, ind_gas_br,
@@ -4430,7 +4437,6 @@ c emitted atoms (see SR aer_source) are subtracted
       double precision detw, deta, eta, etw
 
       common /sss/ brsss,clsss,xnasss
-      common /liq_pl/ nkc_l
 
       if ((lday.eq.0.and.lst.eq.0.and.lmin.le.1).or.lmin/30*30.eq.lmin)
      &     then       

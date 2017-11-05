@@ -58,6 +58,7 @@
 ! History:
 ! Version   Date     Comment
 ! -------   ----     -------
+! 05-Nov-2017  Josue Bock  Removed module directories, replaced by config
 ! 1.2      10/2016   Comments after personnal communication with A. Bott  <Josué Bock>
 !
 !          07/2016   Removal of labeled do loops
@@ -77,9 +78,9 @@
 ! Declarations:
 ! Modules used:
 
-      USE directories, ONLY :
+      USE config, ONLY :
 ! Imported Parameters:
-     &     inpdir
+     &     cinpdir
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -95,7 +96,7 @@
       parameter (na0=11,nw0=40)
 
 ! Local scalars:
-      character (len=len_trim(inpdir)+11) fname
+      character (len=len_trim(cinpdir)+11) fname
       double precision dx,dy,dxdy,dxdy1,dx1dy,dx1dy1 ! Interpolation coefficients
       double precision xa1,xw1                       ! Actual percentage of water (xa1, []) and total aerosol radius (xw1, [µm]) for each aerosol class
       integer ipc,i,j,k,ka,ia,jt
@@ -132,17 +133,17 @@
 ! input qabs, qext and asym for radiation parameters of particles
 !   odd unit numbers: short wave data
 !   even unit numbers: long wave data
-      fname=TRIM(inpdir)//"urbankw.dat"
+      fname=TRIM(cinpdir)//"urbankw.dat"
       open (unit=51, file=fname, status='old')
-      fname=TRIM(inpdir)//"urbanlw.dat"
+      fname=TRIM(cinpdir)//"urbanlw.dat"
       open (unit=52, file=fname, status='old')
-      fname=TRIM(inpdir)//"ruralkw.dat"
+      fname=TRIM(cinpdir)//"ruralkw.dat"
       open (unit=53, file=fname, status='old')
-      fname=TRIM(inpdir)//"rurallw.dat"
+      fname=TRIM(cinpdir)//"rurallw.dat"
       open (unit=54, file=fname, status='old')
-      fname=TRIM(inpdir)//"ozeankw.dat"
+      fname=TRIM(cinpdir)//"ozeankw.dat"
       open (unit=55, file=fname, status='old')
-      fname=TRIM(inpdir)//"ozeanlw.dat"
+      fname=TRIM(cinpdir)//"ozeanlw.dat"
       open (unit=56, file=fname, status='old')
 ! input format to read these files
  5000 format (3e16.8)
@@ -396,9 +397,9 @@
 ! Declarations:
 ! Modules used:
 
-      USE directories, ONLY :
+      USE config, ONLY :
 ! Imported Parameters:
-     &     inpdir
+     &     cinpdir
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -457,11 +458,11 @@
       double precision ret, r2wt, b2wt, w2wt, g2wt
 
 ! Local scalars:
-      character (len=len_trim(inpdir)+16) fname
+      character (len=len_trim(cinpdir)+16) fname
 
 !- End of header ---------------------------------------------------------------
 
-      fname=TRIM(inpdir)//'pifm2_171028.dat'
+      fname=TRIM(cinpdir)//'pifm2_171028.dat'
       open(unit=57, file=fname, status='old')
 
 ! input format to read this file
@@ -535,9 +536,9 @@
 ! Imported Parameters:
      &     r0               ! Specific gas constant of dry air, in J/(kg.K)
 
-      USE directories, ONLY :
+      USE config, ONLY :
 ! Imported Parameters:
-     &     inpdir
+     &     cinpdir
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -552,7 +553,7 @@
       implicit none
 
 ! Local scalars:
-      character  (len=len_trim(inpdir)+12) fname
+      character  (len=len_trim(cinpdir)+12) fname
       integer i, j, jj, jp, k, na, naf, nafm, nw
       double precision gamma, rf, zj, zjp
       double precision dd, emdd, xdd, xemdd, xnaer
@@ -617,7 +618,7 @@
 ! read optical parameters
 ! -----------------------
 !     input constants for radiation code
-      fname=TRIM(ADJUSTL(inpdir))//'initr_v3.dat'
+      fname=TRIM(ADJUSTL(cinpdir))//'initr_v3.dat'
       open (unit=58, file=fname, status='old')
 
 ! input formats to read this file

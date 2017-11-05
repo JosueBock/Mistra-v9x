@@ -502,6 +502,9 @@
 !
 ! Declarations:
 ! Modules used:
+      USE config, ONLY:
+     &     nkc_l
+
       USE global_params, ONLY :
 ! Imported Parameters:
      &     j2,
@@ -533,7 +536,6 @@
       double precision detw, deta, eta, etw
 
       common /blck17/ sl1(j2,nkc,n),sion1(j6,nkc,n)
-      common /liq_pl/ nkc_l
 
 !- End of header ---------------------------------------------------------------
 
@@ -613,6 +615,9 @@
 !
 ! Declarations:
 ! Modules used:
+      USE config, ONLY:
+     &     nkc_l
+
       USE global_params, ONLY :
 ! Imported Parameters:
      &     j2,
@@ -657,8 +662,6 @@
       common /cb52/ ff(nkt,nka,n),fsum(n),nar(n)
       double precision ff, fsum
       integer nar
-
-      common /liq_pl/ nkc_l
 
 !- End of header ---------------------------------------------------------------
 
@@ -1400,6 +1403,9 @@
 
 ! Declarations:
 ! Modules used:
+      USE config, ONLY :
+     &     neula
+
       USE gas_common, ONLY :
 ! Imported Parameters:
      &     j1,
@@ -1415,9 +1421,9 @@
       integer j
 
 ! Common blocks:
-      common /kpp_eul/ xadv(10),nspec(10),neula
+      common /kpp_eul/ xadv(10),nspec(10)
       double precision xadv
-      integer nspec, neula
+      integer nspec
 
 !- End of header ---------------------------------------------------------------
 
@@ -1591,6 +1597,9 @@
 !     number of species has to be used in the format descriptor (fmt), because
 !     it is repeated for each line.
 
+      USE config, ONLY:
+     &     nkc_l
+
       USE gas_common, ONLY :
 ! Imported parameter
      &     j1,
@@ -1647,9 +1656,6 @@
 
       common /cb41/ detw(n),deta(n),eta(n),etw(n)
       double precision detw, deta, eta, etw
-
-      common /liq_pl/ nkc_l
-      integer nkc_l
 
 
 ! ==============================================================================

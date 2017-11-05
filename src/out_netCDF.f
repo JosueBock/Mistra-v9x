@@ -910,6 +910,9 @@ c
       subroutine open_chem_aq(n_bln,halo,iod,nuc)
 c open netCDF file for aqueous phase chemistry output
 
+      USE config, ONLY:
+     &     nkc_l
+
       USE global_params, ONLY :
 ! Imported Parameters:
      &     j1=>j1_fake,
@@ -929,7 +932,6 @@ c open netCDF file for aqueous phase chemistry output
       parameter (x=1,y=1,noz=1)
       common /cdf_var_aq/ idaq_rec,idvar_aq(j2+j6+7),idaqfile,
      &  iliqcount,jddim_aq(4)
-      common /liq_pl/ nkc_l
       dimension jddim1(4)
       iliqcount=0
       fname="aq.nc"
@@ -3663,6 +3665,9 @@ c----------------------------------------------------------------
 c
       subroutine write_chem_aq (n_bln,halo,iod,nuc)
 
+      USE config, ONLY:
+     &     nkc_l
+
       USE global_params, ONLY :
 ! Imported Parameters:
      &     j1=>j1_fake,
@@ -3694,7 +3699,6 @@ c
       common /blck11/ rc(nkc,n)
       common /blck12/ cw(nkc,n),cm(nkc,n)
       common /blck17/ sl1(j2,nkc,n),sion1(j6,nkc,n)
-      common /liq_pl/ nkc_l
 !      dimension field(nkc_l,1,n),jddim1(4),idimcount(4),idimstart(4), ! jjb jddim1 not used
       dimension field(nkc_l,1,n),idimcount(4),idimstart(4),
      &        ifield(1,1,1),mliq(nliq),mhalo(nhalo),miod(niod),
