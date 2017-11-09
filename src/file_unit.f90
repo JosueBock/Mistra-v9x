@@ -16,6 +16,7 @@ module file_unit
   ! JPFUNNAM: unit number for namelist
   ! JPFUNCFGOUT: unit number for config output
 
+  ! JPFUNAERRAD: unit number for aerosol (particles) radiation parameters
   implicit none
 
   public
@@ -26,5 +27,7 @@ module file_unit
 
   integer, parameter :: jpfunnam = 1
   integer, parameter :: jpfuncfgout = 2
+
+  integer, parameter :: jpfunaerrad = 51
 
 end module file_unit

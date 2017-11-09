@@ -73,23 +73,20 @@ subroutine intrad
 
 ! Method :
 ! ------
-!    Find index i (1 <= i <= nw0+1) such that xw0(i-1) < xw1 <= xw0(i)
+!    Find index iw0 (2 <= iw0 <= nw0) such that xw0(iw0-1) < xw1 <= xw0(iw0)
 !    Then define an interpolation factor dx (proportionality factor, 0 <= dx <= 1)
-!      such that the interpolated value is dx*f(i) + (1-dx)*f(i-1) where f is one of the
+!      such that the interpolated value is dx*f(iw0) + (1-dx)*f(iw0-1) where f is one of the
 !      radiation parameter qabs, qext, asym.
 
-!    If xw1 <= xw0(1) or xw1 > xw0(nw0), then the boundary value (xw0(1) or xw0(nw0)) will be
-!       used without interpolation nor extrapolation (dx=1. or dx=0., respectively).
-!    Note that the MIN(i,nw0) and MAX(i-1,1) used in the final calculation are necessary to deal
-!       with these special cases when i=1 or i=nw0+1.
+!    If xw1 < xw0(1) or xw1 > xw0(nw0), then the boundary value (xw0(1) or xw0(nw0)) will be
+!       used without interpolation nor extrapolation (dx=0. or dx=1., respectively). Warning
+!       messages are displayed in these specific cases.  
 
-!    Similarly, find index j (2 <= j <= na0) such that xa0(j-1) < xw1 <= xa0(j), and define an
+!    Similarly, find index ia0 (2 <= ia0 <= na0) such that xa0(ia0-1) < xw1 <= xa0(ia0), and define an
 !       interpolation factor dy.
-!    Note the slightly different treatment of general and special cases:
-!       - if xw1 < 0, an error message arise and the program is stopped
-!       - the do-loop is started at j=2, no MIN / MAX is necessary in the final calculation.
+!    Note the different treatment of special cases:
+!       - if xa1 < 0, an error message arise and the program is stopped
 !       - if xa1 > 1, another error message arise and the program is stopped
-
 
 
 ! Author :
@@ -113,14 +110,16 @@ subroutine intrad
 !
 ! 10-Mar-2017   Josue Bock   Improvement of j case (now accept xa1=0, error if xa<0)
 !                            Cosmetic reorganisation, new header organisation
-!                            Set nkaer as a new global parameter
+!                            Set nkaer as a new global parameter (later replaced by jptaerrad)
 !
 ! 04-Apr-2017   Josue Bock   Fortran90 conversion
 !
 ! 05-Nov-2017   Josue Bock   Removed module directories, replaced by config
-!
-! End modifications
-!-----------------------------------------------------------------------------------------------------------------------
+!  
+! 09-Nov-2017   Josue Bock   Final cleaning after second F90 conversion (GitHub version),
+!                              rewritten interpolation, coding standards for variable names
+
+! == End of header =============================================================
 
 
 ! Declarations :
@@ -131,8 +130,15 @@ subroutine intrad
 ! Imported Parameters:
        cinpdir
 
+  USE file_unit, ONLY : &
+! Imported Parameters:
+       jpfunerr,      &
+       jpfunout,      &
+       jpfunaerrad
+
   USE global_params, ONLY : &
 ! Imported Parameters:
+       jptaerrad,           &
        nka,                 &
        nkt,                 &
        mb,                  &
@@ -145,11 +151,11 @@ subroutine intrad
   implicit none
 
 ! Local parameters:
-  integer, parameter :: na0 = 11  ! Number of tabulated values, percentage of water
+  integer, parameter :: na0 = 11  ! Number of tabulated values, volume fraction of water
   integer, parameter :: nw0 = 40  ! Number of tabulated values, total aerosol radius
 
-  real (kind=dp), parameter :: xa0(na0) = &  ! percentage part of pure water, in volume (tabulated values) [%]
-       (/0.0_dp,0.2_dp,0.4_dp,0.6_dp,0.7_dp,0.8_dp,0.85_dp,0.9_dp,0.95_dp,0.975_dp,1.0_dp/)
+  real (kind=dp), parameter :: xa0(na0) = &  ! volume fraction of pure water (tabulated values) []
+       (/0.0_dp, 0.2_dp, 0.4_dp, 0.6_dp, 0.7_dp, 0.8_dp, 0.85_dp, 0.9_dp, 0.95_dp, 0.975_dp, 1.0_dp/)
   real (kind=dp), parameter :: xw0(nw0) = &  ! total radius of the scattering spheres (tabulated values) [micro m]
        (/0.01_dp, 0.0125_dp, 0.015_dp, 0.02_dp, 0.025_dp, 0.03_dp, 0.04_dp, 0.05_dp, 0.06_dp, 0.08_dp, &
          0.1_dp,  0.125_dp,  0.15_dp,  0.2_dp,  0.25_dp,  0.3_dp,  0.4_dp,  0.5_dp,  0.6_dp,  0.8_dp,  &
@@ -162,7 +168,12 @@ subroutine intrad
   real (kind=dp) :: dx,dy,dxdy,dxdy1,dx1dy,dx1dy1 ! Interpolation coefficients
   real (kind=dp) :: xa1                           ! Actual percentage of water computed for each particle class (2D spectrum)
   real (kind=dp) :: xw1                           ! Actual total aerosol radius [micro m] for each particle class (2D spectrum)
-  integer :: ipc,i,j,k,ka,ia,jt
+  integer :: ifun                                 ! File unit number
+  integer :: ia0,iw0                              ! upper indexes of tabulated values for interpolation
+  integer :: ja0,jw0                              ! loop indexes, tabulated values
+  integer :: jaer                                 ! loop index for aerosol type
+  integer :: jb                                   ! loop index for spectral band number
+  integer :: jka,jkt                              ! loop indexes, 2D microphysical grid
 
 ! Local arrays:
   real (kind=dp) :: qabs0(mb,nw0,na0) ! tabulated values of absorption coefficient
@@ -171,144 +182,145 @@ subroutine intrad
 
 
 ! Common blocks:
-  common /cb49/ qabs(mb,nkt,nka,3),qext(mb,nkt,nka,3),asym(mb,nkt,nka,3)
+  common /cb49/ qabs(mb,nkt,nka,jptaerrad),qext(mb,nkt,nka,jptaerrad),asym(mb,nkt,nka,jptaerrad)
   real (kind=dp) :: qabs,qext,asym
 
-  common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),e(nkt),dew(nkt),rq(nkt,nka) ! only rn (dry radius), rq (total radius) are used here
+  common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka), &
+                e(nkt),dew(nkt),rq(nkt,nka)                      ! only rn (dry radius), rq (total radius) are used here
   real (kind=dp) :: enw,ew,rn,rw,en,e,dew,rq
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
 
 ! Open input data files
 ! ---------------------
 
 ! first unit number to read
-  ipc=51
+  ifun=jpfunaerrad
 
 ! input qabs, qext and asym for radiation parameters of particles
-!   odd unit numbers: short wave data
-!   even unit numbers: long wave data
+!   *kw.dat: short wave data
+!   *lw.dat: long wave data
   fname=TRIM(cinpdir)//"urbankw.dat"
-  open (unit=ipc, file=fname, status='old')
+  open (unit=ifun, file=fname, status='old')
   fname=TRIM(cinpdir)//"urbanlw.dat"
-  open (unit=ipc+1, file=fname, status='old')
+  open (unit=ifun+1, file=fname, status='old')
   fname=TRIM(cinpdir)//"ruralkw.dat"
-  open (unit=ipc+2, file=fname, status='old')
+  open (unit=ifun+2, file=fname, status='old')
   fname=TRIM(cinpdir)//"rurallw.dat"
-  open (unit=ipc+3, file=fname, status='old')
+  open (unit=ifun+3, file=fname, status='old')
   fname=TRIM(cinpdir)//"ozeankw.dat"
-  open (unit=ipc+4, file=fname, status='old')
+  open (unit=ifun+4, file=fname, status='old')
   fname=TRIM(cinpdir)//"ozeanlw.dat"
-  open (unit=ipc+5, file=fname, status='old')
+  open (unit=ifun+5, file=fname, status='old')
 
 ! input format to read these files
 5000 format (3e16.8)
-  ipc=51
 
-  do ka=1,3  ! ka=1 urban, ka=2 rural, ka=3 ocean
+  do jaer=1,jptaerrad  ! jaer=1 urban, jaer=2 rural, jaer=3 ocean
 
 ! Read input data file: tabulated values
 ! --------------------------------------
-     do j=1,na0
-        do i=1,nw0
-           do k=1,mbs
-              read(ipc,5000) qabs0(k,i,j),qext0(k,i,j),asym0(k,i,j)
+     do ja0=1,na0
+        do jw0=1,nw0
+           do jb=1,mbs
+              read(ifun,5000) qabs0(jb,jw0,ja0),qext0(jb,jw0,ja0),asym0(jb,jw0,ja0)
            enddo
         enddo
      enddo
-     close (ipc)
-     ipc=ipc+1
-     do j=1,na0
-        do i=1,nw0
-           do k=mbs+1,mb
-              read(ipc,5000) qabs0(k,i,j),qext0(k,i,j),asym0(k,i,j)
+     close (ifun)
+     ifun=ifun+1
+     do ja0=1,na0
+        do jw0=1,nw0
+           do jb=mbs+1,mb
+              read(ifun,5000) qabs0(jb,jw0,ja0),qext0(jb,jw0,ja0),asym0(jb,jw0,ja0)
            enddo
         enddo
      enddo
-     close (ipc)
-     ipc=ipc+1
+     close (ifun)
+     ifun=ifun+1
 
 ! Loop over the aerosol class
 ! ---------------------------
-     do ia=1,nka
-        do jt=1,nkt
+     do jka=1,nka
+        do jkt=1,nkt
            ! Values of total radius (xw1) and volume mixing ratio of water (xa1) for each aerosol class
            ! ------------------------------------------------------------------------------------------
-           xw1=rq(jt,ia)
-           xa1=1.-(rn(ia)/rq(jt,ia))**3
-           ! Perform a supplementary check to detect potential model inconsistency
-           !  (this case should never happend if the particle grid has been properly defined: rq(jt,ia) >= rn(ia) )
-           if (xa1 < 0.d0) then
-              print*,'Error in SR intrad: xa1 < xa0(1)=0',ia,jt,xa1
-              stop ' Stopped by SR intrad'
-           end if
+           xw1=rq(jkt,jka)
+           xa1=1._dp-(rn(jka)/rq(jkt,jka))**3
 
            ! Locate xw1 in the tabulated xw0 grid, and calculate interpolation factor dx
            ! ---------------------------------------------------------------------------
-           do i=1,nw0
-              if (xw1.le.xw0(i)) then
-                 if (i.eq.1) then ! if rq <= xw0(1)
-                    dx=1.d0
-                    print*,'Warning: in SR intrad, rq <= xw0(1)',ia,jt,xw1
-                 else ! general case: xw0(i-1) < rq <= xw0(i)
-                    dx=(xw1-xw0(i-1))/(xw0(i)-xw0(i-1))
-                 end if
-                 go to 2000 ! exit do loop
-              end if
-           end do
-           ! Last case: do loop ended without going to 2000, means rq(jt,ia) > xw0(nw0)
-           print*,'Warning: in SR intrad, rq > xw0(nw0)',ia,jt,xw1
-           dx=0.d0
-           i=nw0+1
-
-2000       continue
+           if (xw1 < xw0(1)) then
+              ! case rq < xw0(1), warn user, set iw0 and dx values as if xw1=xw0(1)
+              iw0 = 2
+              dx  = 0._dp
+              write(jpfunout,*)'Warning: in SR intrad, rq < xw0(1)',jka,jkt,xw1
+           else if (xw1 > xw0(nw0)) then
+              ! case rq > xw0(nw0), warn user, set iw0 and dx values as if xw1=xw0(nw0)
+              iw0 = nw0
+              dx  = 1._dp
+              write(jpfunout,*)'Warning: in SR intrad, rq > xw0(nw0)',jka,jkt,xw1
+           else
+              ! general case: xw0(iw-1) < rq <= xw0(iw)
+              iw0 = 2
+              do while (xw1 > xw0(iw0))
+                 iw0 = iw0 + 1
+              end do
+              dx=(xw1-xw0(iw0-1))/(xw0(iw0)-xw0(iw0-1))
+           end if
 
            ! Locate xa1 in the tabulated xa0 grid, and calculate interpolation factor dy
            ! ---------------------------------------------------------------------------
-           do j=2,na0
-              if (xa1.le.xa0(j)) then
-                 ! general case: xa0(j-1) < xa1 <= xa0(j)
-                 dy=(xa1-xa0(j-1))/(xa0(j)-xa0(j-1))
-                 go to 2010 ! exit do loop
-              end if
-           end do
-           ! Last case: do loop ended without going to 2010, means xa1 > xa0(na0)
-           print*,'Error in SR intrad: xa1 > xa0(na0)',ia,jt,xa1
-           stop
+           ! First test to detect potential model inconsistency
+           !  (this case should never happend: if the particle grid has been properly defined,
+           !   rq(jt,ia) >= rn(ia) thus xa1 >= 0.)
+           if (xa1 < xa0(1)) then
+              write(jpfunerr,*)'Error in SR intrad: xa1 < xa0(1)=0.',jka,jkt,xa1
+              stop ' Stopped by SR intrad'
+           else if (xa1 > xa0(na0)) then
+              write(jpfunerr,*)'Error in SR intrad: xa1 > xa0(na0)=1.',jka,jkt,xa1
+              stop ' Stopped by SR intrad'
+           else
+              ! general case: xa0(ia-1) < xa1 <= xa0(ia)
+              ia0 = 2
+              do while (xa1 > xa0(ia0))
+                 ia0 = ia0 + 1
+              end do
+              dy=(xa1-xa0(ia0-1))/(xa0(ia0)-xa0(ia0-1))
+           end if
 
-2010       continue
 
            ! Interpolation factors
            ! ---------------------
            dxdy   = dx*dy
-           dxdy1  = dx*(1.d0-dy)
-           dx1dy  = dy*(1.d0-dx)
-           dx1dy1 = (1.d0-dy)*(1.d0-dx)
+           dxdy1  = dx*(1._dp-dy)
+           dx1dy  = (1._dp-dx)*dy
+           dx1dy1 = (1._dp-dx)*(1._dp-dy)
 
            ! Interpolated values of qabs, qext and asym
            ! ------------------------------------------
-           do k=1,mb
-              qabs(k,jt,ia,ka) = dxdy   * qabs0(k,MIN(i,nw0),j)   &
-                               + dxdy1  * qabs0(k,MIN(i,nw0),j-1) &
-                               + dx1dy  * qabs0(k,MAX(1,i-1),j)   &
-                               + dx1dy1 * qabs0(k,MAX(1,i-1),j-1)
+           do jb=1,mb
+              qabs(jb,jkt,jka,jaer) = dxdy   * qabs0(jb,iw0,ia0)   &
+                                    + dxdy1  * qabs0(jb,iw0,ia0-1) &
+                                    + dx1dy  * qabs0(jb,iw0-1,ia0)   &
+                                    + dx1dy1 * qabs0(jb,iw0-1,ia0-1)
 
-              qext(k,jt,ia,ka) = dxdy   * qext0(k,MIN(i,nw0),j)   &
-                               + dxdy1  * qext0(k,MIN(i,nw0),j-1) &
-                               + dx1dy  * qext0(k,MAX(1,i-1),j)   &
-                               + dx1dy1 * qext0(k,MAX(1,i-1),j-1)
+              qext(jb,jkt,jka,jaer) = dxdy   * qext0(jb,iw0,ia0)   &
+                                    + dxdy1  * qext0(jb,iw0,ia0-1) &
+                                    + dx1dy  * qext0(jb,iw0-1,ia0)   &
+                                    + dx1dy1 * qext0(jb,iw0-1,ia0-1)
 
-              asym(k,jt,ia,ka) = dxdy   * asym0(k,MIN(i,nw0),j)    &
-                               + dxdy1  * asym0(k,MIN(i,nw0),j-1) &
-                               + dx1dy  * asym0(k,MAX(1,i-1),j)   &
-                               + dx1dy1 * asym0(k,MAX(1,i-1),j-1)
+              asym(jb,jkt,jka,jaer) = dxdy   * asym0(jb,iw0,ia0)   &
+                                    + dxdy1  * asym0(jb,iw0,ia0-1) &
+                                    + dx1dy  * asym0(jb,iw0-1,ia0)   &
+                                    + dx1dy1 * asym0(jb,iw0-1,ia0-1)
            enddo
 
-        end do ! jt loop
-     end do ! ia loop
+        end do ! jkt loop
+     end do ! jka loop
 
-  end do ! ka loop
+  end do ! jaer loop
 
 end subroutine intrad
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1110,6 +1122,7 @@ subroutine load1
 
   USE global_params, ONLY : &
 ! Imported Parameters:
+       jptaerrad,           &
        n,                   &
        nf,                  &
        nrlay,               &
@@ -1157,7 +1170,7 @@ subroutine load1
   common /cb41/ detw(n),deta(n),eta(n),etw(n)
   real (kind=dp) :: detw, deta, eta, etw
 
-  common /cb49/ qabs(mb,nkt,nka,3),qext(mb,nkt,nka,3),asym(mb,nkt,nka,3)
+  common /cb49/ qabs(mb,nkt,nka,jptaerrad),qext(mb,nkt,nka,jptaerrad),asym(mb,nkt,nka,jptaerrad)
   real (kind=dp) :: qabs,qext,asym
 
   common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka), &

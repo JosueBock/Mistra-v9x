@@ -3464,6 +3464,7 @@ c update total liquid water [kg/m^3]
 
       USE global_params, ONLY :
 ! Imported Parameters:
+     &     jptaerrad,
      &     nka,
      &     nkt,
      &     mb
@@ -3484,8 +3485,11 @@ c update total liquid water [kg/m^3]
       double precision g,a0m,b0m,ug,vg,z0,ebs,psis,aks,
      &              bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
-      common /cb49/ qabs(18,nkt,nka,3),qext(18,nkt,nka,3), ! only qabs is used here
-     &              asym(18,nkt,nka,3)
+      common /cb49/ qabs(18,nkt,nka,jptaerrad), ! only qabs is used here
+     &              qext(18,nkt,nka,jptaerrad),
+     &              asym(18,nkt,nka,jptaerrad)
+      double precision qabs,qext,asym
+
       common /cb50/ enw(nka),ew(nkt),rn(nka),rw(nkt,nka),en(nka),
      &              e(nkt),dew(nkt),rq(nkt,nka)
       double precision enw,ew,rn,rw,en,e,dew,rq

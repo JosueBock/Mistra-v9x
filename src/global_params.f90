@@ -71,6 +71,11 @@ module global_params
   ! Wavelength bands for the infrared region
   integer, parameter :: mbir = 12
 
+  ! Number of aerosol types whose radiative properties (qabs, qext and asym)
+  !   have been tabulated with Mie calculations. See SR intrad.
+  !   1=urban, 2=rural, 3=ocean
+  integer, parameter :: jptaerrad = 3
+
   ! Number of tabulated classes for the parameters related to liquid water
   !   in the radiation code (see SR water)
   integer, parameter :: ncw = 8
