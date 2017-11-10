@@ -350,6 +350,11 @@ subroutine initstr
 ! History:
 ! Version   Date     Comment
 ! -------   ----     -------
+  ! 10-Nov-2017   Josue Bock   Removal of cb55, which is useless
+  !                            Calling nstrahl twice during initialisation has absolutely no effect,
+  !                              since the only apparent reason was to fill cb55 data, which were not
+  !                              actually used. This simplifies much this subroutine.
+  !
 ! 1.1      07/2016   Removal of labeled do loops.                 <Josue Bock>
 !                    Use module for parameters
 !                    All explicit declarations and implicit none
@@ -373,21 +378,15 @@ subroutine initstr
   implicit none
 
 ! Local scalars:
-  integer :: istr, k, lmin0, lst0, jtd
+  integer :: k, jtd
   logical :: linit
 ! Common blocks:
   common /cb15/ fnseb,flgeg,hr(nrlay)
   real (kind=dp) :: fnseb, flgeg, hr
 
-  common /cb40/ time,lday,lst,lmin,it,lcl,lct
-  real (kind=dp) :: time
-  integer lday, lst, lmin, it, lcl, lct
-
   common /cb48/ sk,sl,dtrad(n),dtcon(n)
   real (kind=dp) :: sk, sl, dtrad, dtcon
 
-  common /cb55/ dtrad0(n),dtrad1(n),sk0,sl0,sk1,sl1,time0,time2
-  real (kind=dp) :: dtrad0, dtrad1, sk0, sl0, sk1, sl1, time0, time2
 !- End of header ---------------------------------------------------------------
 
 ! initialisation of radiation code
@@ -401,51 +400,13 @@ subroutine initstr
   call nstrahl
   call profr
 
-  sk0=fnseb
-  sl0=flgeg
-  sk=sk0
-  sl=sl0
+  sk=fnseb
+  sl=flgeg
   dtrad(1)=0.d0
   do k=2,n
      jtd=nrlay-k+2
      dtrad(k)=hr(jtd)
-     dtrad0(k)=hr(jtd)
   end do
-  istr=30
-
-! addition of istr to the actual time
-! -----------------------------------
-  lmin0=lmin
-  lst0=lst
-  lmin=lmin+istr
-  if (lmin.ge.60) then
-     lmin=lmin-60
-     lst=lst+1
-     if (lst.eq.24) lst=0
-  end if
-  time2=float(istr)*60.d0
-  time0=time2
-
-  call load1
-
-  linit = .false.
-  call rotate_in(linit)
-
-  call nstrahl
-  call profr
-
-  sk1=fnseb
-  sl1=flgeg
-  dtrad(1)=0.d0
-  do k=2,n
-     jtd=nrlay-k+2
-     dtrad1(k)=hr(jtd)
-  end do
-
-! recorrection of time
-! --------------------
-  lmin=lmin0
-  lst=lst0
 
 end subroutine initstr
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

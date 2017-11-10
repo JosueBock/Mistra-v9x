@@ -1252,7 +1252,6 @@
       double precision theta, thetl, t, talt, p, rho
       common /cb53a/ thet(n),theti(n)
       common /cb54/ xm1(n),xm2(n),feu(n),dfddt(n),xm1a(n),xm2a(n)
-      common /cb55/ dtrad0(n),dtrad1(n),sk0,sl0,sk1,sl1,time0,time2
       common /cb63/ fcs(nka),xmol3(nka)
       character *10 fname
       character *1 fogtype
@@ -1261,12 +1260,12 @@
       open (15,file=fname,status='unknown',form='unformatted')
 ! double precision arrays
       read (15) 
-     &     atkm,atkh,b0m,dfddt,dtrad,dtrad0,dtrad1,eb,ff,fcs,feu,fsum,
+     &     atkm,atkh,b0m,dfddt,dtrad,eb,ff,fcs,feu,fsum,
      &     gh,p,rho,t,talt,tb,tke,tkep,theta,totrad,u,v,w,xl,xm1,xm1a,
      &     xm2,xmol3,
 ! double precision single vars
-     &     a0m,alat,declin,ds1,ds2,reif,sk,sk0,sk1,sl,sl0,sl1,tau,time0,
-     &     time2,trdep,
+     &     a0m,alat,declin,ds1,ds2,reif,sk,sl,tau,
+     &     trdep,
 ! integer arrays
      &     nar,
 ! integer single vars
