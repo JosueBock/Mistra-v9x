@@ -1214,7 +1214,6 @@
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
-     &     nrlay,
      &     nb,
      &     nka,
      &     nkt,
@@ -1223,7 +1222,7 @@
       implicit double precision (a-h,o-z)
 ! vertical profiles of meteorological data if the program is restarted
 
-      common /cb11/ totrad (mb,nrlay)
+      common /cb11/ totrad (mb,n)
       double precision totrad
 
       common /cb18/ alat,declin                ! for the SZA calculation
@@ -3133,7 +3132,6 @@ c update total liquid water [kg/m^3]
 ! Imported Parameters:
      &     nf,
      &     n,
-     &     nrlay,
      &     nka,
      &     nkt,
      &     nkc,
@@ -3142,7 +3140,7 @@ c update total liquid water [kg/m^3]
       implicit double precision (a-h,o-z)
 
       logical chem!,chmic ! jjb defined below, but unused
-      common /cb11/ totrad (mb,nrlay)
+      common /cb11/ totrad (mb,n)
       double precision totrad
 
       common /cb40/ time,lday,lst,lmin,it,lcl,lct
@@ -3201,8 +3199,7 @@ c update total liquid water [kg/m^3]
          xm1o=xm1a(k)
          feualt=feu(k)
          do ib=1,mb
-            !totr(ib)=totrad(ib,k-1)
-            totr(ib)=totrad(ib,nrlay-k+2)
+            totr(ib)=totrad(ib,k)
          enddo
          kr=nar(k)
          do ia=1,nka

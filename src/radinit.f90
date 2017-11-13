@@ -367,25 +367,10 @@ subroutine initstr
 ! Declarations:
 ! Modules used:
 
-  USE global_params, ONLY : &
-! Imported Parameters:
-       n,                   &
-       nrlay
-
-  USE precision, ONLY : &
-       dp
-
   implicit none
 
 ! Local scalars:
-  integer :: k, jtd
   logical :: linit
-! Common blocks:
-  common /cb15/ fnseb,flgeg,hr(nrlay)
-  real (kind=dp) :: fnseb, flgeg, hr
-
-  common /cb48/ sk,sl,dtrad(n),dtcon(n)
-  real (kind=dp) :: sk, sl, dtrad, dtcon
 
 !- End of header ---------------------------------------------------------------
 
@@ -400,13 +385,7 @@ subroutine initstr
   call nstrahl
   call profr
 
-  sk=fnseb
-  sl=flgeg
-  dtrad(1)=0.d0
-  do k=2,n
-     jtd=nrlay-k+2
-     dtrad(k)=hr(jtd)
-  end do
+  call rotate_out
 
 end subroutine initstr
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1060,7 +1039,7 @@ subroutine load1
 ! Version   Date     Comment
 ! -------   ----     -------
 ! 1.1       10/2016  Removed /nox/ tauno2(nrlay) which was set to 0    <Josue Bock>
-!                      (see SR tau in nard.f for explanations)
+!                      (see SR tau in nrad.f90 for explanations)
 
 !           07/2016  Removal of labeled do loops.                   <Josue Bock>
 !                    Header
@@ -1330,7 +1309,7 @@ subroutine str (mic)
   logical :: mic
 
 ! Local scalars:
-  integer :: ia, jt, jtd, k
+  integer :: ia, jt, k
   real (kind=dp) :: zeit, horang, rlat, rdec, u00, ru0, x0
   real (kind=dp) :: znum,zdenom,zfix   ! calculation of effective drop radius
 
@@ -1347,9 +1326,6 @@ subroutine str (mic)
   common /cb08/ re1(nkt), re2(nkt), re3(nkt)
   real (kind=dp) :: re1, re2, re3
 
-  common /cb15/ fnseb,flgeg,hr(nrlay)
-  real (kind=dp) :: fnseb, flgeg, hr
-
   common /cb16/ u0,albedo(mbs),thk(nrlay)
   real (kind=dp) :: u0, albedo, thk
 
@@ -1362,9 +1338,6 @@ subroutine str (mic)
 
   common /cb41/ detw(n),deta(n),eta(n),etw(n)
   real (kind=dp) :: detw, deta, eta, etw
-
-  common /cb48/ sk,sl,dtrad(n),dtcon(n)
-  real (kind=dp) :: sk, sl, dtrad, dtcon
 
   common /cb52/ ff(nkt,nka,n),fsum(n),nar(n)
   real (kind=dp) :: ff,fsum
@@ -1438,13 +1411,8 @@ subroutine str (mic)
   endif
 
   call nstrahl
-  sk=fnseb
-  sl=flgeg
-  dtrad(1)=0.
-  do k=2,n
-     jtd=nrlay-k+2
-     dtrad(k)=hr(jtd)
-  end do
+
+  call rotate_out
 
 end subroutine str
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1604,3 +1572,104 @@ subroutine rotate_in(linit)
   ts = tsx
 
 end subroutine rotate_in
+! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+subroutine rotate_out
+
+! Description :
+! -----------
+  !    Rotate arrays outputed by the radiative code, that are indexed from top to the ground
+  !    (top-down: _td) to the corresponding variables used in the main program, that are indexed
+  !    from the ground to the top (bottom-up: _bu).
+
+
+! Interface :
+! ---------
+  !    SR rotate_out is called after the radiative code
+
+! Input :
+! -----
+  !    - /cb10/ totrad(mb,nrlay)
+  !    - /cb15/ fnseb,flgeg,hr(nrlay)
+
+! Output :
+! ------
+  !    - /cb11/ totrad(mb,n)
+  !    - /cb48/ sk,sl,dtrad(n)
+
+! Externals :
+! ---------
+  !    none
+
+
+! Method :
+! ------
+  !    Mistra layer #1 is surface
+  !    Thus, fill dtrad and totrad_bu from indexes #2 to #n
+  !    Index #2 in Mistra must match index #nrlay in the radiative code
+
+
+! Author :
+! ------
+  !    Josue Bock
+
+
+! Modifications :
+! -------------
+  !    13-Nov-2017  Josue Bock   First version of this routine
+
+! == End of header =============================================================
+
+
+! Declarations:
+! ------------
+! Modules used:
+
+  USE global_params, ONLY : &
+! Imported Parameters:
+       n,                   &
+       nrlay,               &
+       mb
+
+  USE precision, ONLY : &
+! Imported Parameters:
+       dp
+
+  implicit none
+
+! Local scalars:
+  integer :: jzbu, jztd                 ! running indexes (bu = bottom-up, td = top-down)
+
+! Common blocks:
+  common /cb10/ totrad_td (mb,nrlay)
+  real (kind=dp) :: totrad_td
+
+  common /cb11/ totrad_bu (mb,n)
+  real (kind=dp) :: totrad_bu
+
+  common /cb15/ fnseb,flgeg,hr(nrlay)
+  real (kind=dp) :: fnseb, flgeg, hr
+
+  common /cb48/ sk,sl,dtrad(n),dtcon(n)
+  real (kind=dp) :: sk, sl, dtrad, dtcon
+
+! == End of declarations =======================================================
+
+
+  sk = fnseb
+  sl = flgeg
+
+  dtrad(1)       = 0._dp
+  totrad_bu(:,1) = 0._dp
+
+  do jzbu = 2,n
+     jztd = nrlay-jzbu+2
+
+     dtrad(jzbu)=hr(jztd)
+     totrad_bu(:,jzbu)=totrad_td(:,jztd)
+  end do
+
+end subroutine rotate_out

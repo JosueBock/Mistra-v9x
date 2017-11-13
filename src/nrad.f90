@@ -177,7 +177,7 @@ subroutine nstrahl
                 frac(nrlay),ts
   real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
 
-  common /cb11/ totrad (mb,nrlay)
+  common /cb10/ totrad (mb,nrlay)
   real (kind=dp) :: totrad
 
   common /cb15/ fnseb,flgeg,hr(nrlay)

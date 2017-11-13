@@ -68,7 +68,6 @@
       USE global_params, ONLY :
 ! Imported Parameters:
      &     n,
-     &     nrlay,
      &     nb,
      &     nka,
      &     nkt,
@@ -81,7 +80,7 @@
       character (len=1) sub
 
 ! Common blocks:
-      common /cb11/ totrad (mb,nrlay)
+      common /cb11/ totrad (mb,n)
       double precision totrad
 
       common /cb18/ alat,declin                ! for the SZA calculation
@@ -1101,7 +1100,7 @@
 
       implicit double precision (a-h,o-z)
 
-      common /cb11/ totrad (mb,nrlay)
+      common /cb10/ totrad (mb,nrlay)
       double precision totrad
 
       common /cb15/ fnseb,flgeg,hr(nrlay)
@@ -1877,7 +1876,7 @@
      &              frac(nrlay),ts
       real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
 
-      common /cb11/ totrad (mb,nrlay)
+      common /cb10/ totrad (mb,nrlay)
       real(kind=dp) :: totrad
 
       common /cb15/ fnseb,flgeg,hr(nrlay)
@@ -1903,13 +1902,13 @@
       ! Time stamp
       write (40,6000) lday,lst,lmin,u0
 
-      ! Solar bands (middle of layer values)
+      ! Solar bands (middle of layer (or half level) values)
       write (40,6010)
       do i=1,nrlay
          write (40,6011) i,(totrad(ib,i),ib=1,mbs),hr(i)
       enddo
 
-      ! IR bands (middle of layer values)
+      ! IR bands (middle of layer (or half level) values)
       write (40,6020)
       do i=1,nrlay
          write (40,6021) i,(totrad(ib,i),ib=mbs+1,mb)
