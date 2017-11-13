@@ -2839,15 +2839,7 @@ subroutine langw(ib)
   f2f(1) = pib(1)
   f2w(1) = 0._dp
 !
-! surface
-  ii0 = ib-mbs
-  agdb = ee(ii0) * (pib(nrlev)-pibs) + (1._dp - ee(ii0)) * &
-      (1._dp - ee(ii0)) * (pib(nrlev) - pib(nrlay)) * a6(1,nrlay) * &
-      (1._dp - frac(nrlay))
-  f1w(nrlev) = agdb * frac(nrlay)
-  f1f(nrlev) = agdb - f1w(nrlev)
-!
-! remaining layers
+! regular layers
   do i = 1,nrlay
      ip = i+1
      db = pib(i)-pib(ip)
@@ -2856,6 +2848,14 @@ subroutine langw(ib)
      f2f(ip) = -f1f(i)
      f2w(ip) = -f1w(i)
   end do
+!
+! surface
+  ii0 = ib-mbs
+  agdb = ee(ii0) * (pib(nrlev)-pibs) + (1._dp - ee(ii0)) * &
+      (1._dp - ee(ii0)) * (pib(nrlev) - pib(nrlay)) * a6(1,nrlay) * &
+      (1._dp - frac(nrlay))
+  f1w(nrlev) = agdb * frac(nrlay)
+  f1f(nrlev) = agdb - f1w(nrlev)
 !
 ! upper boundary condition for the right hand side of the third to sixth
 ! equation
