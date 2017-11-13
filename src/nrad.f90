@@ -127,6 +127,8 @@ subroutine nstrahl
   !                       first GitHub release, and has been done again in a more readable way.
   !
   ! Oct-2017  Josue Bock  Converted to f90, further cleaning/improvements in the code
+  !
+  ! Nov-2017  Josue Bock  Removed ntypa and ntypd from /cb02/, unused
 
 ! == End of header =============================================================
 
@@ -172,9 +174,8 @@ subroutine nstrahl
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
   common /cb11/ totrad (mb,nrlay)
   real (kind=dp) :: totrad
@@ -547,9 +548,8 @@ subroutine frr
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), & ! only: frac
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
   common /part/ cc(4,nrlay),bb(4,nrlay)
   real (kind=dp) :: cc, bb
@@ -697,9 +697,8 @@ subroutine water(ib)
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer ntypa,ntypd
 
   common /cb09/ rew(nrlay)
   real (kind=dp) :: rew
@@ -890,9 +889,8 @@ subroutine qopcon ( vv )
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
   common /con/ tgcon(nrlay)
   real (kind=dp) :: tgcon
@@ -972,9 +970,8 @@ subroutine planck ( ib )
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer ntypa,ntypd
 
   common /planci/ pib(nrlev),pibs
   real (kind=dp) :: pib, pibs
@@ -1196,9 +1193,8 @@ end function plkavg
 !!$
 !!$! Common blocks:
 !!$  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-!!$                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+!!$                frac(nrlay),ts
 !!$  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-!!$  integer :: ntypa,ntypd
 !!$
 !!$  common /planci/ pib(nrlev),pibs
 !!$  real (kind=dp) :: pib, pibs
@@ -1388,9 +1384,8 @@ subroutine gase ( ib, ig, hk )
   real (kind=dp) :: hk18, c18h2o
 
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
   common /gas/ tg(nrlay)
   real (kind=dp) :: tg
@@ -1644,9 +1639,8 @@ subroutine qks ( coefks, fkg )
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
 ! == End of declarations =======================================================
 
@@ -1750,9 +1744,8 @@ subroutine qki ( coefki, fkg )
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                   frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                   frac(nrlay),ts
   real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
 ! == End of declarations =======================================================
 
@@ -1856,9 +1849,8 @@ subroutine qkio3 ( coefki, fkg )
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                   frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                   frac(nrlay),ts
   real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
 ! == End of declarations =======================================================
 
@@ -1944,9 +1936,8 @@ subroutine qopo3s ( fk, tg )
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
   common /ozon/ qmo3(nrlev)
   real(kind=dp) :: qmo3
@@ -2015,9 +2006,8 @@ subroutine qoph2o ( fkg, tg )
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
 ! == End of declarations =======================================================
 
@@ -2076,9 +2066,8 @@ subroutine qopch4 ( fkg, tg )
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
 ! == End of declarations =======================================================
 
@@ -2136,9 +2125,8 @@ subroutine qopn2o ( fkg, tg )
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
 ! == End of declarations =======================================================
 
@@ -2195,9 +2183,8 @@ subroutine qopo3i ( fkg, tg )
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
   common /ozon/ qmo3(nrlev)
   real(kind=dp) :: qmo3
@@ -2261,9 +2248,8 @@ subroutine qophc ( fkg, tg )
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
 ! == End of declarations =======================================================
 
@@ -2739,9 +2725,8 @@ subroutine langw(ib)
 
 ! Common blocks:
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-  integer :: ntypa,ntypd
 
   common /leck1/ a4(2,nrlay),a5(2,nrlay)                       ! matrix coefficients
   real(kind=dp) :: a4, a5

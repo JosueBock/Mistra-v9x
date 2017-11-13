@@ -1849,6 +1849,7 @@
 !    18-Mar-2017  Josue Bock  improvement of output formats, to fit the data
 !                             added header, comments
 !    19-Oct-2017  Josue Bock  double precision => real(kind=dp)
+!    13-Nov-2017  Josue Bock  removed ntypa and ntypd from /cb02/, unused
 
 ! == End of header =============================================================
 
@@ -1873,9 +1874,8 @@
 
 ! Common blocks:
       common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
-     &              frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+     &              frac(nrlay),ts
       real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-      integer :: ntypa,ntypd
 
       common /cb11/ totrad (mb,nrlay)
       real(kind=dp) :: totrad

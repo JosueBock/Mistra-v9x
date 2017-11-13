@@ -904,9 +904,8 @@ end subroutine initr
 !!$  real (kind=dp) :: seanew, saanew, ganew, ff2
 !!$
 !!$  common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),rho2x(nrlay), &
-!!$                fracx(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+!!$                fracx(nrlay),ts
 !!$  real (kind=dp) :: tx,px,rhox,xm1x,rho2x,fracx,ts
-!!$  integer ntypa,ntypd
 !!$
 !!$  common /cb16/ u0,albedo(mbs),thk(nrlay)
 !!$  real (kind=dp) :: u0, albedo, thk
@@ -1495,7 +1494,8 @@ subroutine rotate_in(linit)
 
 ! Modifications :
 ! -------------
-!    02-Apr-2017  Josué Bock   First version of this routine
+  !    02-Apr-2017  Josue Bock   First version of this routine
+  !    13-Nov-2017  Josue Bock   removed ntypa and ntypd from /cb02/, unused
 !
 ! End modifications
 !-----------------------------------------------------------------------------------------------------------------------
@@ -1533,11 +1533,9 @@ subroutine rotate_in(linit)
                     beax, baax, gax, qmo3x, rewx, tsx
   integer :: ntypax,ntypdx
 
-
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2w(nrlay), &
-                frac(nrlay),ts,ntypa(nrlay),ntypd(nrlay)
+                frac(nrlay),ts
   real (kind=dp) :: t, p, rho, xm1, rho2w, frac, ts
-  integer :: ntypa,ntypd
 
   common /cb09/ rew(nrlay)
   real (kind=dp) :: rew
@@ -1597,8 +1595,6 @@ subroutine rotate_in(linit)
          rho2w(jltd) = rho2wx(jlbu)
          rew(jltd) = rewx(jlbu)
          frac(jltd) = fracx(jlbu)
-         ntypa(jltd) = ntypax(jlbu)
-         ntypd(jltd) = ntypdx(jlbu)
          bea(:,jltd) = beax(:,jlbu)
          baa(:,jltd) = baax(:,jlbu)
          ga(:,jltd) = gax(:,jlbu)
