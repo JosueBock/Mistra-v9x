@@ -539,6 +539,7 @@ subroutine initr
 ! Version   Date     Comment
 ! -------   ----     -------
 !        14/11/2017 <jjb> removed ntypdx(nrlay) (droplet type), initialised =4 but unused
+!                         removed ntypax(nrlay) (aerosol type) from cb01, local declaration
 !        10/03/2017 <jjb> corrected rf=0.08 for level 30000 (was 0.8)
 !
 ! 1.2       10/2016  corrected several array size
@@ -597,6 +598,7 @@ subroutine initr
   real (kind=dp) :: dz                         ! Height increment of extra layers up to the tropopause [m]
 
 ! Local arrays:
+  integer :: ntypax(nrlay)
   real (kind=dp) :: etax(nrlev), usav(nrlay)
   real (kind=dp) :: rnaer(nrlay)               ! total number concentration of aerosol particles [cm**-3]
 
@@ -610,11 +612,9 @@ subroutine initr
   common /cb01/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),      &
                 rho2wx(nrlay),fracx(nrlay),zx(nrlev),thkx(nrlay), &
                 beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),      &
-                qmo3x(nrlev),rewx(nrlay), tsx,                    &
-                ntypax(nrlay)
+                qmo3x(nrlev),rewx(nrlay), tsx
   real (kind=dp) :: tx,px,rhox,xm1x,rho2wx,fracx,zx,thkx, &
                     beax, baax, gax, qmo3x, rewx, tsx
-  integer :: ntypax
 
   common /cb16/ u0,albedo(mbs),thk(nrlay)
   real (kind=dp) :: u0, albedo, thk
@@ -1086,11 +1086,9 @@ subroutine load1
   common /cb01/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),      &
                 rho2wx(nrlay),fracx(nrlay),zx(nrlev),thkx(nrlay), &
                 beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),      &
-                qmo3x(nrlev),rewx(nrlay), tsx,                    &
-                ntypax(nrlay)
+                qmo3x(nrlev),rewx(nrlay), tsx
   real (kind=dp) :: tx,px,rhox,xm1x,rho2wx,fracx,zx,thkx, &
                     beax, baax, gax, qmo3x, rewx, tsx
-  integer :: ntypax
 
   common /cb08/ re1(nkt), re2(nkt), re3(nkt)
   real (kind=dp) :: re1, re2, re3
@@ -1316,11 +1314,9 @@ subroutine str (mic)
   common /cb01/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),      &
                 rho2wx(nrlay),fracx(nrlay),zx(nrlev),thkx(nrlay), &
                 beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),      &
-                qmo3x(nrlev),rewx(nrlay), tsx,                    &
-                ntypax(nrlay)
+                qmo3x(nrlev),rewx(nrlay), tsx
   real (kind=dp) :: tx,px,rhox,xm1x,rho2wx,fracx,zx,thkx, &
                     beax, baax, gax, qmo3x, rewx, tsx
-  integer :: ntypax
 
   common /cb08/ re1(nkt), re2(nkt), re3(nkt)
   real (kind=dp) :: re1, re2, re3
@@ -1495,11 +1491,9 @@ subroutine rotate_in(linit)
   common /cb01/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),         &
                 rho2wx(nrlay),fracx(nrlay),zx_bu(nrlev),thkx(nrlay), &
                 beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),         &
-                qmo3x(nrlev),rewx(nrlay), tsx,                       &
-                ntypax(nrlay)
+                qmo3x(nrlev),rewx(nrlay), tsx
   real (kind=dp) :: tx,px,rhox,xm1x,rho2wx,fracx,zx_bu,thkx, &
                     beax, baax, gax, qmo3x, rewx, tsx
-  integer :: ntypax
 
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2w(nrlay), &
                 frac(nrlay),ts
