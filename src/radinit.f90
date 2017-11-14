@@ -538,6 +538,7 @@ subroutine initr
 ! History:
 ! Version   Date     Comment
 ! -------   ----     -------
+!        14/11/2017 <jjb> removed ntypdx(nrlay) (droplet type), initialised =4 but unused
 !        10/03/2017 <jjb> corrected rf=0.08 for level 30000 (was 0.8)
 !
 ! 1.2       10/2016  corrected several array size
@@ -610,10 +611,10 @@ subroutine initr
                 rho2wx(nrlay),fracx(nrlay),zx(nrlev),thkx(nrlay), &
                 beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),      &
                 qmo3x(nrlev),rewx(nrlay), tsx,                    &
-                ntypax(nrlay),ntypdx(nrlay)
+                ntypax(nrlay)
   real (kind=dp) :: tx,px,rhox,xm1x,rho2wx,fracx,zx,thkx, &
                     beax, baax, gax, qmo3x, rewx, tsx
-  integer :: ntypax,ntypdx
+  integer :: ntypax
 
   common /cb16/ u0,albedo(mbs),thk(nrlay)
   real (kind=dp) :: u0, albedo, thk
@@ -748,10 +749,8 @@ subroutine initr
   end do
 
 ! aerosol type: 1 rural 2 urban 3 maritme 4 tropospheric
-! droplet type: 1-3 cumulus 4 best
   do k=1,nrlay
      ntypax(k)=2
-     ntypdx(k)=4
   enddo
 
 ! ozone concentration profile
@@ -1088,10 +1087,10 @@ subroutine load1
                 rho2wx(nrlay),fracx(nrlay),zx(nrlev),thkx(nrlay), &
                 beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),      &
                 qmo3x(nrlev),rewx(nrlay), tsx,                    &
-                ntypax(nrlay),ntypdx(nrlay)
+                ntypax(nrlay)
   real (kind=dp) :: tx,px,rhox,xm1x,rho2wx,fracx,zx,thkx, &
                     beax, baax, gax, qmo3x, rewx, tsx
-  integer :: ntypax,ntypdx
+  integer :: ntypax
 
   common /cb08/ re1(nkt), re2(nkt), re3(nkt)
   real (kind=dp) :: re1, re2, re3
@@ -1318,10 +1317,10 @@ subroutine str (mic)
                 rho2wx(nrlay),fracx(nrlay),zx(nrlev),thkx(nrlay), &
                 beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),      &
                 qmo3x(nrlev),rewx(nrlay), tsx,                    &
-                ntypax(nrlay),ntypdx(nrlay)
+                ntypax(nrlay)
   real (kind=dp) :: tx,px,rhox,xm1x,rho2wx,fracx,zx,thkx, &
                     beax, baax, gax, qmo3x, rewx, tsx
-  integer :: ntypax,ntypdx
+  integer :: ntypax
 
   common /cb08/ re1(nkt), re2(nkt), re3(nkt)
   real (kind=dp) :: re1, re2, re3
@@ -1464,6 +1463,7 @@ subroutine rotate_in(linit)
 ! -------------
   !    02-Apr-2017  Josue Bock   First version of this routine
   !    13-Nov-2017  Josue Bock   removed ntypa and ntypd from /cb02/, unused
+  !    14-Nov-2017  Josue Bock   further removed ntypd from /cb01/
 !
 ! End modifications
 !-----------------------------------------------------------------------------------------------------------------------
@@ -1496,10 +1496,10 @@ subroutine rotate_in(linit)
                 rho2wx(nrlay),fracx(nrlay),zx_bu(nrlev),thkx(nrlay), &
                 beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),         &
                 qmo3x(nrlev),rewx(nrlay), tsx,                       &
-                ntypax(nrlay),ntypdx(nrlay)
+                ntypax(nrlay)
   real (kind=dp) :: tx,px,rhox,xm1x,rho2wx,fracx,zx_bu,thkx, &
                     beax, baax, gax, qmo3x, rewx, tsx
-  integer :: ntypax,ntypdx
+  integer :: ntypax
 
   common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2w(nrlay), &
                 frac(nrlay),ts
