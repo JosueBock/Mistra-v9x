@@ -395,53 +395,72 @@ end subroutine initstr
 
 subroutine ipdata
 !
-! Description:
+! Description :
+! -----------
 !    input data for radiation code:
-!    reads from file 'pifm2.dat'
+!    reads from file 'pifm2_yymmdd.dat'
 !    writes in several common blocks
-!    descriptions of variables can be found at the end of file 'pifm2*.dat'
+!    descriptions of variables can be found at the end of file 'pifm2_yymmdd.dat'
 !    (part of these description written in German)
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-!       28-Oct-2017  Reindexed pibtab (thus changed input file) so that it is read in natural
-!                      Fortran order (leftmost is innermost in loops)
-!                    Replaced dimension 12 by mbir
-! 1.1       10/2016  More cleaning, after checking the variables actually used   <Josue Bock>
-!                      (several old variables from PIFM1, apparently)
-!
-!           07/2016  Header, comments                                            <Josue Bock>
-!                    Use modules for parameters
-!
-! 1.0       ?        Original code.                                              <Andreas Bott>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  !    Jul-2016  Josue Bock  Header, comments
+  !                          Use modules for parameters
+  !
+  !    Oct-2016  Josue Bock  More cleaning, after checking the variables actually used
+  !                            (several old variables from PIFM1, apparently)
+  !
+  ! 28-Oct-2017  Josue Bock  Reindexed pibtab (thus changed input file) so that it is read
+  !                            in optimum Fortran order (leftmost is innermost in loops)
+  !                          Replaced dimension 12 by mbir
+  !
+  ! 15-Nov-2017  Josue Bock  Merged input data from pifm2*.dat and initr*.dat
+  !                          Cleaned some unused data from PIFM1 (mostly in cb56)
+  !                          Adopted the same data file structure as WS did in his Mistra-F90 version
+  !                            ==> all comment lines are from his version
+  !                          Each data block is now separated by a comment line.
+  !                          Also added a former common block /sol/ to remove hardcoded values from
+  !                            the radiative code.
+  !                          Final cleaning after Fortran90 conversion
+
+! == End of header =============================================================
+
+! Declarations :
+! ------------
 ! Modules used:
 
   USE config, ONLY : &
 ! Imported Parameters:
-          cinpdir
+       cinpdir,      &
+! Imported Routines:
+       abortM
+
+  USE file_unit, ONLY : &
+! Imported Parameters:
+       jpfundatarad
 
   USE global_params, ONLY : &
 ! Imported Parameters:
        mb,                  &
+       mbs,                 &
        mbir,                &
-       ncw
+       ncw,                 &
+       nrlay
 
   USE precision, ONLY : &
        dp
 
   implicit none
 
+! Local scalars:
+  character (len=len_trim(cinpdir)+16) :: clfname
+  integer :: istat
+
 ! Common blocks:
-  common /aeag/ seanew(8,mb,4),saanew(8,mb,4),ganew(8,mb,4),ff2(8)
-  real (kind=dp) :: seanew, saanew, ganew, ff2
+  common /aeag/ feux(8),seanew(8,mb,4),saanew(8,mb,4),ganew(8,mb,4)
+  real (kind=dp) :: feux, seanew, saanew, ganew
   common /band1/ hk1(10),fk1o3(10)
   real (kind=dp) :: hk1, fk1o3
   common /band2/ hk2(8),c2h2o(3,11,8)
@@ -479,47 +498,156 @@ subroutine ipdata
   common /band18/ hk18(8),c18h2o(3,19,8)
   real (kind=dp) :: hk18, c18h2o
 
-!  common /plancd/ ttab(35),pibtab(35,mbir) ! jjb was used in FN fst4 (called by SR plancktab), both unused now
-!  real (kind=dp) :: ttab, pibtab           !     left for backward compatibility
-  real (kind=dp) :: ttab(35),pibtab(35,mbir)
+  common /cb19/ berayl(mbs),bea(mb,nrlay),baa(mb,nrlay),ga(mb,nrlay)
+  real (kind=dp) :: berayl, bea, baa, ga
+
+  common /cb56/ o3un(52)
+  real (kind=dp) :: o3un
+
+  common /sol/ s0b(mbs), s0tot
+  real (kind=dp) :: s0b, s0tot
+
+  common /plancd/ ttab(35),pibtab(35,mbir) ! jjb was used in FN fst4 (called by SR plancktab), both unused now
+  real (kind=dp) :: ttab, pibtab           !     left for backward compatibility, might be deleted in the future
 
   common /was1/ ret(ncw),r2wt(ncw),b2wt(ncw,mb),w2wt(ncw,mb),g2wt(ncw,mb)
   real (kind=dp) :: ret, r2wt, b2wt, w2wt, g2wt
 
-! Local scalars:
-  character (len=len_trim(cinpdir)+16) fname
+! == End of declarations =======================================================
 
-!- End of header ---------------------------------------------------------------
+  clfname=TRIM(cinpdir)//'pifm2_171115.dat'
 
-  fname=TRIM(cinpdir)//'pifm2_171028.dat'
-  open(unit=57, file=fname, status='old')
+  open(unit=jpfundatarad, file=clfname, status='old', iostat=istat)
+  if (istat /= 0) call abortM ('Error in SR ipdata: cannot open radiation data file: '//clfname)
 
-! input format to read this file
-10 format(5e16.8)
+! input formats to read this file
+10 format(a)
+11 format(8e16.8)
 
-  read(57,10) ttab,pibtab               ! could be deleted if fst4 and plancktab are deleted
-  read(57,10) ret,r2wt,b2wt,w2wt,g2wt
-  read(57,10) seanew,saanew,ganew
-  read(57,10) hk1,fk1o3
-  read(57,10) hk2,c2h2o
-  read(57,10) hk3,c3h2o
-  read(57,10) hk4,c4h2o
-  read(57,10) hk5,c5h2o
-  read(57,10) hk6,c6h2o
-  read(57,10) hk7,c7h2o
-  read(57,10) hk8,c8h2o
-  read(57,10) hk9,c9h2o
-  read(57,10) hk10,c10h2o,c10ch4,c10n2o
-  read(57,10) hk11,c11h2o,c11ch4,c11n2o
-  read(57,10) hk12,c12o3,c12h2o
-  read(57,10) hk13,c13h2o
-  read(57,10) hk14,c14hca,c14hcb
-  read(57,10) hk15,c15hca,c15hcb
-  read(57,10) hk16,c16h2o
-  read(57,10) hk17,c17h2o
-  read(57,10) hk18,c18h2o
+! planck table                 ! could be deleted if fst4 and plancktab are deleted
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) ttab
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) pibtab
+! effective droplet radii and radiation coefficients for water
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) ret
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) r2wt
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) b2wt
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) w2wt
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) g2wt
+! table of reference relative humidities and tabulated radiation coefficients for aerosols
+! last index of seanew, saanew, ganew = aerosol type: 1=rural, 2=urban, 3=ocean, 4=background
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) feux
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) seanew
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) saanew
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) ganew
+! solar energy in the 6 SW spectral bands
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) s0b
+! radiation coefficients for gas absorption for every spectral band
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk1
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) fk1o3
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk2
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c2h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk3
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c3h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk4
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c4h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk5
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c5h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk6
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c6h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk7
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c7h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk8
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c8h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk9
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c9h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk10
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c10h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c10ch4
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c10n2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk11
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c11h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c11ch4
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c11n2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk12
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c12o3
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c12h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk13
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c13h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk14
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c14hca
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c14hcb
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk15
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c15hca
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c15hcb
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk16
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c16h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk17
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c17h2o
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) hk18
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) c18h2o
+! unreduced ozone amount from Craig table
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) o3un
+! coefficients for rayleigh scattering
+  read(jpfundatarad,10)
+  read(jpfundatarad,11) berayl
 
-  close(57)
+  close(jpfundatarad)
 
 end subroutine ipdata
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -569,10 +697,6 @@ subroutine initr
 ! Imported Parameters:
        r0               ! Specific gas constant of dry air, in J/(kg.K)
 
-  USE config, ONLY : &
-! Imported Parameters:
-       cinpdir
-
   USE global_params, ONLY : &
 ! Imported Parameters:
        n,                   &
@@ -590,8 +714,7 @@ subroutine initr
   implicit none
 
 ! Local scalars:
-  character  (len=len_trim(cinpdir)+12) :: fname
-  integer :: i, j, jj, jp, k, na, naf, nafm, nw
+  integer :: i, j, jj, jp, k, na, naf, nafm, nw, jb
   real (kind=dp) :: gamma                      ! Vertical temperature gradients [K/m]
   real (kind=dp) :: rf, zj, zjp
   real (kind=dp) :: dd, emdd, xdd, xemdd, xnaer
@@ -606,8 +729,8 @@ subroutine initr
   real (kind=dp) :: p21, tt
 
 ! Common blocks:
-  common /aeag/ seanew(8,mb,4),saanew(8,mb,4),ganew(8,mb,4),ff2(8)
-  real (kind=dp) :: seanew, saanew, ganew, ff2
+  common /aeag/ feux(8),seanew(8,mb,4),saanew(8,mb,4),ganew(8,mb,4)
+  real (kind=dp) :: feux, seanew, saanew, ganew
 
   common /cb01/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),      &
                 rho2wx(nrlay),fracx(nrlay),zx(nrlev),thkx(nrlay), &
@@ -630,11 +753,11 @@ subroutine initr
   real (kind=dp) :: g,a0m,b0m,ug,vg,z0,ebs,psis,aks, &
                     bs,rhoc,rhocw,ebc,anu0,bs0,wmin,wmax,tw
 
-!  common /cb56/ o3un(52),o3r(52),vis(nrlev),sigea(8,6,4), &  ! /cb56/ was only used with SR load0
-!                sigaa(8,6,4),gaa(8,6,4),sean(8,4),feux(8)
-!  real (kind=dp) :: o3un,o3r,vis,sigea,sigaa,gaa,sean,feux
-  real (kind=dp) :: o3un(52),o3r(52),sigea(8,6,4), &          ! keep this for array size declaration
-                    sigaa(8,6,4),gaa(8,6,4),sean(8,4),feux(8) ! and potential backward compatibility
+  common /cb56/ o3un(52)
+  real (kind=dp) :: o3un
+
+  common /sol/ s0b(mbs), s0tot
+  real (kind=dp) :: s0b, s0tot
 
   common /tmp2/ as(mbs),ee(mbir)
   real (kind=dp) :: as, ee
@@ -651,26 +774,12 @@ subroutine initr
 ! emissivity of the ground
   ee(:)=1.0
 
+! total solar energy = sum of solar energies for each spectral bands
+  s0tot = s0b(1)
+  do jb = 2, mbs
+     s0tot = s0tot + s0b(jb)
+  end do
 
-! read optical parameters
-! -----------------------
-! input constants for radiation code
-  fname=TRIM(ADJUSTL(cinpdir))//'initr_v3.dat'
-  open (unit=58, file=fname, status='old')
-
-! input formats to read this file
-6000 format (5e15.7)
-
-  read (58,6000) (((sigea(i,j,k),i=1,8),j=1,6),k=1,4)
-  read (58,6000) (((sigaa(i,j,k),i=1,8),j=1,6),k=1,4)
-  read (58,6000) (((gaa(i,j,k),i=1,8),j=1,6),k=1,4)
-  read (58,6000) ((sean(i,k),i=1,8),k=1,4)
-  read (58,6000) (berayl(j),j=1,6)
-  read (58,6000) (o3un(i),i=1,52) ! unreduced ozone amount from Craig table
-  read (58,6000) (o3r(i),i=1,52)  ! reduced ozone amount from Craig table
-  read (58,6000) (feux(i),i=1,8)
-
-  close (58)
 
 ! actual meteorological profiles in the model domain z(1)-z(n-1)
   call load1
@@ -878,8 +987,8 @@ end subroutine initr
 !!$! Internal function:
 !!$  real (kind=dp) :: p21, tt
 !!$
-!!$  common /aeag/ seanew(8,mb,4),saanew(8,mb,4),ganew(8,mb,4),ff2(8)
-!!$  real (kind=dp) :: seanew, saanew, ganew, ff2
+!!$  common /aeag/ feux(8),seanew(8,mb,4),saanew(8,mb,4),ganew(8,mb,4)
+!!$  real (kind=dp) :: feux, seanew, saanew, ganew
 !!$
 !!$  common /cb02/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),rho2x(nrlay), &
 !!$                fracx(nrlay),ts

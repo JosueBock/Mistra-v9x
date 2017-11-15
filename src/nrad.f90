@@ -109,8 +109,9 @@ subroutine nstrahl
   ! Jul-2015  Josue Bock  First check of the code using Forcheck (Mistra v7.3.3)
   !                       minor cleaning
   ! Mar-2016  Josue Bock  Transferred to Mistra v7.4.1, further cleaning
-  ! Jul-2016  Josue Bock  BUGFIX: berayl was defined twice, in SR berayl (4 values only,
-  !                       read from file: likely from PIFM1) and here with a data instruction.
+  ! Jul-2016  Josue Bock  BUGFIX: berayl was defined twice:
+  !                       - in SR initr (4 values only, read from file initr.dat: likely from PIFM1)
+  !                       - and here with a "data" instruction.
   !                       But the data instruction was not correct Fortran:
   !                       "[223 W] initialization of named COMMON should be in BLOCKDATA" (Forcheck W)
   !                       thus the first four values already initialised were not overwritten!
@@ -129,6 +130,8 @@ subroutine nstrahl
   ! Oct-2017  Josue Bock  Converted to f90, further cleaning/improvements in the code
   !
   ! Nov-2017  Josue Bock  Removed ntypa and ntypd from /cb02/, unused
+  !                       Replaced hardcoded value of total solar energy (1340.0 W/m2) by
+  !                         s0tot (which is slightly different: 1339.94507 W/m2)
 
 ! == End of header =============================================================
 
@@ -211,6 +214,9 @@ subroutine nstrahl
 
   common /ray/ dtaur(nrlay), plr(2,nrlay)                         ! rayleigh
   real (kind=dp) :: dtaur, plr
+
+  common /sol/ s0b(mbs), s0tot
+  real (kind=dp) :: s0b, s0tot
 
   common /tmp2/ as(mbs),ee(mbir)                            ! albedo, and emissivity of the surface
   real (kind=dp) :: as, ee
@@ -408,7 +414,7 @@ subroutine nstrahl
 
 ! flux correction for given solar constant s0 and emissivity ee
 
-  zfuq1 = s0 / 1340.0_dp
+  zfuq1 = s0 / s0tot
   zfuq2 = pibs * 0.03_dp * ee(mbir)
 
   ! Solar wavelength bands corrections
@@ -1311,6 +1317,9 @@ subroutine gase ( ib, ig, hk )
   !
   ! Oct-2017  Josue Bock  Fortran90, plus select case instead of "computed" goto
   !                       matrix operations instead of vertical loops
+  !
+  ! Nov-2017  Josue Bock  Replaced hardcoded values of solar energies by the values
+  !                         read from data file, and carried in CB /sol/
 
 ! == End of header =============================================================
 
@@ -1320,7 +1329,8 @@ subroutine gase ( ib, ig, hk )
 
   USE global_params, ONLY : &
 ! Imported Parameters:
-       nrlay, &
+       mbs,                 &
+       nrlay,               &
        nrlev
 
   USE precision, ONLY :     &
@@ -1390,6 +1400,9 @@ subroutine gase ( ib, ig, hk )
   common /gas/ tg(nrlay)
   real (kind=dp) :: tg
 
+  common /sol/ s0b(mbs), s0tot
+  real (kind=dp) :: s0b, s0tot
+
   common /umcon/ umco2,umch4,umn2o
   real (kind=dp) :: umco2,umch4,umn2o
 
@@ -1400,50 +1413,50 @@ subroutine gase ( ib, ig, hk )
   case (1)
 ! Band 1:
 ! In this band ( 50000 - 14500 cm**-1 ), we consider the nongray gaseous absorption of O3.
-! 619.618 is the solar energy contained in the band in units of Wm**-2.
+! solar energy contained in the band: s0b(1) = 619.618 W m**-2
      fk = fk1o3(ig)
      call qopo3s ( fk, tg )
-     hk = 619.618_dp * hk1(ig)
+     hk = s0b(1) * hk1(ig)
 
   case (2)
 ! Band 2:
 ! In this band ( 14500 - 7700 cm**-1 ), we consider the nongray gaseous absorption of H2O.
-! 484.295 is the solar energy contained in the band in units of Wm**-2.
+! solar energy contained in the band: s0b(2) = 484.295 W m**-2
      call qks ( c2h2o(:,:,ig), fkg )
      call qoph2o ( fkg, tg )
-     hk = 484.295_dp * hk2(ig)
+     hk = s0b(2) * hk2(ig)
 
   case (3)
 ! Band 3:
 ! In this band ( 7700 - 5250 cm**-1 ), we consider the nongray gaseous absorption of H2O.
-! 149.845 is the solar energy contained in the band in units of Wm**-2.
+! solar energy contained in the band: s0b(3) = 149.845 W m**-2
      call qks ( c3h2o(:,:,ig), fkg )
      call qoph2o ( fkg, tg )
-     hk = 149.845_dp * hk3(ig)
+     hk = s0b(3) * hk3(ig)
 
   case (4)
 ! Band 4:
 ! In this band ( 5250 - 4000 cm**-1 ), we consider the nongray gaseous absorption of H2O.
-! 48.7302 is the solar energy contained in the band in units of Wm**-2.
+! solar energy contained in the band: s0b(4) = 48.7302 W m**-2
      call qks ( c4h2o(:,:,ig), fkg )
      call qoph2o ( fkg, tg )
-     hk = 48.7302_dp * hk4(ig)
+     hk = s0b(4) * hk4(ig)
 
   case (5)
 ! Band 5:
 ! In this band ( 4000 - 2850 cm**-1 ), we consider the nongray gaseous absorption of H2O.
-! 31.6576 is the solar energy contained in the band in units of Wm**-2.
+! solar energy contained in the band: s0b(5) = 31.6576 W m**-2
      call qks ( c5h2o(:,:,ig), fkg )
      call qoph2o ( fkg, tg )
-     hk = 31.6576_dp * hk5(ig)
+     hk = s0b(5) * hk5(ig)
 
   case (6)
 ! Band 6:
 ! In this band ( 2850 - 2500 cm**-1 ), we consider the nongray gaseous absorption of H2O.
-! 5.79927 is the solar energy contained in the band in units of Wm**-2.
+! solar energy contained in the band: s0b(6) = 5.79927 W m**-2
      call qks ( c6h2o(:,:,ig), fkg )
      call qoph2o ( fkg, tg )
-     hk = 5.79927_dp * hk6(ig)
+     hk = s0b(6) * hk6(ig)
 
   case (7)
 ! Band 7:
