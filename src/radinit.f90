@@ -964,6 +964,10 @@ subroutine load1
 ! Declarations:
 ! Modules used:
 
+  USE config, ONLY : &
+! Imported Parameters:
+       mic
+
   USE constants, ONLY : &
 ! Imported Parameters:
        pi,              &
@@ -1054,34 +1058,7 @@ subroutine load1
          rho2wx(k)=xm2(k+1)
       enddo
 
-! define frac, for use in SR frr,
-!     and rew, for use in SR water
-! start at index 2 (the case lcl = lct = 1 means no clouds)
-!     and go up to index nf+1 (lct should be < nf anyway)
-!     the remaining indexes nf+2:nrlay have been initialised to 0. in SR initr
-      do k=2,nf+1
-         if (k.ge.lcl .and. k.le.lct) then
-            fracx(k-1) = 1.d0
-
-            znum=0.d0
-            zdenom=0.d0
-            do jt=1,nkt
-               zfix=0.d0
-               do ia=1,nka
-                  zfix = zfix + ff(jt,ia,k)
-               end do
-               znum   = znum + re3(jt)*zfix
-               zdenom = zdenom + re2(jt)*zfix
-            end do
-            rewx(k-1) = znum/zdenom
-
-         else
-            fracx(k-1) = 0.d0
-            rewx(k-1) = 0.d0
-         end if
-      end do
-
-
+      if (mic) then
       
 ! calculate u0 from geogr. latitude, declination and hourangle
 ! make correction because of spherical surface of the earth
@@ -1134,6 +1111,34 @@ subroutine load1
 
   end do ! k loop over vertical layers
 
+! define frac, for use in SR frr,
+!     and rew, for use in SR water
+! start at index 2 (the case lcl = lct = 1 means no clouds)
+!     and go up to index nf+1 (lct should be < nf anyway)
+!     the remaining indexes nf+2:nrlay have been initialised to 0. in SR initr
+      do k=2,nf+1
+         if (k.ge.lcl .and. k.le.lct) then
+            fracx(k-1) = 1.d0
+
+            znum=0.d0
+            zdenom=0.d0
+            do jt=1,nkt
+               zfix=0.d0
+               do ia=1,nka
+                  zfix = zfix + ff(jt,ia,k)
+               end do
+               znum   = znum + re3(jt)*zfix
+               zdenom = zdenom + re2(jt)*zfix
+            end do
+            rewx(k-1) = znum/zdenom
+
+         else
+            fracx(k-1) = 0.d0
+            rewx(k-1) = 0.d0
+         end if
+      end do
+
+      end if
 
 ! < jjb 13/10/2016. Quick fix for consistency:
 !
@@ -1162,7 +1167,7 @@ end subroutine load1
 
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-subroutine str (mic)
+subroutine str
 !
 ! Description:
 !    radiative fluxes and heating rates at each minute
@@ -1173,6 +1178,9 @@ subroutine str (mic)
 ! History:
 ! Version   Date     Comment
 ! -------   ----     -------
+  ! 16-Nov-2017  Josue Bock  The mic=false case is now directly handled in SR load1.
+  !                            This avoids to duplicate the part of this SR which is
+  !                            common to both cases.
 ! 1.2      10/2016   'clouds' removed after discussion with Andeas Bott   <Josue Bock>
 !
 !          07/2016   Common block /cb20/ was missing for 'clouds'         <Josue Bock>
@@ -1191,130 +1199,13 @@ subroutine str (mic)
 ! Declarations:
 ! Modules used:
 
-  USE constants, ONLY : &
-! Imported Parameters:
-       pi,              &
-       r0                 ! Specific gas constant of dry air, in J/(kg.K)
-
-  USE global_params, ONLY : &
-! Imported Parameters:
-       n,                   &
-       nf,                  &
-       nrlay,               &
-       nrlev,               &
-       nka,                 &
-       nkt,                 &
-       mb,                  &
-       mbs
-
-  USE precision, ONLY : &
-       dp
-
   implicit none
 
-! Subroutine arguments
-! Scalar arguments with intent(in):
-  logical :: mic
-
-! Local scalars:
-  integer :: ia, jt, k
-  real (kind=dp) :: zeit, horang, rlat, rdec, u00, ru0, x0
-  real (kind=dp) :: znum,zdenom,zfix   ! calculation of effective drop radius
-
-! Common blocks:
-  common /cb01/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),      &
-                rho2wx(nrlay),fracx(nrlay),zx(nrlev),thkx(nrlay), &
-                beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),      &
-                qmo3x(nrlev),rewx(nrlay), tsx
-  real (kind=dp) :: tx,px,rhox,xm1x,rho2wx,fracx,zx,thkx, &
-                    beax, baax, gax, qmo3x, rewx, tsx
-
-  common /cb08/ re1(nkt), re2(nkt), re3(nkt)
-  real (kind=dp) :: re1, re2, re3
-
-  common /cb16/ u0,albedo(mbs),thk(nrlay)
-  real (kind=dp) :: u0, albedo, thk
-
-  common /cb18/ alat,declin                ! for the SZA calculation
-  real (kind=dp) :: alat,declin
-
-  common /cb40/ time,lday,lst,lmin,it,lcl,lct
-  real (kind=dp) :: time
-  integer :: lday, lst, lmin, it, lcl, lct
-
-  common /cb41/ detw(n),deta(n),eta(n),etw(n)
-  real (kind=dp) :: detw, deta, eta, etw
-
-  common /cb52/ ff(nkt,nka,n),fsum(n),nar(n)
-  real (kind=dp) :: ff,fsum
-  integer :: nar
-
-  common /cb53/ theta(n),thetl(n),t(n),talt(n),p(n),rho(n)
-  real (kind=dp) :: theta, thetl, t, talt, p, rho
-
-  common /cb54/ xm1(n),xm2(n),feu(n),dfddt(n),xm1a(n),xm2a(n)
-  real (kind=dp) :: xm1, xm2, feu, dfddt, xm1a, xm2a
 !- End of header ---------------------------------------------------------------
 
-  if (mic) then
 !    if (lmin/2*2.eq.lmin) call load1
      call load1
      ! difference is nearly unplottable (cloudless case) but saves 20 % CPU time !
-  else
-! next lines are copied from SR load1
-     tsx=t(1)
-     tx(1)=t(2)                      ! jjb CHECK this! For me, this should be t(1) (same as pressure below)
-     px(1)=p(1)
-     xm1x(1)=xm1(2)                  ! jjb CHECK this! For me, this should be xm1(1) (same as pressure above)
-     rhox(1)=px(1)/(r0*tx(1)*(1.+.608*xm1x(1)))
-     rho2wx(1)=xm2(2)
-     do  k=2,n-1
-        x0=0.5*detw(k)/deta(k)
-        tx(k)=t(k)+(t(k+1)-t(k))*x0
-        px(k)=p(k)+(p(k+1)-p(k))*x0
-        xm1x(k)=xm1(k)+(xm1(k+1)-xm1(k))*x0
-        rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
-        rho2wx(k)=xm2(k+1)
-     enddo
-
-! define frac, for use in SR frr,
-!     and rew, for use in SR water
-! start at index 2 (the case lcl = lct = 1 means no clouds)
-!     and go up to index nf+1 (lct should be < nf anyway)
-!     the remaining indexes nf+2:nrlay have been initialised to 0. in SR initr
-     do k=2,nf+1
-        if (k.ge.lcl .and. k.le.lct) then
-           fracx(k-1) = 1.d0
-
-           znum=0.d0
-           zdenom=0.d0
-           do jt=1,nkt
-              zfix=0.d0
-              do ia=1,nka
-                 zfix = zfix + ff(jt,ia,k)
-              end do
-              znum   = znum + re3(jt)*zfix
-              zdenom = zdenom + re2(jt)*zfix
-           end do
-           rewx(k-1) = znum/zdenom
-
-        else
-           fracx(k-1) = 0.d0
-           rewx(k-1) = 0.d0
-        end if
-     end do
-
-     ! calculate u0 from geogr. latitude, declination and hourangle
-     ! make correction because of spherical surface of the earth
-     zeit=lst*3600.+lmin*60.
-     horang=7.272205e-05*zeit-pi
-     ! pi/180=1.745329e-02
-     rlat=alat*1.745329e-02
-     rdec=declin*1.745329e-02
-     u00=cos(rdec)*cos(rlat)*cos(horang)+sin(rdec)*sin(rlat)
-     ru0=6371.*u00
-     u0=8./(dsqrt(ru0**2+102000.)-ru0)
-  endif
 
   call nstrahl
 

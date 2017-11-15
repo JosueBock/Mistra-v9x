@@ -210,7 +210,7 @@
 ! ---------------------------------------
 ! initial photolysis rates
 !      print*,'initialisation, call str'
- 2010 call str (mic)
+ 2010 call str
 !      if (chem) call photol
       if (chem) then
          call photol_initialize
@@ -355,7 +355,7 @@
 
 ! radiative fluxes and heating rates
 !         print*,'call str'
-         if (.not.box) call str (mic)
+         if (.not.box) call str
 ! new photolysis rates
          if (chem) then
             if (u0.gt.3.48e-2) then
