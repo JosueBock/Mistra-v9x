@@ -22,12 +22,102 @@
 ! radinit.f: radiation initialisation and start (SR str)
 !
 ! contains the following subroutines:
+!     - radiation
 !     - intrad
-!     - initstr
 !     - ipdata
 !     - initr
 !     - load1
-!     - str
+!     - rotate_in
+!     - rotate_out
+! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+subroutine radiation (ldinit)
+!
+! Description:
+! -----------
+  !    interface between Mistra and the radiative code:
+  !      read tabulated data during model initialisation,
+  !      then regrid some variables (T, P, ...) and call the radiative code
+  !      to calculate radiative fluxes and heating rates
+  !
+  !    This routine results from the merge of former SR initstr, which was called during initialisation,
+  !      and SR str, which was called at the end of the initialisation and during time integration.
+  !      The history of modification from both SRs has been merged below.
+  !    Note that str is a shortcut for "strahlung", which means "radiation" in German.
+
+
+! Author :
+! ------
+  !    Andreas Bott and others (original SRs initstr and str)
+  !    Josue Bock              (current version)
+
+
+! Modifications :
+! -------------
+  !     ?        Roland      Change to add 'mic' case, and call load1 every 2 minutes only
+  !              von Glasow
+  !
+  !    Jul-2016  Josue Bock  <SR initstr> Removal of labeled do loops.
+  !                          <SR str> Common block /cb20/ was missing for 'clouds'
+  !                          <SR str> Comments / header
+  !                          Use module for parameters
+  !                          All explicit declarations and implicit none
+  !
+  !    Oct-2016  Josue Bock  <SR str> 'clouds' removed after discussion with Andeas Bott
+  !
+  ! 10-Nov-2017  Josue Bock  <SR initstr> Removal of cb55, which is useless
+  !                          <SR initstr> Calling nstrahl twice during initialisation has
+  !                                         absolutely no effect, since the only apparent
+  !                                         reason was to fill cb55 data, which were not
+  !                                         actually used. This simplifies much this subroutine.
+  !
+  ! 16-Nov-2017  Josue Bock  <SR str> The mic=false case is now directly handled in SR load1.
+  !                                     This avoids to duplicate the part of this SR which is
+  !                                     common to both cases.
+  !                          Then merged initstr and str into this "new" subroutine, renamed to
+  !                            highlight the change.
+
+! == End of header =============================================================
+
+  implicit none
+
+! Subroutine arguments
+! Scalar arguments with intent(in):
+  logical, intent(in) :: ldinit
+
+! == End of declarations =======================================================
+
+  if (ldinit) then
+  ! initialisation of radiation code:
+  ! --------------------------------
+     ! interpolation of radiation coefficients for prognostic aerosols
+     call intrad
+     ! input data for the radiative code
+     call ipdata
+     ! define the vertical grid for the radiation code, and load variables (T, P, ...) from the main program
+     call initr
+  else
+     ! load variables (T, P, ...) from the main program
+     call load1
+     ! if (lmin/2*2.eq.lmin) call load1
+     ! difference is nearly unplottable (cloudless case) but saves 20 % CPU time !
+  end if
+
+  ! rotate the grid and the variables so that they are all indexed top-down
+  call rotate_in (ldinit)
+
+  ! call the radiative code
+  call nstrahl
+
+  ! rotate the output variables
+  call rotate_out
+
+  ! print the output of the first calculation
+  if (ldinit) call profr
+
+end subroutine radiation
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -54,7 +144,7 @@ subroutine intrad
 
 ! Interface :
 ! ---------
-!    SR intrad is called by main program during initialisation
+!    SR intrad is called during initialisation
 
 ! Input :
 ! -----
@@ -322,71 +412,6 @@ subroutine intrad
   end do ! jaer loop
 
 end subroutine intrad
-! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-subroutine initstr
-!
-! Description :
-! -----------
-!    first calculation of radiative fluxes and heating rates
-
-
-! Interface :
-! ---------
-!    SR initstr is called by main program during initialisation
-
-! Input :
-! -----
-
-! Output :
-! ------
-!    - /cb15/ fnseb,flgeg
-!
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-  ! 10-Nov-2017   Josue Bock   Removal of cb55, which is useless
-  !                            Calling nstrahl twice during initialisation has absolutely no effect,
-  !                              since the only apparent reason was to fill cb55 data, which were not
-  !                              actually used. This simplifies much this subroutine.
-  !
-! 1.1      07/2016   Removal of labeled do loops.                 <Josue Bock>
-!                    Use module for parameters
-!                    All explicit declarations and implicit none
-!
-! 1.0       ?        Original code.                               <Andreas Bott>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
-! Modules used:
-
-  implicit none
-
-! Local scalars:
-  logical :: linit
-
-!- End of header ---------------------------------------------------------------
-
-! initialisation of radiation code
-! --------------------------------
-  call ipdata
-  call initr
-
-  linit = .true.
-  call rotate_in(linit)
-
-  call nstrahl
-  call profr
-
-  call rotate_out
-
-end subroutine initstr
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -1167,57 +1192,7 @@ end subroutine load1
 
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-subroutine str
-!
-! Description:
-!    radiative fluxes and heating rates at each minute
-
-!
-
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-  ! 16-Nov-2017  Josue Bock  The mic=false case is now directly handled in SR load1.
-  !                            This avoids to duplicate the part of this SR which is
-  !                            common to both cases.
-! 1.2      10/2016   'clouds' removed after discussion with Andeas Bott   <Josue Bock>
-!
-!          07/2016   Common block /cb20/ was missing for 'clouds'         <Josue Bock>
-!                    Comments / header
-!                    Use module for parameters
-!                    All explicit declarations and implicit none
-!
-! 1.1       ?        Change to add 'mic' case, and call load1             <Roland von Glasow>
-!                       every 2 minutes
-!
-! 1.0       ?        Original code.                                       <Andreas Bott>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
-! Modules used:
-
-  implicit none
-
-!- End of header ---------------------------------------------------------------
-
-!    if (lmin/2*2.eq.lmin) call load1
-     call load1
-     ! difference is nearly unplottable (cloudless case) but saves 20 % CPU time !
-
-  call nstrahl
-
-  call rotate_out
-
-end subroutine str
-! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-subroutine rotate_in(linit)
+subroutine rotate_in(ldinit)
 
 ! Description :
 ! -----------
@@ -1254,7 +1229,7 @@ subroutine rotate_in(linit)
 
 ! Author :
 ! ------
-!    Josué Bock
+!    Josue Bock
 
 
 ! Modifications :
@@ -1285,7 +1260,7 @@ subroutine rotate_in(linit)
 
   implicit none
 
-  logical, intent(in) :: linit          ! called during initialisation, or not.
+  logical, intent(in) :: ldinit          ! called during initialisation, or not.
 
   integer :: jlbu, jltd                 ! running indexes (bu = bottom-up, td = top-down)
   integer :: nmin
@@ -1318,7 +1293,7 @@ subroutine rotate_in(linit)
 
 
 ! Vertical grid arrays: rotate only during initialisation
-  if(linit) then
+  if(ldinit) then
      ! thk(nrlay)
      do jltd = 1,nrlay
         jlbu = nrlay - jltd + 1
@@ -1335,7 +1310,7 @@ subroutine rotate_in(linit)
 
 
 ! Define max index that will be rotated
-  if(linit) then
+  if(ldinit) then
      nmin = 1
   else
      nmin = nrlev - n + 1 ! fits nrlev size arrays. For nrlev size arrays, use nmin+1 instead

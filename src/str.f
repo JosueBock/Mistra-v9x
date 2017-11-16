@@ -87,6 +87,7 @@
       implicit double precision (a-h,o-z)
 
       logical Napari, Lovejoy, both
+      logical :: llinit
 
       common /cb16/ u0,albedo(mbs),thk(nrlay)
       double precision u0, albedo, thk
@@ -112,6 +113,9 @@
       dimension aer(n,nka)
       character *1 fogtype
       character *10 fname
+
+      ! initialisation switch
+      llinit = .true.
 
       call read_config
 
@@ -153,8 +157,6 @@
       nz_box = 0
       if (box) call get_n_box (z_box,nz_box)
       call write_grid ! writes information on grid that is not f(t)
-! radiation parameters qabs, qext and asym
-      call intrad
       dt = 60. ! jjb moved from below, was missing for restart case
       if (rst) go to 2000
 
@@ -170,8 +172,6 @@
       call atk0
 ! initial position of humidified aerosols
       call vgleich
-! first radiation calculation
-      call initstr
 ! output of meteorological and chemical constants of current run
       call constm (chem,mic,rst)
       if (chem) call constc
@@ -191,9 +191,6 @@
       it=0
       if (chem) call startc (fogtype)
 
-! initialization of radiation code
-      print*,'initialisation, call initstr (restart)'
-      call initstr
 ! number of iterations
       itmax=it0+60*lstmax
 ! output of meteorological and chemical constants of current run
@@ -208,9 +205,11 @@
 
 ! Continue the initialisation, both cases
 ! ---------------------------------------
+
+! initialization of radiation code, and first calculation
+ 2010 call radiation (llinit)
+
 ! initial photolysis rates
-!      print*,'initialisation, call str'
- 2010 call str
 !      if (chem) call photol
       if (chem) then
          call photol_initialize
@@ -239,6 +238,10 @@
  2005 continue
       if (box) call box_init (nlevbox,nz_box,n_bl,BL_box)
       if (box) box_switch=1.
+
+      ! initialisation switch
+      llinit = .false.
+
       print*,'end initialisation str.f'
 ! ====================integration in time=====================
 ! outer time loop: minutes
@@ -355,7 +358,7 @@
 
 ! radiative fluxes and heating rates
 !         print*,'call str'
-         if (.not.box) call str
+         if (.not.box) call radiation (llinit)
 ! new photolysis rates
          if (chem) then
             if (u0.gt.3.48e-2) then
