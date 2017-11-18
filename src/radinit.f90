@@ -169,7 +169,7 @@ subroutine intrad
 
 !    If xw1 < xw0(1) or xw1 > xw0(nw0), then the boundary value (xw0(1) or xw0(nw0)) will be
 !       used without interpolation nor extrapolation (dx=0. or dx=1., respectively). Warning
-!       messages are displayed in these specific cases.  
+!       messages are displayed in these specific cases.
 
 !    Similarly, find index ia0 (2 <= ia0 <= na0) such that xa0(ia0-1) < xw1 <= xa0(ia0), and define an
 !       interpolation factor dy.
@@ -204,7 +204,7 @@ subroutine intrad
 ! 04-Apr-2017   Josue Bock   Fortran90 conversion
 !
 ! 05-Nov-2017   Josue Bock   Removed module directories, replaced by config
-!  
+!
 ! 09-Nov-2017   Josue Bock   Final cleaning after second F90 conversion (GitHub version),
 !                              rewritten interpolation, coding standards for variable names
 
@@ -250,7 +250,7 @@ subroutine intrad
          0.1_dp,  0.125_dp,  0.15_dp,  0.2_dp,  0.25_dp,  0.3_dp,  0.4_dp,  0.5_dp,  0.6_dp,  0.8_dp,  &
          1.0_dp,  1.25_dp,   1.5_dp,   2.0_dp,  2.5_dp,   3.0_dp,  4.0_dp,  5.0_dp,  6.0_dp,  8.0_dp,  &
         10.0_dp, 12.5_dp,   15.0_dp,  20.0_dp, 25.0_dp,  30.0_dp, 40.0_dp, 50.0_dp, 60.0_dp, 80.0_dp/)
-  
+
 
 ! Local scalars:
   character (len=len_trim(cinpdir)+11) :: fname
@@ -681,45 +681,56 @@ end subroutine ipdata
 
 subroutine initr
 !
-! Description:
+! Description :
+! -----------
 !    standard atmosphere between etw(n) and 50000 meters.
 !    input of constant radiation parameters
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-!        14/11/2017 <jjb> removed ntypdx(nrlay) (droplet type), initialised =4 but unused
-!                         removed ntypax(nrlay) (aerosol type) from cb01, local declaration
-!        10/03/2017 <jjb> corrected rf=0.08 for level 30000 (was 0.8)
-!
-! 1.2       10/2016  corrected several array size
-!                    initialisation of qmo3(nrlev) was missing
-!                    initialisation of rnaer(nrlay) was missing
-!                    removed rnaer from /cb02/, turned into a local array
-!
-!           07/2016  Removal of labeled do loops.                        <Josue Bock>
-!                    Use modules for parameters
-!                    data file updated with berayl(6)
-!                      (previously, an old version berayl(4) was read here, then
-!                       berayl was redefined with 'data' in strahl). But for some
-!                       unknown reason, only the last two values were updated,
-!                       the first four were NOT overwritten, while they were expected to be)
-!
-! 1.1       ?        Calculation of qmo3 for layers 1-80 (bug fix)       <Roland von Glasow>
-!
-! 1.0       ?        Original code.                                      <Andreas Bott>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+
+! Modifications :
+! -------------
+  !     ?        Roland      Calculation of qmo3 for layers 1-80 (bug fix)
+  !              von Glasow
+  !
+  !    Jul-2016  Josue Bock  Removal of labeled do loops.
+  !                          Use modules for parameters
+  !                          BUGFIX: data file updated with berayl(6)
+  !                                 (previously, an old version berayl(4) was read here, then
+  !                                 berayl was redefined with 'data' in strahl). But for some
+  !                                 unknown reason, only the last two values were updated, while
+  !                                 the first four outdated values were NOT overwritten)
+  !
+  !    Oct-2016  Josue Bock  corrected several array size
+  !                          initialisation of qmo3(nrlev) was missing
+  !                          initialisation of rnaer(nrlay) was missing
+  !                          removed rnaer from /cb02/, turned into a local array
+  !
+  ! 10-Mar-2017  Josue Bock  corrected rf=0.08 for level 30000 (was 0.8)
+  !
+  ! 14-Nov-2017  Josue Bock  removed ntypdx(nrlay) (droplet type), initialised =4 but unused
+  !                          removed ntypax(nrlay) (aerosol type) from cb01, local declaration
+  !
+  ! 17-Nov-2017  Josue Bock  Recent changes: cb02 is now cb01
+  !                                          added CB /sol/, and s0tot calculation in this SR
+  !                                          rewritten interpolations
+  !                                          reorganised this SR, uniformisation of some variable names
+  !                          BUGFIX: the qmo3x calculation was wrong (it rotated the indexes twice, and
+  !                                  used the pressure array in the wrong line
+
+! == End of header =============================================================
+
+
+! Declarations :
+! ------------
 ! Modules used:
 
   USE constants, ONLY : &
 ! Imported Parameters:
        r0               ! Specific gas constant of dry air, in J/(kg.K)
+
+  USE file_unit, ONLY : &
+! Imported Parameters:
+       jpfunerr
 
   USE global_params, ONLY : &
 ! Imported Parameters:
@@ -738,15 +749,19 @@ subroutine initr
   implicit none
 
 ! Local scalars:
-  integer :: i, j, jj, jp, k, na, naf, nafm, nw, jb
-  real (kind=dp) :: gamma                      ! Vertical temperature gradients [K/m]
-  real (kind=dp) :: rf, zj, zjp
-  real (kind=dp) :: dd, emdd, xdd, xemdd, xnaer
+  integer :: jb, jz, k, na
+  integer :: io3_inf, io3_sup                  ! indexes for O3 interpolation
+  integer :: irh_inf, irh_sup                  ! indexes for relative humidity interpolation
   real (kind=dp) :: dz                         ! Height increment of extra layers up to the tropopause [m]
+  real (kind=dp) :: dzo3, zo3_inf, zo3_sup     ! heights for O3 interpolation [m]
+  real (kind=dp) :: gamma                      ! Vertical temperature gradients [K/m]
+  real (kind=dp) :: rf                         ! relative humidity
+  real (kind=dp) :: drh, omdrh, xdrh, xomdrh   ! coefficients for aerosol coefficients interpolation
+  real (kind=dp) :: xnaer                      ! total number concentration of aerosol particles [m**-3]
 
 ! Local arrays:
   integer :: ntypax(nrlay)
-  real (kind=dp) :: etax(nrlev), usav(nrlay)
+  real (kind=dp) :: eta_o3(nrlev), u_o3(nrlay) ! intermediate variables for O3 interpolation
   real (kind=dp) :: rnaer(nrlay)               ! total number concentration of aerosol particles [cm**-3]
 
 ! Internal function:
@@ -766,9 +781,6 @@ subroutine initr
   common /cb16/ u0,albedo(mbs),thk(nrlay)
   real (kind=dp) :: u0, albedo, thk
 
-  common /cb19/ berayl(6),bea(mb,nrlay),baa(mb,nrlay),ga(mb,nrlay)
-  real (kind=dp) :: berayl, bea, baa, ga
-
   common /cb41/ detw(n),deta(n),eta(n),etw(n)
   real (kind=dp) :: detw, deta, eta, etw
 
@@ -786,17 +798,18 @@ subroutine initr
   common /tmp2/ as(mbs),ee(mbir)
   real (kind=dp) :: as, ee
 
-!- End of header ---------------------------------------------------------------
+! == End of declarations =======================================================
 
-  p21(tt)=610.7*exp(17.15*(tt-273.15)/(tt-38.33))
+  ! Internal function: saturation pressure of liquid water
+  p21(tt)=610.7_dp*exp(17.15_dp*(tt-273.15_dp)/(tt-38.33_dp))
 
 
 ! albedo of the ground for the six solar wavelength regions of the radiation code
-  albedo(:)=0.05
-!  albedo(:)=0.8       ! snow
+  albedo(:)=0.05_dp
+!  albedo(:)=0.8_dp       ! snow
   as = albedo
 ! emissivity of the ground
-  ee(:)=1.0
+  ee(:)=1.0_dp
 
 ! total solar energy = sum of solar energies for each spectral bands
   s0tot = s0b(1)
@@ -805,156 +818,187 @@ subroutine initr
   end do
 
 
-! actual meteorological profiles in the model domain z(1)-z(n-1)
-  call load1
-  do k=1,n-1
-     zx(k)=etw(k)
-  enddo
+! radiation model level
+!----------------------
+  ! Use meteorological grid for the lowest n-1 layers (note that etw(1) = 0.)
+  ! Then add 7 equidistant layers up to 11 km (tropopause height in standard atmosphere)
+  ! Then add 4 layers at 20, 30, 40, and 50 km height, and the last one at 100 km height
+  ! Note that the same vertical structure is used in the photolysis code (except the uppermost level,
+  ! whose temperature and pressure are calculated differently in jrate.f (see SR read_data)).
 
-! Even if etw(n-1) should be much lower than 11 km, check anyway
-  if(zx(n-1) >= 11000.d0) then
-     write(0,*) 'Error: etw(n-1) >= 11 km, check the vertical grid'
+  ! First check consistency: nlev = n + 11 in the current settings
+  if(nrlev /= n+11) then
+     write(jpfunerr,*) 'Error: nlev /= n+11, change nlev in global_params,'
+     write(jpfunerr,*) '  or change the extra layers settings in SR initr'
      stop 'Stopped by SR initr'
   end if
-      ! dz: height increment up to the tropopause [m]
-  dz=(11000.-zx(n-1))/7.
 
-  gamma=0.0065
+  ! Main model grid, define radiation level <=> "wall" values
+  zx(1:n-1) = etw(1:n-1)
+
+  ! Even if etw(n-1) should be much lower than 11 km, check anyway
+  if(zx(n-1) >= 11000._dp) then
+     write(jpfunerr,*) 'Error: etw(n-1) >= 11 km, check the vertical grid'
+     stop 'Stopped by SR initr'
+  end if
+  ! dz: height increment up to the tropopause [m]
+  dz = (11000._dp - zx(n-1)) / 7._dp
+
   do k=n,n+6
      zx(k)=zx(k-1)+dz
-     tx(k)=tx(k-1)-gamma*dz
+  end do
+  zx(n+7)  =  20000._dp
+  zx(n+8)  =  30000._dp
+  zx(n+9)  =  40000._dp
+  zx(n+10) =  50000._dp
+  zx(n+11) = 100000._dp
+
+  ! Layer thicknesses calculated during initialisation
+  do k=1,nrlay
+     thkx(k) = zx(k+1) - zx(k)
+  end do
+
+
+! Initialise frac, rho2wx, and rew: no clouds
+!   (they will be overwritten in SR load1 from index 1 to nf, only if mic=true)
+! -------------------------------------------
+  fracx(:)  = 0._dp
+  rewx(:)   = 0._dp
+  rho2wx(:) = 0._dp
+
+
+! load actual meteorological profiles in the model domain z(1)-z(n-1)
+! -------------------------------------------------------------------
+  call load1
+
+! define meteorological profile from n-1 to nrlay / nrlev
+! -------------------------------------------------------
+
+  ! temperature gradient and relative humidity for the next layers:
+  gamma=0.0065_dp
+  rf=.3_dp
+  do k=n,n+6
+     tx(k)=tx(k-1)-gamma*thkx(k-1)
      px(k)=px(k-1)*(tx(k)/tx(k-1))**(g/(r0*gamma))
-     rf=.3
-     xm1x(k)=0.62198*rf/(px(k)/p21(tx(k))-0.37802*rf)
-     rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
-     rnaer(k)=100.
+     xm1x(k)=0.62198_dp*rf/(px(k)/p21(tx(k))-0.37802_dp*rf)
+     rhox(k)=px(k)/(r0*tx(k)*(1._dp+.608_dp*xm1x(k)))
+     rnaer(k)=100._dp
   enddo
 
   k=n+7
-  zx(k)=20000.
+  ! relative humidity for the next layer:
+  rf=.02_dp
   tx(k)=tx(k-1)
   px(k)=px(k-1)*dexp(-g*(zx(k)-zx(k-1))/(r0*tx(k)))
-  rf=.02
-  xm1x(k)=0.62198*rf/(px(k)/p21(tx(k))-0.37802*rf)
-  rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
-  rnaer(k)=0.
+  xm1x(k)=0.62198_dp*rf/(px(k)/p21(tx(k))-0.37802_dp*rf)
+  rhox(k)=px(k)/(r0*tx(k)*(1._dp+.608_dp*xm1x(k)))
+  rnaer(k)=0._dp
 
-  k=k+1
-  zx(k)=30000.
-  gamma=-0.001
-  tx(k)=tx(k-1)-gamma*10000.
+  k=n+8
+  ! temperature gradient and relative humidity for the next layer:
+  gamma=-0.001_dp
+  rf=.005_dp
+  tx(k)=tx(k-1)-gamma*thkx(k-1)
   px(k)=px(k-1)*(tx(k)/tx(k-1))**(g/(r0*gamma))
-  rf=.005
-  xm1x(k)=0.62198*rf/(px(k)/p21(tx(k))-0.37802*rf)
-  rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
-  rnaer(k)=0.
+  xm1x(k)=0.62198_dp*rf/(px(k)/p21(tx(k))-0.37802_dp*rf)
+  rhox(k)=px(k)/(r0*tx(k)*(1._dp+.608_dp*xm1x(k)))
+  rnaer(k)=0._dp
 
-  k=k+1
-  zx(k)=40000.
-  gamma=-0.0026
-  tx(k)=tx(k-1)-gamma*10000.
+  k=n+9
+  ! temperature gradient and relative humidity for the next layer:
+  gamma=-0.0026_dp
+  rf=.00005_dp
+  tx(k)=tx(k-1)-gamma*thkx(k-1)
   px(k)=px(k-1)*(tx(k)/tx(k-1))**(g/(r0*gamma))
-  rf=.00005
-  xm1x(k)=0.62198*rf/(px(k)/p21(tx(k))-0.37802*rf)
-  rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
-  rnaer(k)=0.
+  xm1x(k)=0.62198_dp*rf/(px(k)/p21(tx(k))-0.37802_dp*rf)
+  rhox(k)=px(k)/(r0*tx(k)*(1._dp+.608_dp*xm1x(k)))
+  rnaer(k)=0._dp
 
-  k=k+1
-  zx(k)=50000.
-  gamma=-0.0018
-  tx(k)=tx(k-1)-gamma*10000.
+  k=n+10
+  ! temperature gradient and relative humidity for the next layer:
+  gamma=-0.0018_dp
+  rf=.000002_dp
+  tx(k)=tx(k-1)-gamma*thkx(k-1)
   px(k)=px(k-1)*(tx(k)/tx(k-1))**(g/(r0*gamma))
-  rf=.000002
-  xm1x(k)=0.62198*rf/(px(k)/p21(tx(k))-0.37802*rf)
-  rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
-  rnaer(k)=0.
+  xm1x(k)=0.62198*rf/(px(k)/p21(tx(k))-0.37802_dp*rf)
+  rhox(k)=px(k)/(r0*tx(k)*(1._dp+.608_dp*xm1x(k)))
+  rnaer(k)=0._dp
 
 ! fictitious level at infinity
-  zx(nrlev)=zx(nrlay)+50000._dp
-  tx(nrlev)=210.
+  tx(nrlev)=210._dp
   px(nrlev)=0._dp
   xm1x(nrlev)=0._dp
   rhox(nrlev)=0._dp
 
-! Layer thicknesses calculated during initialisation
-  do i=1,nrlay
-     thkx(i)=zx(i+1)-zx(i)
-  end do
-
 ! aerosol type: 1 rural 2 urban 3 maritme 4 tropospheric
-  do k=1,nrlay
-     ntypax(k)=2
-  enddo
+  ntypax(:)=4
 
 ! ozone concentration profile
 !----------------------------
-! interpolate unreduced and reduced ozone amounts from craig
-! table, save preliminarily the total amounts in arrays eta
-! and xi which will be used for h2o and co2 later.
-  do i=1,nrlay
-     do j=1,51
-        jj=j
-        zj=(j-1.)*1000.
-        jp=jj+1
-        zjp=zj+1000.
-        if (j.eq.51) zjp=0.
-        if (zx(i).le.zjp) go to 2000
-     enddo
-     stop 'error in subroutine initr'
-2000 continue
-     dd=(zx(i)-zj)/(zjp-zj)
-     etax(i)=o3un(jj)+(o3un(jp)-o3un(jj))*dd
-  enddo
-  etax(nrlev)=0.
-! path lengths for every layer
-  do i=1,nrlay
-     j=nrlev-i
-     jp=j+1
-     usav(i)=(etax(j)-etax(jp))*0.01
-  enddo
-
-! start calculate qmo3
-  do i=1,nrlay
-     j=nrlev-i
-     jp=j+1
-     qmo3x(i)=usav(j)/(2.3808*(px(j)-px(jp)))
+! interpolate unreduced ozone amounts from craig table
+! save preliminarily the interpolated total amount in array etao3
+  ! Notes about interpolation:
+  !   - while the tabulated o3un has 52 values, the latest one (=0) is not used here
+  !   - tabulated values from the surface (zo3_inf=0) to 51 km height, every km
+  !   - zx is a monotonic function, thus io3_inf is not reset to 1 in the jz do-loop.
+  !
+  ! In the radiative code, qmo3 is used twice, after being  multiplied by 2.3808*(delta_P);
+  !   this is thus identical to u_o3 (ozone path length).
+  io3_inf = 1
+  zo3_sup = real(io3_inf,dp) * 1000._dp
+  do jz=1,nrlev
+     do while (zx(jz) > zo3_sup .and. io3_inf < 51)
+        io3_inf = io3_inf + 1
+        zo3_sup = real(io3_inf,dp) * 1000._dp
+     end do
+     if (io3_inf < 51) then
+        io3_sup = io3_inf + 1
+        zo3_inf = zo3_sup - 1000._dp
+        dzo3 = (zx(jz)-zo3_inf) / 1000._dp
+        eta_o3(jz) = o3un(io3_inf) + (o3un(io3_sup)-o3un(io3_inf)) * dzo3
+     else
+        ! this case should happend only for the latest level at 100 km
+        eta_o3(jz) = 0._dp
+     end if
   end do
-  qmo3x(nrlev)=0.
 
-  do i=n,nrlay
-!    ip=i+1         ! jjb potential problem here, ip is defined but not used
-     na=ntypax(i)
-     if (na.gt.0.and.rnaer(i).gt.0.) then
-        rf=xm1x(i)*px(i)/(p21(tx(i))*(.62198+.37802*xm1x(i)))
-        xnaer=rnaer(i)*1.d+06
-        do nw=1,8
-           naf=nw
-           if (rf.le.feux(nw)) go to 2030
-        enddo
-2030    nafm=naf-1                                ! jjb potential problem here, nafm can be equal to 0 and lead to out of bounds index below
-        dd=(rf-feux(nafm))/(feux(naf)-feux(nafm))
-        emdd=1.-dd
-        xdd=xnaer*dd
-        xemdd=xnaer*emdd
-        do k=1,mb
-           beax(k,i)=xemdd*seanew(nafm,k,na)+xdd*seanew(naf,k,na)
-           baax(k,i)=xemdd*saanew(nafm,k,na)+xdd*saanew(naf,k,na)
-           gax(k,i)=emdd*ganew(nafm,k,na)+dd*ganew(naf,k,na)
+  do jz=1,nrlay
+     ! path lengths for every layer
+     u_o3(jz)=(eta_o3(jz)-eta_o3(jz+1))*0.01_dp
+     qmo3x(jz)=u_o3(jz)/(2.3808_dp*(px(jz)-px(jz+1)))
+  end do
+  qmo3x(nrlev)=0._dp
+
+
+! diagnostic aerosol properties above n
+!--------------------------------------
+  do jz=n,nrlay
+     na=ntypax(jz)
+     if (na.gt.0.and.rnaer(jz).gt.0._dp) then
+        rf=xm1x(jz)*px(jz)/(p21(tx(jz))*(.62198_dp+.37802_dp*xm1x(jz)))
+
+        irh_sup = 2
+        do while (rf > feux(irh_sup) .and. irh_sup < 8)
+           irh_sup = irh_sup + 1
+        end do
+        irh_inf = irh_sup - 1
+
+        drh = (rf-feux(irh_inf)) / (feux(irh_sup)-feux(irh_inf))
+        omdrh = 1 - drh
+
+        xnaer = rnaer(jz) * 1.e6_dp
+        xdrh   = xnaer * drh
+        xomdrh = xnaer * omdrh
+        do jb=1,mb
+           beax(jb,jz) = xomdrh * seanew(irh_inf,jb,na) + xdrh * seanew(irh_sup,jb,na)
+           baax(jb,jz) = xomdrh * saanew(irh_inf,jb,na) + xdrh * saanew(irh_sup,jb,na)
+           gax (jb,jz) = omdrh  * ganew (irh_inf,jb,na) +  drh * ganew (irh_sup,jb,na)
         enddo
      else
-        do k=1,mb
-           beax(k,i)=0.
-           baax(k,i)=0.
-           gax(k,i)=0.
-        end do
+        beax(:,jz) = 0._dp
+        baax(:,jz) = 0._dp
+        gax (:,jz) = 0._dp
      endif
-  enddo
-
-! Initialise frac, rho2wx, and rew: no clouds
-  do i=1,nrlay
-     fracx(i)=0.
-     rho2wx(i)=0.
-     rewx(i) = 0.d0
   enddo
 
 end subroutine initr
@@ -1084,7 +1128,7 @@ subroutine load1
       enddo
 
       if (mic) then
-      
+
 ! calculate u0 from geogr. latitude, declination and hourangle
 ! make correction because of spherical surface of the earth
       zeit=lst*3600.+lmin*60.

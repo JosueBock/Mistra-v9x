@@ -1548,7 +1548,7 @@ subroutine gase ( ib, ig, hk )
         if ( p(jz) >= 6310._dp ) then
            pq(jz)=xm1(jz)
         else
-           pq(jz)=0.0
+           pq(jz)=0.0_dp
         endif
      end do
      call qki ( c15hca(:,:,ig), fkga )
@@ -1638,6 +1638,9 @@ subroutine qks ( coefks, fkg )
 ! Array arguments with intent(out):
   real (kind=dp), intent(out) :: fkg(nrlev)  ! gaseous absorption coefficients
 
+! Local parameters:
+  real (kind=dp), parameter :: ztref = 245.0_dp
+
 ! Local scalars:
   integer :: ipl, iph                ! index low, high such that stanp(ipl) < p <stanp(iph)
   integer :: jz                      ! vertical loop index (top-down)
@@ -1658,7 +1661,7 @@ subroutine qks ( coefks, fkg )
 ! == End of declarations =======================================================
 
   do jz=1, nrlev
-     ztfact  = t(jz) - 245.0_dp
+     ztfact  = t(jz) - ztref
      ztfact2 = ztfact * ztfact
 
      if ( p(jz) <= stanp(1) ) then
@@ -1742,6 +1745,9 @@ subroutine qki ( coefki, fkg )
 ! Array arguments with intent(out):
   real(kind=dp), intent(out) :: fkg(nrlev)  ! gaseous absorption coefficients
 
+! Local parameters:
+  real (kind=dp), parameter :: ztref = 245.0_dp
+
 ! Local scalars:
   integer :: ipl, iph                ! index low, high such that stanp(ipl) < p <stanp(iph)
   integer :: jz                      ! vertical loop index (top-down)
@@ -1763,7 +1769,7 @@ subroutine qki ( coefki, fkg )
 ! == End of declarations =======================================================
 
   do jz=1, nrlev
-     ztfact  = t(jz) - 245.0_dp
+     ztfact  = t(jz) - ztref
      ztfact2 = ztfact * ztfact
 
      if ( p(jz) <= stanp(1) ) then
@@ -1847,6 +1853,9 @@ subroutine qkio3 ( coefki, fkg )
 ! Array arguments with intent(out):
   real (kind=dp), intent(out) :: fkg(nrlev)
 
+! Local parameters:
+  real (kind=dp), parameter :: ztref = 250.0_dp
+
 ! Local scalars:
   integer :: ipl, iph                ! index low, high such that stanp(ipl) < p <stanp(iph)
   integer :: jz                      ! vertical loop index (top-down)
@@ -1868,7 +1877,7 @@ subroutine qkio3 ( coefki, fkg )
 ! == End of declarations =======================================================
 
   do jz=1, nrlev
-     ztfact  = t(jz) - 250.0_dp
+     ztfact  = t(jz) - ztref
      ztfact2 = ztfact * ztfact
 
      if ( p(jz) <= stanp(1) ) then
