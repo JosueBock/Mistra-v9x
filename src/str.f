@@ -61,6 +61,8 @@
      &     binout,
      &     BL_box,
      &     box,
+     &     nlevbox,
+     &     z_box,
      &     chem,
      &     halo,
      &     iod,
@@ -70,8 +72,7 @@
      &     nuc,
      &     rst,
      &     iaertyp,
-     &     lstmax,
-     &     nkc_l
+     &     lstmax
 
       USE global_params, ONLY :
 ! Imported Parameters:
@@ -105,7 +106,6 @@
       common /cb54/ xm1(n),xm2(n),feu(n),dfddt(n),xm1a(n),xm2a(n)
       common /cb52/ ff(nkt,nka,n),fsum(n),nar(n)
       common /band_rat/ photol_j(nphrxn,n)
-      common /band_o3/ scaleo3_m
       common /kpp_eul/ xadv(10),nspec(10)
       common /nucfeed/ ifeed
 
