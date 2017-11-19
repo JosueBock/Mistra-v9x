@@ -363,7 +363,7 @@ subroutine intrad
            ! ---------------------------------------------------------------------------
            ! First test to detect potential model inconsistency
            !  (this case should never happend: if the particle grid has been properly defined,
-           !   rq(jt,ia) >= rn(ia) thus xa1 >= 0.)
+           !   rq(jkt,jka) >= rn(jka) thus xa1 >= 0.)
            if (xa1 < xa0(1)) then
               write(jpfunerr,*)'Error in SR intrad: xa1 < xa0(1)=0.',jka,jkt,xa1
               stop ' Stopped by SR intrad'
@@ -371,7 +371,7 @@ subroutine intrad
               write(jpfunerr,*)'Error in SR intrad: xa1 > xa0(na0)=1.',jka,jkt,xa1
               stop ' Stopped by SR intrad'
            else
-              ! general case: xa0(ia-1) < xa1 <= xa0(ia)
+              ! general case: xa0(ia0-1) < xa1 <= xa0(ia0)
               ia0 = 2
               do while (xa1 > xa0(ia0))
                  ia0 = ia0 + 1
@@ -716,6 +716,7 @@ subroutine initr
   !                                          reorganised this SR, uniformisation of some variable names
   !                          BUGFIX: the qmo3x calculation was wrong (it rotated the indexes twice, and
   !                                  used the pressure array in the wrong line
+  ! 18-Nov-2017              BUGFIX: missing initialisation of beax, baax and gax for layers 1:n-1
 
 ! == End of header =============================================================
 
@@ -859,7 +860,14 @@ subroutine initr
   end do
 
 
-! Initialise frac, rho2wx, and rew: no clouds
+! Initialise aerosol coefficients baax, beax and gax to zero
+!   (they will be overwritten in SR load1 from index 1 to n, only if mic=true)
+! -------------------------------------------
+  baax(:,:n-1) = 0._dp
+  beax(:,:n-1) = 0._dp
+  gax (:,:n-1) = 0._dp
+
+! Initialise liquid water variables: fracx, rho2wx, and rewx: no clouds
 !   (they will be overwritten in SR load1 from index 1 to nf, only if mic=true)
 ! -------------------------------------------
   fracx(:)  = 0._dp
@@ -1009,28 +1017,52 @@ end subroutine initr
 
 subroutine load1
 !
-! Description:
+! Description :
+! -----------
 !    loading actual variables and actual optical parameters
-!
 
-!
-! History:
-! Version   Date     Comment
-! -------   ----     -------
-! 1.1       10/2016  Removed /nox/ tauno2(nrlay) which was set to 0    <Josue Bock>
-!                      (see SR tau in nrad.f90 for explanations)
 
-!           07/2016  Removal of labeled do loops.                   <Josue Bock>
-!                    Header
-!                    Use module for parameters
-!                    All explicit declarations and implicit none
-!
-! 1.0       ?        Original code.                                 <Andreas Bott>
-!
-! Code Description:
-!   Language:          Fortran 77 (with Fortran 90 features)
-!
-! Declarations:
+! Method :
+! ------
+  ! tx, px, xm1x and rhox are defined for half-level (= layer) in Mistra.
+  ! tx, px and xm1x are linearly interpolated to get level values for the radiative code
+  ! rhox is then recalculated using the interpolated values.
+  !
+  ! At the ground level, px(1)=p(1), but tx(1)=t(2) and xm1x(1)=xm1(2).
+  ! Indeed, while the pressure varies continuously, the surface temperature (t(1)) can not be used as
+  ! the air temperature at the surface. Thus, it is expected that using t(2) is less wrong than t(1).
+
+
+! Author :
+! ------
+  !    Andreas Bott and others
+
+
+! Modifications :
+! -------------
+  !    Jul-2016  Josue Bock  Removal of labeled do loops.
+  !                          Header
+  !                          Use module for parameters
+  !                          All explicit declarations and implicit none
+  !
+  !    Oct-2016  Josue Bock  Removed /nox/ tauno2(nrlay) which was set to 0
+  !                            (see SR tau in nrad.f90 for explanations)
+  !
+  ! 13-Oct-2016  Josue Bock  Added CB /neu/ icld and declared icld=0. This was missing for two routines
+  !
+  ! 22-Oct-2017  Josue Bock  icld further removed along with an important bugfix in SR water
+  !
+  ! 18-Nov-2017  Josue Bock  introduced a test in the final calculation of gax (if beax-baax > 0)
+  !                            previously, this case was handled by adding a small value (gax = gax / (beax-baax+1e-15),
+  !                            which might lead to unexpectedly high values (just a guess). It seems safer to do a proper test.
+  !                          BUGFIX: beax, baax and gax must be initialised to 0. for all spectral bands. If not, at night, the
+  !                                  last solar values calculated during the day were still used.
+
+! == End of header =============================================================
+
+
+! Declarations :
+! ------------
 ! Modules used:
 
   USE config, ONLY : &
@@ -1061,9 +1093,13 @@ subroutine load1
   implicit none
 
 ! Local scalars:
-  integer :: ia, jt, k, ka, ka0, l1
-  integer ::lu0, luf
-  real (kind=dp) :: zeit, horang, rlat, rdec, u00, ru0, x0
+  integer :: ib0                                  ! first spectral band index (day => 1, night => 7)
+  integer :: jb                                   ! loop index for spectral band number
+  integer :: jka,jkt                              ! loop indexes, 2D microphysical grid
+  integer :: jz, jzm                              ! loop indexes, vertical
+  integer :: ka, ka0
+  real (kind=dp) :: x0                            ! interpolation factor
+  real (kind=dp) :: zeit, horang, rlat, rdec, u00, ru0
   real (kind=dp) :: znum,zdenom,zfix   ! calculation of effective drop radius
 
 ! Common blocks:
@@ -1107,128 +1143,133 @@ subroutine load1
   common /cb54/ xm1(n),xm2(n),feu(n),dfddt(n),xm1a(n),xm2a(n)
   real (kind=dp) :: xm1, xm2, feu, dfddt, xm1a, xm2a
 
-      !common /neu/ icld ! jjb 13/10/2016: added, see comment at the end of this SR
-      !integer icld
+! == End of declarations =======================================================
 
-!- End of header ---------------------------------------------------------------
+  tsx     = t(1)
+  tx(1)   = t(2)
+  px(1)   = p(1)
+  xm1x(1) = xm1(2)
+  rhox(1) = px(1)/(r0*tx(1)*(1._dp+.608_dp*xm1x(1)))
+  do jz = 2,n-1
+     x0      = 0.5_dp*detw(jz)/deta(jz)
+     tx(jz)   = t(jz)+(t(jz+1)-t(jz))*x0
+     px(jz)   = p(jz)+(p(jz+1)-p(jz))*x0
+     xm1x(jz) = xm1(jz)+(xm1(jz+1)-xm1(jz))*x0
+     rhox(jz) = px(jz)/(r0*tx(jz)*(1._dp+.608_dp*xm1x(jz)))
+  enddo
 
-      tsx=t(1)
-      tx(1)=t(2)                               ! jjb CHECK this! For me, this should be t(1) (same as pressure below)
-      px(1)=p(1)
-      xm1x(1)=xm1(2)
-      rhox(1)=px(1)/(r0*tx(1)*(1.+.608*xm1x(1)))
-      rho2wx(1)=xm2(2)
-      do k=2,n-1
-         x0=0.5*detw(k)/deta(k)
-         tx(k)=t(k)+(t(k+1)-t(k))*x0
-         px(k)=p(k)+(p(k+1)-p(k))*x0
-         xm1x(k)=xm1(k)+(xm1(k+1)-xm1(k))*x0
-         rhox(k)=px(k)/(r0*tx(k)*(1.+.608*xm1x(k)))
-         rho2wx(k)=xm2(k+1)
-      enddo
-
-      if (mic) then
+  if (mic) then
 
 ! calculate u0 from geogr. latitude, declination and hourangle
 ! make correction because of spherical surface of the earth
-      zeit=lst*3600.+lmin*60.
-      horang=7.272205e-05*zeit-pi
+     zeit=lst*3600._dp+lmin*60._dp
+     horang=7.272205e-05_dp*zeit-pi
 ! pi/180=1.745329e-02
-      rlat=alat*1.745329e-02
-      rdec=declin*1.745329e-02
-      u00=cos(rdec)*cos(rlat)*cos(horang)+sin(rdec)*sin(rlat)
-      ru0=6371.*u00
-      u0=8./(dsqrt(ru0**2+102000.)-ru0)
+     rlat=alat*1.745329e-02_dp
+     rdec=declin*1.745329e-02_dp
+     u00=cos(rdec)*cos(rlat)*cos(horang)+sin(rdec)*sin(rlat)
+     ru0=6371._dp*u00
+     u0=8._dp/(dsqrt(ru0**2+102000._dp)-ru0)
 
-      ! Wavelenght bands: 1-6 = shortwave (sun), 7-18 = longwave (earth)
-      ! 24h per day: earth longwave radiation taken into account
-      lu0=7
-      luf=mb
-      ! Depending on solar zenith angle: sun shortwave radiation also accounted for
-      if (u0.gt.1.d-02) lu0=1
+     ! Wavelenght bands: 1-6 = shortwave (sun), 7-18 = longwave (earth)
+     ! 24h per day: earth longwave radiation taken into account
+     ! Depending on solar zenith angle: sun shortwave radiation also accounted for
+     if (u0.gt.1.e-02_dp) then
+        ib0 = 1
+     else
+        ib0 = 7
+     end if
 
-      ! Initialisation
-      do k=1,n-1
-         do l1=lu0,luf
-            baax(l1,k)=0.
-            beax(l1,k)=0.
-            gax(l1,k)=0.
-         end do
-      end do
-
-      do k=1,n-1
-         ka0=nar(k+1)
+! =====================================================================================================
+! -- 1 -- aerosol coefficients: baax, beax, gax
+! =====================================================================================================
 ! the quantities needed in the radiation code are given by
-! the sum over ia and jt of: qabs(ia,jt,l)*pi*r**2*ff(jt,ia,k)
-! (same formula for qext) asym has weighting factor qsca*f(k)
-     do ia=1,nka
-        ka=ka0
-        if (rn(ia).lt.0.5.and.ka0.eq.3) ka=2 ! ka=1 urban, ka=2 rural, ka=3 ocean
-        do jt=1,nkt
-           x0=pi*1.d-6*rq(jt,ia)**2*ff(jt,ia,k+1)
-           do l1=lu0,luf
-              baax(l1,k)=baax(l1,k)+qabs(l1,jt,ia,ka)*x0
-              beax(l1,k)=beax(l1,k)+qext(l1,jt,ia,ka)*x0
-              gax(l1,k)=gax(l1,k)+asym(l1,jt,ia,ka)*x0*(qext(l1,jt,ia,ka)-qabs(l1,jt,ia,ka))
+! the sum over jka and jkt of: qabs(jka,jkt,l)*pi*r**2*ff(jkt,jka,jz)
+! (same formula for qext) asym has weighting factor qsca*f(jz)
+
+     ! Initialisation for all spectral bands
+     ! (it is mandatory to set all these parameters to zero, even if lu0=7. If not, the previous, non-zero
+     !  values, would still exist).
+     baax(:,1:n-1) = 0._dp
+     beax(:,1:n-1) = 0._dp
+     gax (:,1:n-1) = 0._dp
+
+     do jz=1,n-1
+        jzm = jz+1
+        ! index jz is related to radiative code variables
+        ! index jzm ("m" as "mistra") is shifted by +1 to account for the first, infinitesimally thin layer, ignored here
+
+        ka0=nar(jzm)
+
+        do jka=1,nka
+           ka=ka0
+           if (rn(jka).lt.0.5_dp.and.ka0.eq.3) ka=2 ! ka=1 urban, ka=2 rural, ka=3 ocean
+           do jkt=1,nkt
+              x0=pi*1.e-6_dp*rq(jkt,jka)**2*ff(jkt,jka,jzm)
+              do jb = ib0,mb
+                 baax(jb,jz)  =baax(jb,jz) + qabs(jb,jkt,jka,ka)*x0
+                 beax(jb,jz) = beax(jb,jz) + qext(jb,jkt,jka,ka)*x0
+                 gax (jb,jz) = gax (jb,jz) + asym(jb,jkt,jka,ka)*x0*(qext(jb,jkt,jka,ka)-qabs(jb,jkt,jka,ka))
+              end do
            end do
         end do
-     end do
 
-     do l1=lu0,luf
-        gax(l1,k)=gax(l1,k)/(beax(l1,k)-baax(l1,k)+.1e-15)
-     end do
+        do jb=ib0,mb
+           if (beax(jb,jz)-baax(jb, jz) > 0._dp) then
+              gax(jb,jz) = gax(jb,jz) / (beax(jb,jz)-baax(jb,jz))
+           else
+              gax(jb,jz) = 0._dp
+           end if
+        end do
 
-  end do ! k loop over vertical layers
+     end do ! jz loop over vertical layers
 
-! define frac, for use in SR frr,
+
+! =====================================================================================================
+! -- 2 -- liquid water related variables: rho2wx, fracx, and rewx
+! =====================================================================================================
+! note that this loop goes up to nf-1, not n-1
+! indeed, the cloud top is Mistra cannot be higher than nf
+!
+! Also note that the 2D microphysical grid is read in an unusual order here (jkt first, then jka)
+! This is because a given jkt class has the same amount of water (expressed as an equivalent radius,
+! surface, or volume in variables re1, re2 and re3) for all jka classes.
+
+     do jz=1,nf-1
+        jzm = jz + 1
+
+! rho2wx is used in SR water, both as a switch (if rho2 < 1.e-5 : no absorption in liquid water),
+!   and in the calculations if they are done. NB: frac could be used as well as a switch, since it
+!   is set = 1 between lcl and lct, and lcl and lct are defined according to the LWC.
+!   For the same reason, it is not necessary to define it above nf-1.
+! It is a layer (=half level) value, thus no interpolation is required, just an index shift to account
+!   for Mistra layer 1 which is the infinitesimally thin layer, while the first "true" layer is #2.
+        rho2wx(jz) = xm2(jzm)
+
+! define frac, for use in SR frr and langw,
 !     and rew, for use in SR water
-! start at index 2 (the case lcl = lct = 1 means no clouds)
-!     and go up to index nf+1 (lct should be < nf anyway)
-!     the remaining indexes nf+2:nrlay have been initialised to 0. in SR initr
-      do k=2,nf+1
-         if (k.ge.lcl .and. k.le.lct) then
-            fracx(k-1) = 1.d0
+        if (jzm.ge.lcl .and. jzm.le.lct) then
+           fracx(jz) = 1._dp
 
-            znum=0.d0
-            zdenom=0.d0
-            do jt=1,nkt
-               zfix=0.d0
-               do ia=1,nka
-                  zfix = zfix + ff(jt,ia,k)
-               end do
-               znum   = znum + re3(jt)*zfix
-               zdenom = zdenom + re2(jt)*zfix
-            end do
-            rewx(k-1) = znum/zdenom
+           znum   = 0._dp
+           zdenom = 0._dp
+           do jkt = 1, nkt
+              zfix = 0._dp
+              do jka = 1, nka
+                 zfix = zfix + ff(jkt,jka,jzm)
+              end do
+              znum   = znum   + re3(jkt)*zfix
+              zdenom = zdenom + re2(jkt)*zfix
+           end do
+           rewx(jz) = znum/zdenom
 
-         else
-            fracx(k-1) = 0.d0
-            rewx(k-1) = 0.d0
-         end if
-      end do
+        else
+           fracx(jz) = 0._dp
+           rewx(jz) = 0._dp
+        end if
+     end do
 
-      end if
-
-! < jjb 13/10/2016. Quick fix for consistency:
-!
-!     the variable icld was still needed in SR strahl (see file nrad.f), but it
-!     was not currently defined in SR load1, only in the former SR load0.
-!
-!     According to a comment in file nrad.f, SR water should return zero optical
-!     depths, unless SR load0 is used. This is achieved by defining icld = 0.
-!     See comment after SR strahl, and the SR water in file nrad.f
-!
-!     icld is also used in SR frr (in file nrad.f), and has to be equal to 0 so that
-!     frac is set to 1 between lcl and lct.
-!
-!     In order to keep the compatibility with SR load0, the variable icld has thus
-!     been kept, and defined to zero in this subroutine.
-!     However, it is likely that SR load0 will never be used again: if so, some
-!     cleaning and little tuning will be required to completely remove it.
-
-      !icld = 0
-
-! jjb 13/10/2016 >
+  end if ! mic = .true.
 
 end subroutine load1
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
