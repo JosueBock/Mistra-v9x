@@ -1228,7 +1228,7 @@ subroutine load1
 ! =====================================================================================================
 ! -- 2 -- liquid water related variables: rho2wx, fracx, and rewx
 ! =====================================================================================================
-! note that this loop goes up to nf-1, not n-1
+! note that this loop goes up to nf-1 only, not n-1
 ! indeed, the cloud top is Mistra cannot be higher than nf
 !
 ! Also note that the 2D microphysical grid is read in an unusual order here (jkt first, then jka)
@@ -1265,8 +1265,9 @@ subroutine load1
 
         else
            fracx(jz) = 0._dp
-           rewx(jz) = 0._dp
+           rewx(jz)  = 0._dp
         end if
+
      end do
 
   end if ! mic = .true.
@@ -1277,7 +1278,7 @@ end subroutine load1
 
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-subroutine rotate_in(ldinit)
+subroutine rotate_in (ldinit)
 
 ! Description :
 ! -----------
@@ -1296,7 +1297,9 @@ subroutine rotate_in(ldinit)
 ! Output :
 ! ------
 !    - /cb02/
+!    - /cb09/    liquid water variables
 !    - /cb16/    thk(nrlay)
+!    - /cb19/    aerosol variables
 !    - /height/  zx (nrlev)
 
 ! Externals :
@@ -1322,21 +1325,26 @@ subroutine rotate_in(ldinit)
   !    02-Apr-2017  Josue Bock   First version of this routine
   !    13-Nov-2017  Josue Bock   removed ntypa and ntypd from /cb02/, unused
   !    14-Nov-2017  Josue Bock   further removed ntypd from /cb01/
-!
-! End modifications
-!-----------------------------------------------------------------------------------------------------------------------
+  !    19-Nov-2017  Josue Bock   reorganised CBs: cb09 for water related variables
+  !                              efficiency: qmo3 rotated only during initialisation, and aerosol/water related
+  !                                          variables rotated only if mic (and during initialisation)
+
+! == End of header =============================================================
 
 
-
-! Declarations:
+! Declarations :
 ! ------------
 ! Modules used:
 
+  USE config, ONLY : &
+! Imported Parameters:
+       mic
+
   USE global_params, ONLY : &
 ! Imported Parameters:
-       n, &
-       nrlay, &
-       nrlev, &
+       n,                   &
+       nrlay,               &
+       nrlev,               &
        mb, mbs
 
   USE precision, ONLY : &
@@ -1345,11 +1353,15 @@ subroutine rotate_in(ldinit)
 
   implicit none
 
+! Subroutine arguments
+! Scalar arguments with intent(in):
   logical, intent(in) :: ldinit          ! called during initialisation, or not.
 
-  integer :: jlbu, jltd                 ! running indexes (bu = bottom-up, td = top-down)
+! Local scalars:
+  integer :: jlbu, jltd                  ! running indexes (bu = bottom-up, td = top-down)
   integer :: nmin
 
+! Common blocks:
   common /cb01/ tx(nrlev),px(nrlev),rhox(nrlev),xm1x(nrlev),         &
                 rho2wx(nrlay),fracx(nrlay),zx_bu(nrlev),thkx(nrlay), &
                 beax(mb,nrlay),baax(mb,nrlay),gax(mb,nrlay),         &
@@ -1357,12 +1369,11 @@ subroutine rotate_in(ldinit)
   real (kind=dp) :: tx,px,rhox,xm1x,rho2wx,fracx,zx_bu,thkx, &
                     beax, baax, gax, qmo3x, rewx, tsx
 
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2w(nrlay), &
-                frac(nrlay),ts
-  real (kind=dp) :: t, p, rho, xm1, rho2w, frac, ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
-  common /cb09/ rew(nrlay)
-  real (kind=dp) :: rew
+  common /cb09/ frac(nrlay),rew(nrlay),rho2w(nrlay)
+  real (kind=dp) :: frac, rew, rho2w
 
   common /cb16/ u0,albedo(mbs),thk(nrlay)
   real (kind=dp) :: u0, albedo, thk
@@ -1376,8 +1387,10 @@ subroutine rotate_in(ldinit)
   common /ozon/ qmo3(nrlev)
   real (kind=dp) :: qmo3
 
+! == End of declarations =======================================================
 
-! Vertical grid arrays: rotate only during initialisation
+
+! Vertical grid arrays and ozone profile: rotate only during initialisation
   if(ldinit) then
      ! thk(nrlay)
      do jltd = 1,nrlay
@@ -1386,10 +1399,12 @@ subroutine rotate_in(ldinit)
         thk(jltd) = thkx(jlbu)
      end do
      ! zx(nrlev)
+     ! qmo3x(nrlev)
      do jltd = 1,nrlev
         jlbu = nrlev - jltd + 1
 
         zx(jltd) = zx_bu(jlbu)
+        qmo3(jltd) = qmo3x(jlbu)
      end do
   end if
 
@@ -1398,10 +1413,10 @@ subroutine rotate_in(ldinit)
   if(ldinit) then
      nmin = 1
   else
-     nmin = nrlev - n + 1 ! fits nrlev size arrays. For nrlev size arrays, use nmin+1 instead
-     !nmin = 1 ! fits nrlev size arrays. For nrlev size arrays, use nmin+1 instead
+     nmin = nrlev - n + 1 ! fits nrlev size arrays. For nrlev size arrays, use nmin-1 instead
   end if
 
+! nrlev size variables, rotated any time
   do jltd = nmin, nrlev
      jlbu = nrlev - jltd + 1
 
@@ -1409,21 +1424,24 @@ subroutine rotate_in(ldinit)
      p(jltd) = px(jlbu)
      rho(jltd) = rhox(jlbu)
      xm1(jltd) = xm1x(jlbu)
-     qmo3(jltd) = qmo3x(jlbu)
      !(jltd) = x(jlbu)
   end do
 
-  do jltd = MAX(nmin-1,1), nrlay
-     jlbu = nrlay - jltd + 1
+! nrlay size variables, which are all related to aerosols or water.
+! Then need to be rotated only if mic=true, and during initialisation
+  if (ldinit .or. mic) then
+     do jltd = MAX(nmin-1,1), nrlay
+        jlbu = nrlay - jltd + 1
 
-         rho2w(jltd) = rho2wx(jlbu)
-         rew(jltd) = rewx(jlbu)
-         frac(jltd) = fracx(jlbu)
-         bea(:,jltd) = beax(:,jlbu)
-         baa(:,jltd) = baax(:,jlbu)
-         ga(:,jltd) = gax(:,jlbu)
+        rho2w(jltd) = rho2wx(jlbu)
+        rew(jltd) = rewx(jlbu)
+        frac(jltd) = fracx(jlbu)
+        bea(:,jltd) = beax(:,jlbu)
+        baa(:,jltd) = baax(:,jlbu)
+        ga(:,jltd) = gax(:,jlbu)
 
-  end do
+     end do
+  end if
 
   ts = tsx
 

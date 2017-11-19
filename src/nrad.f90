@@ -176,9 +176,8 @@ subroutine nstrahl
   real (kind=dp) :: sss(nrlev)
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
   common /cb10/ totrad (mb,nrlay)
   real (kind=dp) :: totrad
@@ -540,8 +539,7 @@ subroutine frr
 
   USE global_params, ONLY : &
 ! Imported Parameters:
-       nrlay, &
-       nrlev
+       nrlay
 
   USE precision, ONLY :     &
 ! Imported Parameters:
@@ -553,9 +551,8 @@ subroutine frr
   integer :: jz, jzm, jzp
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), & ! only: frac
-                frac(nrlay),ts
-  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb09/ frac(nrlay),rew(nrlay),rho2w(nrlay)
+  real (kind=dp) :: frac, rew, rho2w
 
   common /part/ cc(4,nrlay),bb(4,nrlay)
   real (kind=dp) :: cc, bb
@@ -640,10 +637,10 @@ subroutine water(ib)
 !   Legendre coefficients {pl2w} of the phase-function for Mie-scattering
 !   of cloud droplets. (eqs. 4.25 - 4.27 diss. Fu (1991))
 !-------------------------------------------------------------------------
-!   rho2 and reff are the partial density of cloud water and the effective
+!   rho2w and reff are the partial density of cloud water and the effective
 !   radius of the cloud droplets. Effective radii lower or higher than the
 !   boundary values of 4.18 um and 31.18 um are set to the corresponding
-!   boundary values. Clouds with rho2 less than 10**-5 kg m**-3 are not
+!   boundary values. Clouds with rho2w less than 10**-5 kg m**-3 are not
 !   calculated.
 !-------------------------------------------------------------------------
 !
@@ -679,10 +676,9 @@ subroutine water(ib)
 
   USE global_params, ONLY : &
 ! Imported Parameters:
-       nrlay, &
-       nrlev, &
-       ncw, &
-       mb, &
+       nrlay,               &
+       ncw,                 &
+       mb,                  &
        mbs
 
   USE precision, ONLY :     &
@@ -702,12 +698,8 @@ subroutine water(ib)
   real (kind=dp) :: gg  ! g2wt interpolation
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
-
-  common /cb09/ rew(nrlay)
-  real (kind=dp) :: rew
+  common /cb09/ frac(nrlay),rew(nrlay),rho2w(nrlay)
+  real (kind=dp) :: frac, rew, rho2w
 
   common /cb16/ u0,albedo(mbs),thk(nrlay)
   real (kind=dp) :: u0, albedo, thk
@@ -723,18 +715,18 @@ subroutine water(ib)
   do jz=1,nrlay
 
 ! no clouds
-     if ( rho2(jz) < 1.0e-5_dp ) then
+     if ( rho2w(jz) < 1.0e-5_dp ) then
         t2w(jz)=0.0_dp
         w2w(jz)=0.0_dp
         pl2w(:,jz)=0.0_dp
      else
 
-! interpolation for given reff and rho2 from tabulated values
+! interpolation for given reff and rho2w from tabulated values
 ! {ret} and {r2wt}
 
         ! lower limit 4.18 um
         if ( rew(jz) <= ret(1) ) then
-           t2w(jz) = thk(jz) * rho2(jz) * b2wt(1,ib) / r2wt(1)
+           t2w(jz) = thk(jz) * rho2w(jz) * b2wt(1,ib) / r2wt(1)
            w2w(jz) = w2wt(1,ib)
            do jl=1,2
               pl2w(jl,jz) = real(2*jl+1,dp) * g2wt(1,ib)**jl
@@ -742,7 +734,7 @@ subroutine water(ib)
 
         ! upper limit 31.18 um
         elseif ( rew(jz) >= ret(ncw) ) then
-           t2w(jz) = thk(jz) * rho2(jz) * b2wt(ncw,ib) / r2wt(ncw)
+           t2w(jz) = thk(jz) * rho2w(jz) * b2wt(ncw,ib) / r2wt(ncw)
            w2w(jz) = w2wt(ncw,ib)
            do jl=1,2
               pl2w(jl,jz) = real(2*jl+1,dp) * g2wt(ncw,ib)**jl
@@ -754,7 +746,7 @@ subroutine water(ib)
            do while (rew(jz) > ret(k+1))
               k = k + 1
            end do
-           t2w(jz) = thk(jz) * rho2(jz) * ( b2wt(k,ib)/r2wt(k) + &
+           t2w(jz) = thk(jz) * rho2w(jz) * ( b2wt(k,ib)/r2wt(k) + &
                     ( b2wt(k+1,ib)/r2wt(k+1) - b2wt(k,ib)/r2wt(k) ) / &
                     ( 1.0_dp/ret(k+1) - 1.0_dp/ret(k) ) * &
                     ( 1.0_dp/rew(jz)  - 1.0_dp/ret(k) ) )
@@ -868,7 +860,7 @@ subroutine qopcon ( vv )
 
   USE global_params, ONLY : &
 ! Imported Parameters:
-       nrlay, &
+       nrlay,               &
        nrlev
 
   USE precision, ONLY :     &
@@ -894,9 +886,8 @@ subroutine qopcon ( vv )
   real (kind=dp) :: ff(nrlev), p1(nrlev)
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
   common /con/ tgcon(nrlay)
   real (kind=dp) :: tgcon
@@ -951,7 +942,6 @@ subroutine planck ( ib )
 
   USE global_params, ONLY : &
 ! Imported Parameters:
-       nrlay,               &
        nrlev,               &
        mbir,                &
        mbs
@@ -975,9 +965,8 @@ subroutine planck ( ib )
            980._dp,  800._dp,  670._dp,  540._dp,  400._dp,  280._dp, 0._dp /)
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
   common /planci/ pib(nrlev),pibs
   real (kind=dp) :: pib, pibs
@@ -1198,9 +1187,8 @@ end function plkavg
 !!$  integer :: jz   ! loop index, top to bottom
 !!$
 !!$! Common blocks:
-!!$  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-!!$                frac(nrlay),ts
-!!$  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+!!$  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+!!$  real (kind=dp) :: t, p, rho, xm1, ts
 !!$
 !!$  common /planci/ pib(nrlev),pibs
 !!$  real (kind=dp) :: pib, pibs
@@ -1393,9 +1381,8 @@ subroutine gase ( ib, ig, hk )
   common /band18/ hk18(8), c18h2o(3,19,8)
   real (kind=dp) :: hk18, c18h2o
 
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
   common /gas/ tg(nrlay)
   real (kind=dp) :: tg
@@ -1623,7 +1610,6 @@ subroutine qks ( coefks, fkg )
 
   USE global_params, ONLY : &
 ! Imported Parameters:
-       nrlay,               &
        nrlev
 
   USE precision, ONLY :     &
@@ -1654,9 +1640,8 @@ subroutine qks ( coefks, fkg )
         100000._dp /)
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real (kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
 ! == End of declarations =======================================================
 
@@ -1730,7 +1715,6 @@ subroutine qki ( coefki, fkg )
 
   USE global_params, ONLY : &
 ! Imported Parameters:
-       nrlay,               &
        nrlev
 
   USE precision, ONLY :     &
@@ -1762,9 +1746,8 @@ subroutine qki ( coefki, fkg )
         25100._dp, 39800._dp, 63100._dp,100000._dp /)
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                   frac(nrlay),ts
-  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
 ! == End of declarations =======================================================
 
@@ -1838,7 +1821,6 @@ subroutine qkio3 ( coefki, fkg )
 
   USE global_params, ONLY : &
 ! Imported Parameters:
-       nrlay,               &
        nrlev
 
   USE precision, ONLY :     &
@@ -1870,9 +1852,8 @@ subroutine qkio3 ( coefki, fkg )
         25100._dp, 39800._dp, 63100._dp,100000._dp /)
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                   frac(nrlay),ts
-  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
 ! == End of declarations =======================================================
 
@@ -1957,9 +1938,8 @@ subroutine qopo3s ( fk, tg )
   integer :: jz
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
   common /ozon/ qmo3(nrlev)
   real(kind=dp) :: qmo3
@@ -2027,9 +2007,8 @@ subroutine qoph2o ( fkg, tg )
   integer :: jz
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
 ! == End of declarations =======================================================
 
@@ -2087,9 +2066,8 @@ subroutine qopch4 ( fkg, tg )
   integer :: jz
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
 ! == End of declarations =======================================================
 
@@ -2146,9 +2124,8 @@ subroutine qopn2o ( fkg, tg )
   integer :: jz
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
 ! == End of declarations =======================================================
 
@@ -2204,9 +2181,8 @@ subroutine qopo3i ( fkg, tg )
   integer :: jz
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
   common /ozon/ qmo3(nrlev)
   real(kind=dp) :: qmo3
@@ -2269,9 +2245,8 @@ subroutine qophc ( fkg, tg )
   integer :: jz
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+  real (kind=dp) :: t, p, rho, xm1, ts
 
 ! == End of declarations =======================================================
 
@@ -2746,9 +2721,8 @@ subroutine langw(ib)
   real(kind=dp) :: a6(2,nrlay)                         ! matrix coefficients (local)
 
 ! Common blocks:
-  common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay), &
-                frac(nrlay),ts
-  real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+  common /cb09/ frac(nrlay),rew(nrlay),rho2w(nrlay)
+  real (kind=dp) :: frac, rew, rho2w
 
   common /leck1/ a4(2,nrlay),a5(2,nrlay)                       ! matrix coefficients
   real(kind=dp) :: a4, a5

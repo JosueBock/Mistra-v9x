@@ -452,9 +452,8 @@ C     OUTPUTS
      $     ITYPE(MAXLAY)     !aerosol type
 
 c commom blocks from MISTRA:
-      common /cb02/ t_m(nrlev),p_m(nrlev),rho_m(nrlev),xm1_m(nrlev),
-     &    rho2_m(nrlay),frac_m(nrlay),ts_m
-      double precision t_m,p_m,rho_m,xm1_m,rho2_m,frac_m,ts_m
+      common /cb02/ t_m(nrlev),p_m(nrlev),rho_m(nrlev),xm1_m(nrlev),ts_m
+      double precision t_m,p_m,rho_m,xm1_m,ts_m
 
       common /cb16/ u0_m,albedo_m(6),thk_m(nrlay)
       double precision u0_m, albedo_m, thk_m

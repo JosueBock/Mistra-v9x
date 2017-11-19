@@ -1872,9 +1872,8 @@
       integer i, ib
 
 ! Common blocks:
-      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),rho2(nrlay),
-     &              frac(nrlay),ts
-      real(kind=dp) :: t,p,rho,xm1,rho2,frac,ts
+      common /cb02/ t(nrlev),p(nrlev),rho(nrlev),xm1(nrlev),ts
+      real(kind=dp) :: t,p,rho,xm1,ts
 
       common /cb10/ totrad (mb,nrlay)
       real(kind=dp) :: totrad
