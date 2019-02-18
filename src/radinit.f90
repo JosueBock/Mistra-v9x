@@ -207,6 +207,8 @@ subroutine intrad
 !
 ! 09-Nov-2017   Josue Bock   Final cleaning after second F90 conversion (GitHub version),
 !                              rewritten interpolation, coding standards for variable names
+!
+! 18-Feb-2019   Josue Bock   Stop the program using abortM
 
 ! == End of header =============================================================
 
@@ -217,7 +219,9 @@ subroutine intrad
 
   USE config, ONLY : &
 ! Imported Parameters:
-       cinpdir
+       cinpdir,      &
+! Imported Routines:
+       abortM
 
   USE file_unit, ONLY : &
 ! Imported Parameters:
@@ -366,10 +370,10 @@ subroutine intrad
            !   rq(jkt,jka) >= rn(jka) thus xa1 >= 0.)
            if (xa1 < xa0(1)) then
               write(jpfunerr,*)'Error in SR intrad: xa1 < xa0(1)=0.',jka,jkt,xa1
-              stop ' Stopped by SR intrad'
+              call abortM(' Error 1 in SR intrad')
            else if (xa1 > xa0(na0)) then
               write(jpfunerr,*)'Error in SR intrad: xa1 > xa0(na0)=1.',jka,jkt,xa1
-              stop ' Stopped by SR intrad'
+              call abortM(' Error 2 in SR intrad')
            else
               ! general case: xa0(ia0-1) < xa1 <= xa0(ia0)
               ia0 = 2
@@ -717,6 +721,8 @@ subroutine initr
   !                          BUGFIX: the qmo3x calculation was wrong (it rotated the indexes twice, and
   !                                  used the pressure array in the wrong line
   ! 18-Nov-2017              BUGFIX: missing initialisation of beax, baax and gax for layers 1:n-1
+  !
+  ! 18-Feb-2019  Josue Bock  Stop the program using abortM
 
 ! == End of header =============================================================
 
@@ -724,6 +730,10 @@ subroutine initr
 ! Declarations :
 ! ------------
 ! Modules used:
+
+  USE config, ONLY : &
+! Imported Routines:
+       abortM
 
   USE constants, ONLY : &
 ! Imported Parameters:
@@ -831,7 +841,7 @@ subroutine initr
   if(nrlev /= n+11) then
      write(jpfunerr,*) 'Error: nlev /= n+11, change nlev in global_params,'
      write(jpfunerr,*) '  or change the extra layers settings in SR initr'
-     stop 'Stopped by SR initr'
+     call abortM(' Error 1 in SR initr')
   end if
 
   ! Main model grid, define radiation level <=> "wall" values
@@ -840,7 +850,7 @@ subroutine initr
   ! Even if etw(n-1) should be much lower than 11 km, check anyway
   if(zx(n-1) >= 11000._dp) then
      write(jpfunerr,*) 'Error: etw(n-1) >= 11 km, check the vertical grid'
-     stop 'Stopped by SR initr'
+     call abortM(' Error 2 in SR initr')
   end if
   ! dz: height increment up to the tropopause [m]
   dz = (11000._dp - zx(n-1)) / 7._dp
