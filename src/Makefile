@@ -69,7 +69,7 @@ common_modules.o gas_common.mod: common_modules.f global_params.mod Makefile
 	rm -f gas_common.mod
 	$(FC) $(CFLAGS) -c $<
 
-constants.o constants.mod: constants.f90 Makefile
+constants.o constants.mod: constants.f90 precision.mod Makefile
 	rm -f constants.mod
 	$(FC) $(CFLAGS) -c $<
 
@@ -77,7 +77,7 @@ file_unit.o file_unit.mod: file_unit.f90 Makefile
 	rm -f file_unit.mod
 	$(FC) $(CFLAGS) -c $<
 
-mod_out_netCDF.o cdf_var_gas.mod: mod_out_netCDF.f90 Makefile
+mod_out_netCDF.o cdf_var_gas.mod: mod_out_netCDF.f90 gas_common.mod Makefile
 	rm -f cdf_var_gas.mod
 	$(FC) $(CFLAGS) -c $<
 
@@ -96,33 +96,34 @@ aer.o kpp_aer_parameters.mod kpp_aer_global.mod: aer.f aer_Parameters.h aer_Glob
 	rm -f kpp_aer_parameters.mod kpp_aer_global.mod
 	$(FC) $(CFLAGS) -c $<
 
-config.o config.mod: config.f90 file_unit.mod precision.mod Makefile
-	rm -f config.mod
-	$(FC) $(CFLAGS) -c $<
-
 gas.o kpp_gas_parameters.mod kpp_gas_global.mod: gas.f gas_Parameters.h gas_Global.h gas_Sparse.h \
 	constants.mod gas_common.mod global_params.mod Makefile
 	rm -f kpp_gas_parameters.mod kpp_gas_global.mod
 	$(FC) $(CFLAGS) -c $<
 
+config.o config.mod: config.f90 file_unit.mod precision.mod Makefile
+	rm -f config.mod
+	$(FC) $(CFLAGS) -c $<
+
 # other files
-utils.o: utils.f config.mod gas_common.mod global_params.mod \
+utils.o: utils.f90 config.mod file_unit.mod gas_common.mod global_params.mod \
 	kpp_aer_global.mod \
 	kpp_gas_global.mod \
 	kpp_tot_global.mod \
+	precision.mod \
 	Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
 str.o: str.f config.mod constants.mod gas_common.mod global_params.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
-radinit.o: radinit.f90 config.mod constants.mod file_unit.mod global_params.mod Makefile
+radinit.o: radinit.f90 config.mod constants.mod file_unit.mod global_params.mod precision.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
 nrad.o: nrad.f90 constants.mod global_params.mod precision.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
-outp.o: outp.f config.mod constants.mod global_params.mod gas_common.mod Makefile
+outp.o: outp.f config.mod constants.mod global_params.mod gas_common.mod precision.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
 out_netCDF.o: out_netCDF.f config.mod global_params.mod gas_common.mod cdf_var_gas.mod Makefile
@@ -131,14 +132,15 @@ out_netCDF.o: out_netCDF.f config.mod global_params.mod gas_common.mod cdf_var_g
 jrate.o: jrate.f config.mod global_params.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
-nuc.o: nuc.f90 config.mod constants.mod file_unit.mod global_params.mod gas_common.mod Makefile
+nuc.o: nuc.f90 config.mod constants.mod file_unit.mod global_params.mod gas_common.mod precision.mod \
+	Makefile
 	rm -f mod_nuc.mod
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
 kpp.o: kpp.f tot_Parameters.h tot_Global.h aer_Parameters.h aer_Global.h gas_Parameters.h gas_Global.h \
 	kpp_tot_global.mod kpp_tot_parameters.mod \
 	kpp_aer_global.mod kpp_aer_parameters.mod \
-	config.mod constants.mod gas_common.mod global_params.mod Makefile
+	config.mod constants.mod gas_common.mod global_params.mod precision.mod Makefile
 	$(FC) $(CFLAGS) -o $(@F) -c $<
 
 activity.o: activity.f90 constants.mod global_params.mod precision.mod Makefile
