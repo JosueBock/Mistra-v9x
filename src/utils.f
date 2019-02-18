@@ -24,6 +24,9 @@
 !     Josue Bock
 
 
+      USE config, ONLY :
+     &     coutdir
+
       USE gas_common, ONLY :
      &     j1,
      &     gas_name,
@@ -58,7 +61,7 @@
 
 
 ! Output file to write initialisation information
-      open(13,file='interface.out')
+      open(13,file=trim(coutdir)//'interface.out')
 
       call global_parameters_check
 
@@ -275,8 +278,6 @@
       double precision, allocatable :: s1_init_top_tmp(:)
       double precision, allocatable :: es1_tmp(:)
 
-      integer is_iod(j1)
-
 ! External function:
       integer, external :: get_atom_nb
 
@@ -302,7 +303,7 @@
 
 
 ! ==============================================================================
-! -- 2 --  Read the file a second time to get all data
+! -- 2 --  Read the file to get all data
 ! ==============================================================================
 
       ! Initialisation, local
@@ -336,7 +337,7 @@
          ! Eliminates the comment at end of line, if present
          if(scan(line,'!').gt.0) line = line(1:scan(line,'!')-1)
 
-         ! Converts the string into the nb of gaseous radical and its name
+         ! Converts the string into the relevant gas species data
          read(line,*,err=101)ind_tmp,name_tmp,mass_tmp,
      &                       conc_ground_tmp,conc_top_tmp,emission_tmp,
      &                       name_long_tmp
@@ -362,7 +363,7 @@
 ! Check that user data are correct:
          ! All indexes must be greater than zero
          if(ind_tmp.le.0) then
-            print*,"Error in gas_species.csv"
+            print*,"Error in "//file_name
             print*,"  All indexes must be strictly positive"
             print*,"  See after index ",ind_gas_tmp(max(1,nb_gas-1))
             print*,"  Index read is: ",ind_tmp
@@ -372,7 +373,7 @@
 
          ! Molar masses must be greater than zero
          if(mass_tmp.le.0.) then
-            print*,"Error in gas_species.csv"
+            print*,"Error in "//file_name
             print*,"  All molar masses must be strictly positive"
             print*,"  See after index ",ind_gas_tmp(max(1,nb_gas-1))
             print*,"  Index read is: ",ind_tmp
@@ -382,7 +383,7 @@
 
          ! Concentrations must be greater equal to zero
          if(conc_ground_tmp.lt.0. .or. conc_top_tmp.lt.0.) then
-            print*,"Error in gas_species.csv"
+            print*,"Error in "//file_name
             print*,"  All concentrations must be positive"
             print*,"  See after index ",ind_gas_tmp(max(1,nb_gas-1))
             print*,"  Index read is: ",ind_tmp
@@ -392,7 +393,7 @@
 
          ! All emissions must be greater equal to zero
          if(emission_tmp.lt.0.) then
-            print*,"Error in gas_species.csv"
+            print*,"Error in "//file_name
             print*,"  All emissions must be positive"
             print*,"  See after index ",ind_gas_tmp(max(1,nb_gas-1))
             print*,"  Index read is: ",ind_tmp
@@ -404,7 +405,7 @@
          if(nb_gas.gt.1) then
             ! Check that indexes are ordered
             if(ind_tmp.le.ind_gas_tmp(nb_gas-1)) then
-               print*,"Error in gas_species.csv, sort out gas indexes"
+               print*,"Error in "//file_name//", sort out gas indexes"
                print*,"  Gas nb: ",ind_tmp
                close(10)
                stop
@@ -413,7 +414,7 @@
             ! Check that names are all different
             do i=1,nb_gas-1
                if(name_tmp.eq.gas_name_tmp(i)) then
-                  print*,"Error in gas_species.csv, two identical names"
+                  print*,"Error in "//file_name//", two identical names"
                   print*,"  Gas numbers: ",ind_gas_tmp(i),ind_tmp
                   print*,"  Gas name: ",name_tmp
                   close(10)
@@ -483,7 +484,7 @@
       stop
 
 ! Error during read
- 101  print*,"Error when reading gas_species.dat"
+ 101  print*,"Error when reading "//file_name
       print*,"  Check if numbers are correctly written,"
       print*,"  and if line breaks are unix-like."
       print*,line
@@ -544,7 +545,7 @@
 ! ==============================================================================
 
       write(13,*)"Information: the number of gases read in ",
-     &     trim(file_name)," is ",j1
+     &     file_name," is ",j1
       write(13,*)"j1_br= ",j1_br," j1_cl= ",j1_cl," j1_iod= ",j1_iod
       write(13,*)"j1_halo= ",j1_halo
       write(13,*)"Index  Name      halo? iod ? n_Br n_Cl mass"
@@ -713,7 +714,7 @@
 
 
 ! ==============================================================================
-! -- 2 --  Read the file a second time to get all data
+! -- 2 --  Read the file to get all data
 ! ==============================================================================
 
       ! Initialisation, local
@@ -745,7 +746,7 @@
          ! Eliminates the comment at end of line, if present
          if(scan(line,'!').gt.0) line = line(1:scan(line,'!')-1)
 
-         ! Converts the string into the nb of gaseous radical and its name
+         ! Converts the string into the relevant radical gas species data
          read(line,*,err=101)ind_tmp,name_tmp,mass_tmp,name_long_tmp
 
 ! ....................................................
@@ -769,7 +770,7 @@
 ! Check that user data are correct:
          ! All indexes must be greater than zero
          if(ind_tmp.le.0) then
-            print*,"Error in gas_radical_species.csv"
+            print*,"Error in "//file_name
             print*,"  All indexes must be strictly positive"
             print*,"  See after index ",ind_rad_tmp(max(1,nb_rad-1))
             print*,"  Index read is: ",ind_tmp
@@ -780,7 +781,7 @@
          if(nb_rad.gt.1) then
             ! Check that indexes are ordered
             if(ind_tmp.le.ind_rad_tmp(nb_rad-1)) then
-               print*,"Error in gas_radical_species.csv, indexes"
+               print*,"Error in "//file_name//", indexes"
      &                //" have to be sorted out"
                print*,"  Rad nb: ",ind_tmp
                close(12)
@@ -790,8 +791,7 @@
             ! Check that names are all different
             do i=1,nb_rad-1
                if(name_tmp.eq.rad_name_tmp(i)) then
-                  print*,"Error in gas_radical_species.csv, two "
-     &                   //"identical names"
+                  print*,"Error in "//file_name//", two identical names"
                   print*,"  Radical numbers: ",ind_rad_tmp(i),ind_tmp
                   print*,"  Radical name: ",name_tmp
                   close(12)
@@ -856,7 +856,7 @@
       stop
 
 ! Error during read
- 101  print*,"Error when reading gas_species.dat"
+ 101  print*,"Error when reading "//file_name
       print*,"  Check if numbers are correctly written,"
       print*,"  and if line breaks are unix-like."
       print*,line
@@ -904,7 +904,7 @@
       rad_mass(:) = rad_mass_tmp(:j5)
 
 ! ==============================================================================
-! -- 3.3 --  Write radical species list, to check that retrieval went well
+! -- 3.3 --  Write radical gas species list, to check that retrieval went well
 ! ==============================================================================
       write(13,*)"Information: the number of radicals read in ",
      & trim(file_name)," is: j5 = ",j5
