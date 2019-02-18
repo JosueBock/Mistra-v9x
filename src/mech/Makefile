@@ -34,3 +34,6 @@ aer.f: aer.k aer.def aer_eqn.head drive_aer.f $(DEPEN_ALL) $(DEPEN_AER)
 
 tot.f: tot.k tot.def tot_eqn12.head tot_eqn34.head drive_tot.f $(DEPEN_ALL) $(DEPEN_AER)
 	$(SC) tot t
+
+clean:
+	rm -f bud_*.f gas.f aer.f tot.f *.h *.map
