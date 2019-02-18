@@ -114,6 +114,8 @@ subroutine nuc_init (Napari,Lovejoy,iod)
 ! -------------
   ! 30-11-2016   Josue Bock   first version of this SR
   ! 04-11-2017   Josue Bock   Fortran90
+  ! 18-02-2019   Josue Bock   update error messages: use file unit jpfunerr for long messages,
+  !                              and call abortM to stop the program
 
 
 ! == End of header =============================================================
@@ -121,6 +123,14 @@ subroutine nuc_init (Napari,Lovejoy,iod)
 ! Declarations :
 ! ------------
 ! Modules used:
+
+  USE config, ONLY: &
+! Imported Routines:
+       abortM
+
+  USE file_unit, ONLY: &
+! Imported Parameters:
+       jpfunerr
 
   USE gas_common, ONLY: &
 ! Imported Parameters:
@@ -205,12 +215,11 @@ subroutine nuc_init (Napari,Lovejoy,iod)
 !  concsat(jvap) = 0._dp
 
   if (jvap /= nvap) then
-     print*,'Error in SR nuc_init:'
-     print*,'  the number of condensible vapours (nvap = ',nvap, &
-               ') differs from the number of species names (jvap = ', &
-               jvap,')'
-     print*,'  Please adjust.'
-     stop 'Stopped by SR nuc_init'
+     write (jpfunerr,'(a)')'Error in SR nuc_init:'
+     write (jpfunerr,'(a)')'  the number of condensible vapours (nvap = ',nvap,')'
+     write (jpfunerr,'(a)')'  differs from the number of species names (jvap = ',jvap,').'
+     write (jpfunerr,'(a)')'  Please adjust.'
+     call abortM ('Error 1 SR nuc_init')
   end if
 
 ! ==============================================================================
@@ -222,9 +231,9 @@ subroutine nuc_init (Napari,Lovejoy,iod)
         do while ( trim(gas_name(jspec)) /= trim(nuc_name(jvap)) )
            jspec = jspec+1
            if (jspec > j1) then
-              print*,'Error in SR nuc_init:'
-              print*,'  ',trim(nuc_name(jvap)),' not found in the list of gas names'
-              stop 'Stopped by SR nuc_init'
+              write (jpfunerr,'(a)')'Error in SR nuc_init:'
+              write (jpfunerr,'(a)')'  ',trim(nuc_name(jvap)),' not found in the list of gas names'
+              call abortM ('Error 2 SR nuc_init')
            end if
         end do
         ivap(jvap) = jspec
@@ -234,18 +243,18 @@ subroutine nuc_init (Napari,Lovejoy,iod)
         do while ( trim(rad_name(jspec)) /= trim(nuc_name(jvap)) )
            jspec = jspec+1
            if (jspec > j5) then
-              print*,'Error in SR nuc_init:'
-              print*,'  ',trim(nuc_name(jvap)),' not found in the list of radicals names'
-              stop 'Stopped by SR nuc_init'
+              write (jpfunerr,'(a)')'Error in SR nuc_init:'
+              write (jpfunerr,'(a)')'  ',trim(nuc_name(jvap)),' not found in the list of radicals names'
+              call abortM ('Error 3 SR nuc_init')
            end if
         end do
         ivap(jvap) = jspec
         m_vap(jvap) = rad_mass (jspec)
 
      else
-        print*,'Error in SR nuc_init:'
-        print*,'  ical must be 0 or 1, ical = ',ical(jvap),jvap
-        stop 'Stopped by SR nuc_init'
+        write (jpfunerr,'(a)')'Error in SR nuc_init:'
+        write (jpfunerr,'(a)')'  ical must be 0 or 1, ical = ',ical(jvap),jvap
+        call abortM ('Error 4 SR nuc_init')
      end if
 
   end do
@@ -258,9 +267,9 @@ subroutine nuc_init (Napari,Lovejoy,iod)
      do while ( trim(gas_name(jspec)) /= 'H2SO4' )
         jspec = jspec+1
         if (jspec > j1) then
-           print*,'Error in SR nuc_init:'
-           print*,'  H2SO4 not found in the list of gas names'
-           stop 'Stopped by SR nuc_init'
+           write (jpfunerr,'(a)')'Error in SR nuc_init:'
+           write (jpfunerr,'(a)')'  H2SO4 not found in the list of gas names'
+           call abortM ('Error 5 SR nuc_init')
         end if
      end do
      ind_H2SO4 = jspec
@@ -269,9 +278,9 @@ subroutine nuc_init (Napari,Lovejoy,iod)
      do while ( trim(gas_name(jspec)) /= 'NH3' )
         jspec = jspec+1
         if (jspec > j1) then
-           print*,'Error in SR nuc_init:'
-           print*,'  NH3 not found in the list of gas names'
-           stop 'Stopped by SR nuc_init'
+           write (jpfunerr,'(a)')'Error in SR nuc_init:'
+           write (jpfunerr,'(a)')'  NH3 not found in the list of gas names'
+           call abortM ('Error 6 SR nuc_init')
         end if
      end do
      ind_NH3 = jspec
@@ -282,18 +291,18 @@ subroutine nuc_init (Napari,Lovejoy,iod)
 
   if (Lovejoy) then ! Search for OIO index
      if (.not.iod) then
-        print*,'Error: inconsistency in the nucleation module'
-        print*,'  Lovejoy scheme require OIO, thus iod must be true'
-        stop 'Stopped by SR nuc_init'
+        write (jpfunerr,'(a)')'Error in SR nuc_init: inconsistency in the nucleation module'
+        write (jpfunerr,'(a)')'  Lovejoy scheme require OIO, thus iod must be true'
+        call abortM ('Error 7 SR nuc_init')
      end if
 
      jspec = 1              ! initialise index
      do while ( trim(rad_name(jspec)) /= 'OIO' )
         jspec = jspec+1
         if (jspec > j5) then
-           print*,'Error in SR nuc_init:'
-           print*,'  OIO not found in the list of gas names'
-           stop 'Stopped by SR nuc_init'
+           write (jpfunerr,'(a)')'Error in SR nuc_init:'
+           write (jpfunerr,'(a)')'  OIO not found in the list of gas names'
+           call abortM ('Error 8 SR nuc_init')
         end if
      end do
      ind_OIO = jspec
