@@ -95,6 +95,7 @@ character (len=100) :: cnmlfile
 character (len=100) :: cinpdir      ! input directory: general data files for Mistra
 character (len=109) :: cinpdir_phot ! input directory for photolysis data files
 character (len=100) :: coutdir      ! output directory
+character (len=100) :: cmechdir     ! mechanism directory
 
 namelist /mistra_cfg/ &
      rst,             &
@@ -185,6 +186,11 @@ subroutine read_config
      call abortM ('Error during initialisation: no output directory specified as environment variable OUTDIR')
   end if
 
+  call getenv ('MECHDIR',cmechdir)
+  if (trim(cmechdir) == '') then
+     call abortM ('Error during initialisation: no mechanism directory specified as environment variable MECHDIR')
+  end if
+
 ! ===============================================================
 ! -- 2. -- Mistra_cfg namelist: default values, and read namelist
 ! ===============================================================
@@ -230,6 +236,7 @@ end if
   write (jpfuncfgout,'(a)') 'Mistra configuration:'
   write (jpfuncfgout,'(a)') '  input directory:',cinpdir
   write (jpfuncfgout,'(a)') '  output directory:',coutdir
+  write (jpfuncfgout,'(a)') '  mechanism directory:',cmechdir
   write (jpfuncfgout,'(a)') '  mistra_cfg namelist:'
 
   write (unit=jpfuncfgout, NML=mistra_cfg, IOSTAT=istat)

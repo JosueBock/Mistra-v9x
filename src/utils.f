@@ -197,6 +197,7 @@
 !     Josue Bock
 
       USE config, ONLY :
+     &     cmechdir,
      &     halo,
      &     iod
 
@@ -314,12 +315,12 @@
       j1_halo = 0  ! Total number of halogenated non radical gases
 
 
-      open(unit=10,file=file_name)
+      open(unit=10,file=trim(cmechdir)//file_name,status='old',err=100)
 
 
       do
          ! Read a line as a string
-         read(10,'(a300)',end=101,err=102)line
+         read(10,'(a300)',err=101,end=102)line
 
          ! Eliminates the leading and trailing blanks
          line = trim(adjustl(line))
@@ -336,7 +337,7 @@
          if(scan(line,'!').gt.0) line = line(1:scan(line,'!')-1)
 
          ! Converts the string into the nb of gaseous radical and its name
-         read(line,*,err=102)ind_tmp,name_tmp,mass_tmp,
+         read(line,*,err=101)ind_tmp,name_tmp,mass_tmp,
      &                       conc_ground_tmp,conc_top_tmp,emission_tmp,
      &                       name_long_tmp
 
@@ -475,10 +476,14 @@
          end if
 
       end do ! read all lines
-      
+
+! Missing file
+ 100  print*,"Error: the file '"//file_name//
+     &"' is missing in mech directory"
+      stop
 
 ! Error during read
- 102  print*,"Error when reading gas_species.dat"
+ 101  print*,"Error when reading gas_species.dat"
       print*,"  Check if numbers are correctly written,"
       print*,"  and if line breaks are unix-like."
       print*,line
@@ -486,7 +491,7 @@
       stop
 
 ! End of file
- 101  close(10)
+ 102  close(10)
 
       j1 = nb_gas
 
@@ -618,6 +623,7 @@
 !     Josue Bock
 
       USE config, ONLY :
+     &     cmechdir,
      &     halo,
      &     iod
 
@@ -719,11 +725,11 @@
       j5_halo = 0  ! Total number of halogenated radicals
 
 
-      open(unit=12,file=file_name)
+      open(unit=12,file=trim(cmechdir)//file_name,status='old',err=100)
 
       do
          ! Read a line as a string
-         read(12,'(a300)',end=101,err=102)line
+         read(12,'(a300)',err=101,end=102)line
 
          ! Eliminates the leading and trailing blanks
          line = trim(adjustl(line))
@@ -740,7 +746,7 @@
          if(scan(line,'!').gt.0) line = line(1:scan(line,'!')-1)
 
          ! Converts the string into the nb of gaseous radical and its name
-         read(line,*,err=102)ind_tmp,name_tmp,mass_tmp,name_long_tmp
+         read(line,*,err=101)ind_tmp,name_tmp,mass_tmp,name_long_tmp
 
 ! ....................................................
 ! Skip if halo = .false. and name contains Cl, Br or I
@@ -844,8 +850,13 @@
 
       end do ! read all lines
 
+! Missing file
+ 100  print*,"Error: the file '"//file_name//
+     &"' is missing in mech directory"
+      stop
+
 ! Error during read
- 102  print*,"Error when reading gas_species.dat"
+ 101  print*,"Error when reading gas_species.dat"
       print*,"  Check if numbers are correctly written,"
       print*,"  and if line breaks are unix-like."
       print*,line
@@ -853,7 +864,8 @@
       stop
 
 ! End of file
- 101  close(12)
+ 102  close(12)
+
       j5 = nb_rad
 
 
