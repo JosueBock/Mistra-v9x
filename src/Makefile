@@ -106,7 +106,7 @@ gas.o kpp_gas_parameters.mod kpp_gas_global.mod: gas.f gas_Parameters.h gas_Glob
 	$(FC) $(CFLAGS) -c $<
 
 # other files
-utils.o: utils.f gas_common.mod global_params.mod \
+utils.o: utils.f config.mod gas_common.mod global_params.mod \
 	kpp_aer_global.mod \
 	kpp_gas_global.mod \
 	kpp_tot_global.mod \
